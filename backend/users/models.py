@@ -208,6 +208,7 @@ class ClinicalRecord(models.Model):
 
 class AllergyIntolerance(ClinicalRecord):
     """type-10022026-Maurice: Synthetic allergy/intolerance display record."""
+    status = models.CharField(max_length=30, default="active")
     reaction = models.CharField(max_length=120, blank=True)
 
 
