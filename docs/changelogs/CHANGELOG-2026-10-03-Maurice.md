@@ -16,3 +16,4 @@ Author Name: Aguda, Maurice
 
 - Added bounded FHIR Bulk Data-style asynchronous export on the unified Job/Outbox system, with allowlisted `_type`, optional `_since`, purpose/approval, idempotency, opaque status location, cancellation, encrypted expiring NDJSON artifacts, checksums, caps, and authorization rechecks.
 - Added canonical TC-EXP-0121..0131 acceptance rows, Ticket 15 specification, and an administrator bulk export panel. This remains a synthetic demo and does not implement SMART Backend Services assertions.
+- Verified TC-EXP-0121..0131 exactly once with 10 discoverable backend tests and 1 discoverable frontend test; all pass with no skips/placeholders. Full collection reconciles to 188 backend tests (178 prior + 10) and 14 frontend tests (13 prior + 1). Fixed status/cancel route kwargs and tampered AES-GCM download handling discovered RED-first.
