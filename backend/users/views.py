@@ -19,7 +19,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from .logging import external_authenticate, log_event
 from . import audit
-from .models import AllergyIntolerance, AuditEvent, Condition, Device, DeviceVersion, DeviceOutboxEvent, Observation, Patient, User, MedicationOrder, MedicationOrderVersion, InteractionRule, AlertConfiguration, InteractionEvaluation, PatientExport, Job, FamilyHistory, FamilyHistoryVersion, FamilyHistoryOutboxEvent, Questionnaire, QuestionnaireResponse, QuestionnaireResponseVersion, QuestionnaireReview, EmergencyAccessRequest, PopulationExportArtifact, PopulationExportSchedule
+from .models import AllergyIntolerance, AuditEvent, Condition, Device, DeviceVersion, DeviceOutboxEvent, Observation, Patient, User, MedicationOrder, MedicationOrderVersion, InteractionRule, AlertConfiguration, InteractionEvaluation, PatientExport, Job, FamilyHistory, FamilyHistoryVersion, FamilyHistoryOutboxEvent, Questionnaire, QuestionnaireResponse, QuestionnaireResponseVersion, QuestionnaireReview, EmergencyAccessRequest, PopulationExportArtifact, PopulationExportSchedule, CcdaDocument, ReconciliationCandidate
 from .jobs import enqueue_job, cancel_job, dispatch_status
 from .exports import create_export, purge_expired
 from .interaction_safety import acknowledge_evaluation, evaluate_version, sign_version
@@ -35,6 +35,9 @@ from .tracing import trace_function
 from .rate_limit import limited
 from .break_glass import can_read, normal_patient_access, request_access, revoke_access, expire_access
 from .population_exports import download_bytes
+from .ccda import decide_candidate, MAX_BYTES, _crypt
+from pathlib import Path
+import os
 
 
 @trace_function
@@ -88,6 +91,77 @@ class JobAdminView(APIView):
             return Response(_job_json(Job.objects.get(pk=job_id)))
         except Job.DoesNotExist:
             return Response({"detail": "Job not found."}, status=404)
+
+
+def _patient_for_request(public_id, request):
+    if request.user.role not in {User.Role.CLINICIAN, User.Role.ADMIN}: return None
+    return Patient.objects.filter(public_id=public_id).first()
+
+class CcdaExportView(APIView):
+    permission_classes = [IsAuthenticated]
+    def post(self, request, public_id):
+        patient = _patient_for_request(public_id, request)
+        if not patient: return Response({"detail":"Not found."}, status=404)
+        key=request.headers.get("Idempotency-Key") or str((request.data or {}).get("idempotency_key", ""))
+        if not key or len(key)>160: return Response({"detail":"Idempotency-Key is required."}, status=400)
+        try: job, created=enqueue_job(owner=request.user, patient=patient, kind="ccda.export", idempotency_key=key, input_data={"format":"ccda","version":"1.0"})
+        except ValueError: return Response({"detail":"Idempotency key is already used."}, status=409)
+        if created:
+            from .jobs import deliver_job
+            deliver_job.delay(str(job.id), str(job.outbox_events.first().id))
+        return Response(_job_json(job), status=202 if created else 200)
+
+class CcdaImportView(APIView):
+    permission_classes = [IsAuthenticated]
+    def post(self, request, public_id):
+        patient=_patient_for_request(public_id, request)
+        if not patient: return Response({"detail":"Not found."}, status=404)
+        data=request.body
+        if len(data)>MAX_BYTES: return Response({"detail":"Upload exceeds bounded size."}, status=413)
+        key=request.headers.get("Idempotency-Key") or ""
+        if not key: return Response({"detail":"Idempotency-Key is required."}, status=400)
+        try: job,created=enqueue_job(owner=request.user, patient=patient, kind="ccda.import", idempotency_key=key, input_data={"format":"ccda","version":"1.0"})
+        except ValueError: return Response({"detail":"Idempotency key is already used."}, status=409)
+        if created:
+            root=Path(getattr(settings,"CCDA_ROOT",os.path.join(settings.BASE_DIR,"var","ccda"))); root.mkdir(parents=True,exist_ok=True)
+            path=root/("input-"+str(job.id)); path.write_bytes(_crypt(data)); job.result_ref=str(path); job.save(update_fields=["result_ref"])
+            from .jobs import deliver_job
+            deliver_job.delay(str(job.id), str(job.outbox_events.first().id))
+        return Response(_job_json(job), status=202 if created else 200)
+
+class CcdaJobView(APIView):
+    permission_classes=[IsAuthenticated]
+    def get(self, request, job_id):
+        job=Job.objects.filter(pk=job_id, owner=request.user, kind__startswith="ccda.").first()
+        return Response(_job_json(job)) if job else Response({"detail":"Not found."},status=404)
+
+class CcdaCandidateView(APIView):
+    permission_classes=[IsAuthenticated]
+    def get(self, request, document_id):
+        doc=CcdaDocument.objects.filter(pk=document_id).first()
+        if not doc or request.user.role not in {User.Role.CLINICIAN,User.Role.ADMIN}: return Response({"detail":"Not found."},status=404)
+        return Response([{"id":c.id,"section":c.section,"resource_type":c.resource_type,"payload":c.payload,"state":c.state} for c in doc.candidates.all()])
+
+class CcdaDecisionView(APIView):
+    permission_classes=[IsAuthenticated]
+    def post(self, request, candidate_id):
+        if request.user.role not in {User.Role.CLINICIAN,User.Role.ADMIN}: return Response({"detail":"Clinician access required."},status=403)
+        try: c=decide_candidate(candidate_id=candidate_id, clinician=request.user, decision=request.data.get("decision"))
+        except (ValueError, ReconciliationCandidate.DoesNotExist): return Response({"detail":"Candidate is stale or invalid."},status=409)
+        return Response({"id":c.id,"state":c.state})
+
+class CcdaBatchDecisionView(APIView):
+    permission_classes=[IsAuthenticated]
+    def post(self, request, document_id):
+        if request.user.role not in {User.Role.CLINICIAN,User.Role.ADMIN}: return Response({"detail":"Clinician access required."},status=403)
+        decisions=request.data.get("decisions",[]) if isinstance(request.data,dict) else []
+        if not isinstance(decisions,list) or not decisions or len(decisions)>100: return Response({"detail":"Batch is bounded to 100 decisions."},status=400)
+        try:
+            with transaction.atomic():
+                results=[decide_candidate(candidate_id=int(item["id"]),clinician=request.user,decision=item["decision"]) for item in decisions]
+        except (KeyError,TypeError,ValueError,ReconciliationCandidate.DoesNotExist):
+            return Response({"detail":"Batch rejected; no decisions were applied."},status=409)
+        return Response({"count":len(results),"states":[c.state for c in results]})
 
 
 def _population_json(artifact):

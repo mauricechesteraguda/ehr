@@ -111,6 +111,20 @@ def _run_demo(job):
         from .population_exports import run_population_export
         run_population_export(job)
         return
+    if job.kind == "ccda.export":
+        from .ccda import generate_ccda
+        generate_ccda(patient=job.patient, job=job)
+        return
+    if job.kind == "ccda.import":
+        from .ccda import parse_ccda, _key
+        from cryptography.fernet import Fernet
+        from pathlib import Path
+        import base64
+        if not job.result_ref:
+            raise PermanentJobError("missing_input")
+        raw = Fernet(base64.urlsafe_b64encode(_key())).decrypt(Path(job.result_ref).read_bytes())
+        parse_ccda(raw, patient=job.patient, job=job)
+        return
     if job.kind not in {"demo.noop", "job.demo"}:
         raise PermanentJobError("unsupported kind")
 
