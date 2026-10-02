@@ -19,8 +19,7 @@ Not complete in this state: interaction signing (Ticket 05), FHIR, SMART on FHIR
 
 ## Architecture
 
-The committed Tickets01–04 data model is shown below. The diagram describes the
-application relationships; `owner` is optional because a patient record may not be
+The diagram describes the application relationships; `owner` is optional because a patient record may not be
 linked to a patient login, and the audit hash link is logical rather than a foreign key.
 
 ```mermaid
