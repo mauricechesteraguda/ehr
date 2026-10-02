@@ -4,6 +4,12 @@ from . import views
 from .smart import DeveloperAppsView, DeveloperAppRevokeView, AuthorizationView, TokenView, RevokeTokenView, LaunchView, PatientSelectionView, smart_configuration
 
 urlpatterns = [
+    path("cds-services/", views.CDSDiscoveryView.as_view()),
+    path("cds-services/<str:service_id>", views.CDSInvokeView.as_view()),
+    path("cds-services/<str:service_id>/", views.CDSInvokeView.as_view()),
+    path("cds-cards/<uuid:card_id>/actions/", views.CDSCardActionView.as_view()),
+    path("admin/cds-rules/", views.CDSRuleAdminView.as_view()),
+    path("admin/cds-rules/<int:rule_id>/", views.CDSRuleAdminView.as_view()),
     path("auth/login/", views.login_view), path("auth/enroll/", views.enroll_view),
     path("auth/enroll/verify/", views.verify_enrollment_view), path("auth/session/", views.session_view),
     path("auth/logout/", views.logout_view), path("shell/", views.shell_view),

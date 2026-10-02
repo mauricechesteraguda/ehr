@@ -19,7 +19,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from .logging import external_authenticate, log_event
 from . import audit
-from .models import AllergyIntolerance, AuditEvent, Condition, Device, DeviceVersion, DeviceOutboxEvent, Observation, Patient, User, MedicationOrder, MedicationOrderVersion, InteractionRule, AlertConfiguration, InteractionEvaluation, PatientExport, Job, FamilyHistory, FamilyHistoryVersion, FamilyHistoryOutboxEvent, Questionnaire, QuestionnaireResponse, QuestionnaireResponseVersion, QuestionnaireReview, EmergencyAccessRequest, PopulationExportArtifact, PopulationExportSchedule, CcdaDocument, ReconciliationCandidate, DirectDelivery
+from .models import AllergyIntolerance, AuditEvent, Condition, Device, DeviceVersion, DeviceOutboxEvent, Observation, Patient, User, MedicationOrder, MedicationOrderVersion, InteractionRule, AlertConfiguration, InteractionEvaluation, PatientExport, Job, FamilyHistory, FamilyHistoryVersion, FamilyHistoryOutboxEvent, Questionnaire, QuestionnaireResponse, QuestionnaireResponseVersion, QuestionnaireReview, EmergencyAccessRequest, PopulationExportArtifact, PopulationExportSchedule, CcdaDocument, ReconciliationCandidate, DirectDelivery, CDSRuleVersion, CDSService, CDSCard
 from .jobs import enqueue_job, cancel_job, dispatch_status
 from .exports import create_export, purge_expired
 from .interaction_safety import acknowledge_evaluation, evaluate_version, sign_version
@@ -37,8 +37,89 @@ from .break_glass import can_read, normal_patient_access, request_access, revoke
 from .population_exports import download_bytes
 from .ccda import decide_candidate, MAX_BYTES, _crypt
 from .direct_delivery import enqueue_delivery, deliver_direct, adapter
+from .cds import discovery as cds_discovery, invoke as cds_invoke, act as cds_act
 from pathlib import Path
 import os
+
+
+class CDSDiscoveryView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if request.user.role not in {User.Role.CLINICIAN, User.Role.ADMIN}:
+            return Response({"detail": "Clinician access required."}, status=403)
+        if hasattr(request, "smart_scopes") and not ({"cds/DecisionSupport.r", "patient/Patient.r"} & request.smart_scopes):
+            return Response({"detail": "CDS read scope required."}, status=403)
+        return Response(cds_discovery())
+
+
+class CDSRuleAdminView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        if request.user.role != User.Role.ADMIN:
+            return Response({"detail": "Administrator access required."}, status=403)
+        if hasattr(request, "smart_scopes") and "cds/DecisionSupport.w" not in request.smart_scopes:
+            return Response({"detail": "CDS write scope required."}, status=403)
+        service = CDSService.objects.filter(pk=request.data.get("serviceId")).first()
+        if not service:
+            return Response({"detail": "Service not found."}, status=404)
+        rule = CDSRuleVersion.objects.create(service=service, rule_key=str(request.data.get("ruleKey", ""))[:80], version=int(request.data.get("version", 1)), config=request.data.get("config", {}), safety_critical=bool(request.data.get("safetyCritical", False)))
+        return Response({"id": rule.pk, "status": rule.status}, status=201)
+
+    def patch(self, request, rule_id):
+        if request.user.role != User.Role.ADMIN:
+            return Response({"detail": "Administrator access required."}, status=403)
+        if hasattr(request, "smart_scopes") and "cds/DecisionSupport.w" not in request.smart_scopes:
+            return Response({"detail": "CDS write scope required."}, status=403)
+        rule = CDSRuleVersion.objects.filter(pk=rule_id).first()
+        if not rule:
+            return Response({"detail": "Rule not found."}, status=404)
+        next_status = request.data.get("status")
+        if next_status not in {CDSRuleVersion.Status.ACTIVE, CDSRuleVersion.Status.RETIRED}:
+            return Response({"detail": "Only activation or retirement is allowed."}, status=400)
+        if next_status == CDSRuleVersion.Status.ACTIVE:
+            CDSRuleVersion.objects.filter(service=rule.service, rule_key=rule.rule_key, status=CDSRuleVersion.Status.ACTIVE).update(status=CDSRuleVersion.Status.RETIRED)
+            rule.published_at = timezone.now()
+        rule.status = next_status; rule.save(update_fields=["status", "published_at"])
+        audit.append_audit_event(actor=request.user, action="update", resource_type="CDSRuleVersion", resource_id=rule.pk)
+        return Response({"id": rule.pk, "status": rule.status})
+
+
+class CDSInvokeView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, service_id):
+        if request.user.role not in {User.Role.CLINICIAN, User.Role.ADMIN}:
+            return Response({"detail": "Clinician access required."}, status=403)
+        if hasattr(request, "smart_scopes") and not ({"cds/DecisionSupport.r", "patient/Patient.r"} & request.smart_scopes):
+            return Response({"detail": "CDS read scope required."}, status=403)
+        try:
+            invocation = cds_invoke(service_id=service_id, payload=request.data, actor=request.user,
+                                    request_key=request.headers.get("Idempotency-Key", ""))
+            return Response({"cards": [
+                {"uuid": str(card.id), "summary": card.summary, "detail": card.detail, "indicator": card.indicator,
+                 "source": card.source, "suggestions": card.suggestions} for card in invocation.cards.all()
+            ], "invocationId": str(invocation.id), "demo": True})
+        except (ValueError, LookupError) as error:
+            return Response({"detail": str(error)}, status=400 if isinstance(error, ValueError) else 404)
+        except Exception:
+            # Never return evaluator/provider details or context in a CDS error.
+            return Response({"detail": "CDS evaluation unavailable."}, status=503)
+
+
+class CDSCardActionView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, card_id):
+        if request.user.role not in {User.Role.CLINICIAN, User.Role.ADMIN}:
+            return Response({"detail": "Clinician access required."}, status=403)
+        try:
+            action = cds_act(card_id=card_id, actor=request.user, action=request.data.get("action", ""),
+                             suggestion_id=request.data.get("suggestionId", ""), reason=request.data.get("reason", ""))
+            return Response({"action": action.action, "recorded": True})
+        except (ValueError, KeyError, CDSCard.DoesNotExist):
+            return Response({"detail": "Invalid card action."}, status=400)
 
 
 @trace_function
