@@ -1,0 +1,12 @@
+case_id,area,scenario,expected
+T15-001,protocol,authorized kickoff returns 202 and opaque Content-Location,202 header
+T15-002,protocol,queued status has 202 and Retry-After; completed has 200 manifest,headers/status
+T15-003,manifest,transactionTime request access token output checksum/count and errors,valid manifest
+T15-004,ndjson,each output is valid FHIR NDJSON and exact SHA-256,valid lines/hash
+T15-005,validation,types since boundaries bad parameters and injection are bounded,400 or exact boundary
+T15-006,authorization,roles scopes inactive app revoked token and expiry are denied,401/403
+T15-007,idempotency,duplicate and concurrent kickoff create one job,one job
+T15-008,limits,empty population and cap at/over cap are deterministic,200/failed
+T15-009,lifecycle,retry cancel expiry cleanup and tampered artifact are safe,terminal/no download
+T15-010,security,AES-GCM encrypted storage has no plaintext and audit/outbox failure fails closed,proved
+T15-011,ui,admin developer surface exposes bounded bulk panel and lifecycle states,accessible

@@ -39,6 +39,9 @@ POPULATION_EXPORT_ROOT = os.environ.get("EHR_POPULATION_EXPORT_ROOT", os.path.jo
 POPULATION_EXPORT_KEY = os.environ.get("EHR_POPULATION_EXPORT_KEY", "")
 POPULATION_EXPORT_CAP = int(os.environ.get("EHR_POPULATION_EXPORT_CAP", "10000"))
 POPULATION_EXPORT_MAX_BYTES = 100 * 1024 * 1024
+BULK_EXPORT_ROOT = os.environ.get("EHR_BULK_EXPORT_ROOT", os.path.join(tempfile.gettempdir(), "ehr-bulk-exports"))
+BULK_EXPORT_KEY = os.environ.get("EHR_BULK_EXPORT_KEY", POPULATION_EXPORT_KEY)
+BULK_EXPORT_MAX_BYTES = 100 * 1024 * 1024
 CCDA_ROOT = os.environ.get("EHR_CCDA_ROOT", os.path.join(tempfile.gettempdir(), "ehr-ccda"))
 CCDA_MAX_BYTES = 10 * 1024 * 1024
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
@@ -47,7 +50,7 @@ LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
 REST_FRAMEWORK = {"DEFAULT_AUTHENTICATION_CLASSES": ["backend.users.authentication.OAuthBearerOrSessionAuthentication"]}
 OAUTH2_PROVIDER = {
-    "SCOPES": {"openid": "OpenID", "fhirUser": "FHIR user identity", "patient/Patient.r": "Read Patient", "patient/Patient.s": "Select one Patient", "patient/MedicationRequest.r": "Read MedicationRequest", "patient/AllergyIntolerance.r": "Read AllergyIntolerance", "patient/Condition.r": "Read Condition", "patient/Observation.r": "Read Observation", "patient/Device.r": "Read Device", "patient/FamilyMemberHistory.r": "Read FamilyMemberHistory", "patient/Questionnaire.r": "Read Questionnaire", "patient/QuestionnaireResponse.r": "Read QuestionnaireResponse", "cds/DecisionSupport.r": "Invoke local CDS", "cds/DecisionSupport.w": "Administer local CDS"},
+    "SCOPES": {"openid": "OpenID", "fhirUser": "FHIR user identity", "system/*.read": "FHIR system bulk read", "patient/Patient.r": "Read Patient", "patient/Patient.s": "Select one Patient", "patient/MedicationRequest.r": "Read MedicationRequest", "patient/AllergyIntolerance.r": "Read AllergyIntolerance", "patient/Condition.r": "Read Condition", "patient/Observation.r": "Read Observation", "patient/Device.r": "Read Device", "patient/FamilyMemberHistory.r": "Read FamilyMemberHistory", "patient/Questionnaire.r": "Read Questionnaire", "patient/QuestionnaireResponse.r": "Read QuestionnaireResponse", "cds/DecisionSupport.r": "Invoke local CDS", "cds/DecisionSupport.w": "Administer local CDS"},
     "DEFAULT_SCOPES": "openid fhirUser",
     "ACCESS_TOKEN_EXPIRE_SECONDS": 300,
     "REFRESH_TOKEN_EXPIRE_SECONDS": 86400,

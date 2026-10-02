@@ -445,3 +445,7 @@ Operational logs are emitted to the console as structured events. They intention
 # CDS Hooks demo (Ticket 13)
 
 The local `/api/cds-services/` discovery and invocation endpoints expose deterministic, CDS Hooks-shaped medication-prescribe/order-sign and patient-view cards. This is **non-clinical demo decision support**: cards are reminders only, never silently mutate records, and their evidence links contain no patient content. Clinicians can accept, dismiss, or override cards; configured safety-critical dismissals and overrides require a reason. Administrators activate or retire immutable rule versions.
+
+### FHIR Bulk Data-style export (Ticket15)
+
+Administrators and authorized SMART system tokens can use `GET` or `POST /fhir/R4/$export` with an allowlisted `_type`, optional `_since`, `purpose`, `approval`, and `Idempotency-Key`. The endpoint returns `202` and an opaque `Content-Location`; poll it for a bounded manifest, then download per-resource `application/fhir+ndjson` entries. Files are AES-GCM encrypted at rest, SHA-256 verified, randomized, capped at 100 MB, and expire after 24 hours. This synthetic demo intentionally has no patient selection/break-glass path and is not a full SMART Backend Services assertion flow.

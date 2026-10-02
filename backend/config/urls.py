@@ -4,6 +4,7 @@ from backend.users.fhir import FHIRFacadeView
 from backend.users.smart import smart_configuration, capability_statement, AuthorizationView, TokenView, RevokeTokenView
 from backend.users.health import live, ready, beat
 from backend.users.quality import FHIRQualityView
+from backend.users.bulk_views import BulkExportView
 
 urlpatterns = [path("api/", include("backend.users.urls")), path("api/health/live/", live), path("api/health/ready/", ready), path("api/health/beat/", beat)]
 urlpatterns.extend([
@@ -19,6 +20,9 @@ urlpatterns.extend([
     path("oauth/token/", TokenView.as_view()),
     path("oauth/revoke_token/", RevokeTokenView.as_view()),
     path("fhir/metadata", capability_statement),
+    path("fhir/R4/$export", BulkExportView.as_view()),
+    path("fhir/R4/$export/<uuid:export_id>", BulkExportView.as_view(), {"get_status": True}),
+    path("fhir/R4/$export/<uuid:export_id>/<str:resource_type>", BulkExportView.as_view(), {"get_status": True}),
     path("fhir/R4/<str:resource_name>", FHIRFacadeView.as_view()),
     path("fhir/R4/<str:resource_name>/<str:resource_id>", FHIRFacadeView.as_view()),
 ])
