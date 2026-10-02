@@ -53,3 +53,9 @@ Author Name: Aguda, Maurice
 - Added deterministic, checksum-bound C-CDA generation/import jobs with secure bounded parsing and encrypted artifacts.
 - Added immutable document metadata, FHIR-shaped reconciliation candidates, clinician decisions, audit/outbox boundaries, and atomic bounded batches.
 - Verification follow-up added canonical acceptance coverage for TC-EXP-0111/0112/0113, fixed secure parser checksum handling and medication mapping, and pinned the defused XML runtime dependency.
+
+## Ticket12 — deterministic Direct-shaped delivery
+
+- Added an authorized clinician/admin, idempotent delivery boundary for bounded C-CDA TransitionDocument artifacts.
+- Added a visibly simulated local adapter with deterministic success, transient, timeout, unavailable, and permanent fixtures; it performs no SMTP, Direct network, or real delivery.
+- Added payload-free transactional outbox/audit metadata, immutable safe attempts and receipt checksums, fail-closed artifact expiry/missing/checksum handling, lifecycle APIs, and accessible UI status/actions.

@@ -505,11 +505,70 @@ class CcdaDocument(models.Model):
     size_bytes = models.PositiveBigIntegerField(default=0)
     artifact_path = models.CharField(max_length=500)
     created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField(null=True, blank=True)
 
     def save(self, *args, **kwargs):
         if self.pk:
             raise ValueError("C-CDA document metadata is immutable")
         return super().save(*args, **kwargs)
+
+
+class DirectDelivery(models.Model):
+    """Ticket12: local-only Direct-shaped delivery metadata; no recipient or payload is retained."""
+    class State(models.TextChoices):
+        QUEUED = "queued", "Queued"
+        SENDING = "sending", "Sending"
+        SENT = "sent", "Sent"
+        FAILED = "failed", "Failed"
+        EXPIRED = "expired", "Expired"
+        CANCELLED = "cancelled", "Cancelled"
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    artifact = models.ForeignKey(CcdaDocument, on_delete=models.PROTECT, related_name="direct_deliveries")
+    owner = models.ForeignKey(User, on_delete=models.PROTECT, related_name="direct_deliveries")
+    recipient_hash = models.CharField(max_length=64)
+    recipient_ciphertext = models.BinaryField()
+    purpose = models.CharField(max_length=240)
+    idempotency_key = models.CharField(max_length=160, unique=True)
+    state = models.CharField(max_length=20, choices=State.choices, default=State.QUEUED)
+    attempts = models.PositiveSmallIntegerField(default=0)
+    max_attempts = models.PositiveSmallIntegerField(default=3)
+    error_code = models.CharField(max_length=40, blank=True, default="")
+    receipt_code = models.CharField(max_length=80, blank=True, default="")
+    receipt_checksum = models.CharField(max_length=64, blank=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    finished_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        constraints = [models.CheckConstraint(check=models.Q(max_attempts__gte=1, max_attempts__lte=3), name="direct_max_attempts_1_3")]
+        indexes = [models.Index(fields=["owner", "created_at"], name="direct_owner_created_idx")]
+
+
+class DirectDeliveryAttempt(models.Model):
+    """Ticket12: immutable attempt metadata; adapter responses are reduced to safe codes."""
+    delivery = models.ForeignKey(DirectDelivery, on_delete=models.PROTECT, related_name="delivery_attempts")
+    number = models.PositiveSmallIntegerField()
+    state = models.CharField(max_length=20, choices=DirectDelivery.State.choices)
+    outcome_code = models.CharField(max_length=40, blank=True, default="")
+    receipt_checksum = models.CharField(max_length=64, blank=True, default="")
+    started_at = models.DateTimeField(auto_now_add=True)
+    finished_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["delivery", "number"], name="direct_attempt_number_unique")]
+
+    def save(self, *args, **kwargs):
+        if self.pk:
+            raise ValueError("Direct delivery attempts are immutable")
+        return super().save(*args, **kwargs)
+
+
+class DirectDeliveryOutbox(models.Model):
+    """Ticket12: transactional, payload-free intent for the local delivery worker."""
+    delivery = models.OneToOneField(DirectDelivery, on_delete=models.CASCADE, related_name="outbox")
+    created_at = models.DateTimeField(auto_now_add=True)
+    dispatched_at = models.DateTimeField(null=True, blank=True)
 
 
 class ReconciliationCandidate(models.Model):

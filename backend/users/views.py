@@ -19,7 +19,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from .logging import external_authenticate, log_event
 from . import audit
-from .models import AllergyIntolerance, AuditEvent, Condition, Device, DeviceVersion, DeviceOutboxEvent, Observation, Patient, User, MedicationOrder, MedicationOrderVersion, InteractionRule, AlertConfiguration, InteractionEvaluation, PatientExport, Job, FamilyHistory, FamilyHistoryVersion, FamilyHistoryOutboxEvent, Questionnaire, QuestionnaireResponse, QuestionnaireResponseVersion, QuestionnaireReview, EmergencyAccessRequest, PopulationExportArtifact, PopulationExportSchedule, CcdaDocument, ReconciliationCandidate
+from .models import AllergyIntolerance, AuditEvent, Condition, Device, DeviceVersion, DeviceOutboxEvent, Observation, Patient, User, MedicationOrder, MedicationOrderVersion, InteractionRule, AlertConfiguration, InteractionEvaluation, PatientExport, Job, FamilyHistory, FamilyHistoryVersion, FamilyHistoryOutboxEvent, Questionnaire, QuestionnaireResponse, QuestionnaireResponseVersion, QuestionnaireReview, EmergencyAccessRequest, PopulationExportArtifact, PopulationExportSchedule, CcdaDocument, ReconciliationCandidate, DirectDelivery
 from .jobs import enqueue_job, cancel_job, dispatch_status
 from .exports import create_export, purge_expired
 from .interaction_safety import acknowledge_evaluation, evaluate_version, sign_version
@@ -36,6 +36,7 @@ from .rate_limit import limited
 from .break_glass import can_read, normal_patient_access, request_access, revoke_access, expire_access
 from .population_exports import download_bytes
 from .ccda import decide_candidate, MAX_BYTES, _crypt
+from .direct_delivery import enqueue_delivery, deliver_direct, adapter
 from pathlib import Path
 import os
 
@@ -162,6 +163,88 @@ class CcdaBatchDecisionView(APIView):
         except (KeyError,TypeError,ValueError,ReconciliationCandidate.DoesNotExist):
             return Response({"detail":"Batch rejected; no decisions were applied."},status=409)
         return Response({"count":len(results),"states":[c.state for c in results]})
+
+
+def _direct_json(delivery):
+    """Safe delivery projection: recipient, artifact path, bytes, and credentials never leave the service."""
+    return {"id": str(delivery.id), "artifact_id": delivery.artifact_id, "purpose": delivery.purpose,
+            "state": delivery.state, "attempts": delivery.attempts, "max_attempts": delivery.max_attempts,
+            "error_code": delivery.error_code or None, "receipt_code": delivery.receipt_code or None,
+            "receipt_checksum": delivery.receipt_checksum or None, "created_at": delivery.created_at,
+            "finished_at": delivery.finished_at}
+
+
+class DirectArtifactView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, public_id):
+        if request.user.role not in {User.Role.CLINICIAN, User.Role.ADMIN}:
+            return Response({"detail": "Clinician access required."}, status=403)
+        patient = Patient.objects.filter(public_id=public_id).first()
+        if not patient:
+            return Response({"detail": "Not found."}, status=404)
+        docs = CcdaDocument.objects.filter(patient=patient, direction="export").order_by("-created_at")[:50]
+        return Response([{"id": d.pk, "template_id": d.template_id, "template_version": d.template_version,
+                          "created_at": d.created_at, "expires_at": d.expires_at, "size_bytes": d.size_bytes,
+                          "sha256": d.sha256} for d in docs])
+
+
+class DirectDeliveryView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def _allowed(self, request):
+        return request.user.role in {User.Role.CLINICIAN, User.Role.ADMIN}
+
+    def get(self, request, delivery_id=None):
+        if not self._allowed(request):
+            return Response({"detail": "Clinician access required."}, status=403)
+        qs = DirectDelivery.objects.select_related("artifact")
+        if request.user.role != User.Role.ADMIN:
+            qs = qs.filter(owner=request.user)
+        if delivery_id:
+            item = qs.filter(pk=delivery_id).first()
+            return Response(_direct_json(item)) if item else Response({"detail": "Not found."}, status=404)
+        return Response([_direct_json(item) for item in qs.order_by("-created_at")[:100]])
+
+    def post(self, request, delivery_id=None):
+        if not self._allowed(request):
+            return Response({"detail": "Clinician access required."}, status=403)
+        if delivery_id:
+            item = DirectDelivery.objects.filter(pk=delivery_id).first() if request.user.role == User.Role.ADMIN else DirectDelivery.objects.filter(pk=delivery_id, owner=request.user).first()
+            if not item or item.state != DirectDelivery.State.FAILED:
+                return Response({"detail": "Only failed deliveries can be retried."}, status=409)
+            item.state, item.error_code, item.finished_at = DirectDelivery.State.QUEUED, "", None
+            item.save(update_fields=["state", "error_code", "finished_at", "updated_at"])
+            deliver_direct.delay(str(item.id))
+            return Response(_direct_json(item), status=202)
+        data = request.data if isinstance(request.data, dict) else {}
+        key = request.headers.get("Idempotency-Key") or data.get("idempotency_key")
+        try:
+            artifact = CcdaDocument.objects.get(pk=data.get("artifact_id"), direction="export")
+            delivery, created = enqueue_delivery(owner=request.user, artifact=artifact, recipient=data.get("recipient"), purpose=data.get("purpose"), idempotency_key=key)
+        except (CcdaDocument.DoesNotExist, TypeError, ValueError):
+            return Response({"detail": "Invalid recipient, purpose, artifact, or idempotency key."}, status=400)
+        if created:
+            deliver_direct.delay(str(delivery.id))
+        return Response(_direct_json(delivery), status=202 if created else 200)
+
+
+class DirectDeliveryCancelView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, delivery_id):
+        if request.user.role not in {User.Role.CLINICIAN, User.Role.ADMIN}:
+            return Response({"detail": "Clinician access required."}, status=403)
+        qs = DirectDelivery.objects.filter(pk=delivery_id)
+        if request.user.role != User.Role.ADMIN:
+            qs = qs.filter(owner=request.user)
+        item = qs.first()
+        if not item:
+            return Response({"detail": "Not found."}, status=404)
+        if item.state in {DirectDelivery.State.QUEUED, DirectDelivery.State.SENDING}:
+            item.state, item.finished_at = DirectDelivery.State.CANCELLED, timezone.now()
+            item.save(update_fields=["state", "finished_at", "updated_at"])
+        return Response(_direct_json(item))
 
 
 def _population_json(artifact):
