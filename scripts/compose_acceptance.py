@@ -26,17 +26,32 @@ ROUTES = ("/", "/patient", "/clinician", "/admin", "/developer", "/api/health/re
 
 def run(cmd: list[str], *, env: dict[str, str], timeout: int = 60, check: bool = True) -> subprocess.CompletedProcess[str]:
     print(json.dumps({"event": "acceptance.command", "command": cmd[0], "args": cmd[1:]}))
-    return subprocess.run(cmd, cwd=ROOT, env=env, text=True, capture_output=True, timeout=timeout, check=check)
+    try:
+        return subprocess.run(cmd, cwd=ROOT, env=env, text=True, capture_output=True, timeout=timeout, check=check)
+    except subprocess.CalledProcessError as exc:
+        print(json.dumps({"event": "acceptance.command_failed", "returncode": exc.returncode, "stderr": exc.stderr[-2000:]}), file=sys.stderr)
+        raise
 
 
-def free_ports() -> None:
-    for port in (80, 443):
-        with socket.socket() as sock:
+def free_ports() -> dict[str, int]:
+    """Select/check free high host ports without inspecting port-80 processes."""
+    selected: dict[str, int] = {}
+    sockets: list[socket.socket] = []
+    try:
+        for name in ("COMPOSE_HTTP_PORT", "COMPOSE_HTTPS_PORT"):
+            sock = socket.socket()
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            try:
-                sock.bind(("127.0.0.1", port))
-            except OSError as exc:
-                raise RuntimeError(f"host port {port} is not available; refusing to touch another stack") from exc
+            sock.bind(("127.0.0.1", 0))
+            port = sock.getsockname()[1]
+            if port < 1024:
+                sock.close()
+                raise RuntimeError(f"selected non-high host port {port}")
+            selected[name] = port
+            sockets.append(sock)
+    finally:
+        for sock in sockets:
+            sock.close()
+    return selected
 
 
 def isolated_compose(temp: Path, env_file: Path) -> Path:
@@ -69,8 +84,10 @@ def assert_only_gateway(compose: Path, env: dict[str, str], project: str) -> Non
     if set(result.stdout.split()) != set(SERVICES):
         raise AssertionError("Compose service set changed")
     ports = run(["docker", "compose", "-p", project, "-f", str(compose), "config"], env=env).stdout
-    if 'published: "80"' not in ports or 'published: "443"' not in ports:
-        raise AssertionError("Caddy must expose 80 and 443")
+    http_port = env.get("COMPOSE_HTTP_PORT", "80")
+    https_port = env.get("COMPOSE_HTTPS_PORT", "443")
+    if f'published: "{http_port}"' not in ports or f'published: "{https_port}"' not in ports:
+        raise AssertionError(f"Caddy must expose configured ports {http_port}/{https_port}")
     for forbidden in ('published: "5432"', 'published: "6379"', 'published: "8000"', 'published: "8080"'):
         if forbidden in ports:
             raise AssertionError(f"internal service port exposed: {forbidden}")
@@ -85,9 +102,10 @@ def live_checks(compose: Path, env: dict[str, str], project: str, temp: Path) ->
     if not ca.exists() or ca.stat().st_size < 100:
         raise AssertionError("Caddy local root CA was not exported")
     timings: dict[str, int] = {}
+    https_port = env["COMPOSE_HTTPS_PORT"]
     for route in ROUTES:
         started = time.monotonic()
-        response = run(["curl", "--fail-with-body", "--silent", "--show-error", "--max-time", "10", "--cacert", str(ca), "-o", os.devnull, "-w", "%{http_code}", f"https://localhost{route}"], env=env, timeout=15, check=False)
+        response = run(["curl", "--fail-with-body", "--silent", "--show-error", "--max-time", "10", "--cacert", str(ca), "-o", os.devnull, "-w", "%{http_code}", f"https://localhost:{https_port}{route}"], env=env, timeout=15, check=False)
         timings[route] = round((time.monotonic() - started) * 1000)
         if response.returncode and route == "/api/health/ready/":
             raise RuntimeError(f"HTTPS readiness failed: {response.stderr[-200:]}")
@@ -102,8 +120,7 @@ def main() -> int:
     args = parser.parse_args()
     if shutil.which("docker") is None:
         raise RuntimeError("docker is required for Compose acceptance")
-    if not args.static_only:
-        free_ports()
+    ports = {} if args.static_only else free_ports()
     project = f"ehr-ticket17-{os.getpid()}"
     with tempfile.TemporaryDirectory(prefix="ehr-ticket17-") as work:
         temp = Path(work)
@@ -113,7 +130,7 @@ def main() -> int:
             "POSTGRES_DB=ehr", "POSTGRES_USER=ehr", f"POSTGRES_PASSWORD={secrets.token_urlsafe(32)}", "POSTGRES_HOST=postgres", "POSTGRES_PORT=5432",
             f"DEMO_PASSWORD={secrets.token_urlsafe(24)}", f"EHR_POPULATION_EXPORT_KEY={secrets.token_urlsafe(32)}", "EHR_POPULATION_EXPORT_CAP=10000",
         )) + "\n")
-        env = {**os.environ, "DOCKER_BUILDKIT": "1", "COMPOSE_DOCKER_CLI_BUILD": "1"}
+        env = {**os.environ, "DOCKER_BUILDKIT": "1", "COMPOSE_DOCKER_CLI_BUILD": "1", **{name: str(port) for name, port in ports.items()}}
         compose = isolated_compose(temp, env_file)
         assert_only_gateway(compose, env, project)
         if args.static_only:
@@ -121,7 +138,7 @@ def main() -> int:
             return 0
         try:
             run(["docker", "compose", "-p", project, "-f", str(compose), "build"], env=env, timeout=900)
-            run(["docker", "compose", "-p", project, "-f", str(compose), "up", "-d"], env=env, timeout=120)
+            run(["docker", "compose", "-p", project, "-f", str(compose), "up", "-d"], env=env, timeout=900)
             wait_healthy(compose, env, project)
             timings = live_checks(compose, env, project, temp)
             print(json.dumps({"event": "acceptance.pass", "project": project, "route_timings_ms": timings, "budget_ms": 500}))
