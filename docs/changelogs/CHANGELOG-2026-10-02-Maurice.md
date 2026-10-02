@@ -49,3 +49,6 @@
 - Static Compose/configuration tests, source checks, and local test suites pass; the live Compose image build remains unverified because PyPI connectivity is intermittent.
 
 Author Name: Aguda, Maurice
+## Ticket11 — bounded C-CDA transition reconciliation
+- Added deterministic, checksum-bound C-CDA generation/import jobs with secure bounded parsing and encrypted artifacts.
+- Added immutable document metadata, FHIR-shaped reconciliation candidates, clinician decisions, audit/outbox boundaries, and atomic bounded batches.

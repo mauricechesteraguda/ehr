@@ -493,6 +493,50 @@ class Job(models.Model):
         indexes = [models.Index(fields=["state", "queued_at"], name="job_dispatch_idx"), models.Index(fields=["heartbeat_at"], name="job_heartbeat_idx")]
 
 
+class CcdaDocument(models.Model):
+    """Ticket11: immutable bounded transition metadata; bytes remain encrypted on disk."""
+    job = models.OneToOneField(Job, on_delete=models.PROTECT, related_name="ccda_document")
+    patient = models.ForeignKey(Patient, on_delete=models.PROTECT, related_name="ccda_documents")
+    direction = models.CharField(max_length=8)
+    template_id = models.CharField(max_length=120)
+    template_version = models.CharField(max_length=40)
+    provenance = models.JSONField(default=dict)
+    sha256 = models.CharField(max_length=64)
+    size_bytes = models.PositiveBigIntegerField(default=0)
+    artifact_path = models.CharField(max_length=500)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        if self.pk:
+            raise ValueError("C-CDA document metadata is immutable")
+        return super().save(*args, **kwargs)
+
+
+class ReconciliationCandidate(models.Model):
+    """Ticket11: imported FHIR-shaped proposal; never a clinical record until accepted."""
+    class State(models.TextChoices):
+        PENDING = "pending", "Pending"
+        ACCEPTED = "accepted", "Accepted"
+        REJECTED = "rejected", "Rejected"
+        DEFERRED = "deferred", "Deferred"
+        STALE = "stale", "Stale"
+        CONFLICT = "conflict", "Conflict"
+
+    document = models.ForeignKey(CcdaDocument, on_delete=models.PROTECT, related_name="candidates")
+    patient = models.ForeignKey(Patient, on_delete=models.PROTECT, related_name="reconciliation_candidates")
+    section = models.CharField(max_length=30)
+    resource_type = models.CharField(max_length=40)
+    payload = models.JSONField()
+    source_fingerprint = models.CharField(max_length=64)
+    state = models.CharField(max_length=12, choices=State.choices, default=State.PENDING)
+    decided_by = models.ForeignKey(User, null=True, blank=True, on_delete=models.PROTECT)
+    decided_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["document", "source_fingerprint"], name="ccda_candidate_fingerprint_unique")]
+
+
 class JobAttempt(models.Model):
     """Per-delivery state; error fields are deliberately class/code only."""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
