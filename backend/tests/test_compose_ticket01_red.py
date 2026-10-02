@@ -66,3 +66,36 @@ def test_TC_EXP_0006_backend_dependency_install_is_cached_pinned_and_bounded():
     assert "--no-index" not in dockerfile
     assert "--trusted-host" not in dockerfile
     assert "--no-cache-dir" not in dockerfile
+
+
+def test_compose_web_non_root_has_writable_runtime_paths():
+    """The nginx worker must not rely on root-owned /var/run defaults."""
+    config = _read("web/nginx.conf")
+    dockerfile = _read("web/Dockerfile")
+    assert "pid /tmp/nginx.pid;" in config
+    assert "client_body_temp_path /tmp/nginx/client_temp;" in config
+    assert "proxy_temp_path /tmp/nginx/proxy_temp;" in config
+    assert "mkdir -p /tmp/nginx" in dockerfile
+    assert "chown -R nginx:nginx /tmp/nginx" in dockerfile
+
+
+def test_readiness_contract_is_explicit_and_fail_safe():
+    """Readiness must expose only a stable state while startup is incomplete."""
+    source = _read("backend/users/health.py")
+    assert 'status="unready"' in source or '"status": "unready"' in source
+    assert "status=503" in source
+    assert "status=500" not in source
+    assert "TRACE_FILE: /run/ehr/api-trace.jsonl" in _read("docker-compose.yml")
+
+
+def test_compose_celery_services_configure_django_before_imports():
+    """Celery imports Django-backed tasks during worker startup."""
+    compose = _read("docker-compose.yml")
+    assert compose.count("DJANGO_SETTINGS_MODULE: backend.config.settings") >= 2
+
+
+def test_caddy_routes_use_valid_block_syntax():
+    """The gateway must parse and stay up before route acceptance runs."""
+    caddy = _read("Caddyfile")
+    assert "handle @api {\n        reverse_proxy api:8000\n    }" in caddy
+    assert "handle {\n        reverse_proxy web:8080\n    }" in caddy

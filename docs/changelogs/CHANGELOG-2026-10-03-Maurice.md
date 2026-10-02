@@ -2,6 +2,9 @@
 
 ## Correction
 
+- Fixed live Compose startup: non-root Nginx now uses explicit writable pid/temp paths, Celery services configure Django before importing tasks, and Caddy uses valid route-block syntax.
+- Bound tracing to the app runtime volume with best-effort writes so readiness remains an explicit 503/200 dependency state rather than becoming a 500 from an unwritable trace home; acceptance seeding no longer exposes the demo password in host command output.
+
 - Restored canonical expansion continuity with TC-EXP-0106..0110 for C-CDA DTD/XXE rejection, entity-expansion rejection, checksum tamper detection, atomic invalid-import rollback, and reconciliation idempotency.
 - Added discoverable Ticket 11 acceptance tests for all five cases without changing existing test behavior; reordered the canonical CSV numerically while preserving existing row fields, with blank QA fields and `Not Run` status.
 

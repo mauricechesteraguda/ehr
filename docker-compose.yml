@@ -40,6 +40,7 @@ services:
       DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1,api,caddy
       DJANGO_CSRF_TRUSTED_ORIGINS: https://localhost,https://127.0.0.1
       EHR_POPULATION_EXPORT_ROOT: /var/lib/ehr/population-exports
+      TRACE_FILE: /run/ehr/api-trace.jsonl
     volumes: [runtime:/run/ehr, population_exports:/var/lib/ehr/population-exports]
     depends_on:
       postgres: {condition: service_healthy}
@@ -74,6 +75,8 @@ services:
     build: {context: ., dockerfile: backend/Dockerfile}
     env_file: .env
     environment:
+      DJANGO_SETTINGS_MODULE: backend.config.settings
+      TRACE_FILE: /run/ehr/worker-trace.jsonl
       POSTGRES_HOST: postgres
       REDIS_URL: redis://redis:6379/0
       CELERY_BROKER_URL: redis://redis:6379/0
@@ -95,6 +98,8 @@ services:
     build: {context: ., dockerfile: backend/Dockerfile}
     env_file: .env
     environment:
+      DJANGO_SETTINGS_MODULE: backend.config.settings
+      TRACE_FILE: /run/ehr/beat-trace.jsonl
       POSTGRES_HOST: postgres
       REDIS_URL: redis://redis:6379/0
       CELERY_BROKER_URL: redis://redis:6379/0

@@ -11,22 +11,24 @@ from pathlib import Path
 SESSION_ID = os.environ.get("TRACE_SESSION_ID", f"pid-{os.getpid()}")
 REPO_HASH = hashlib.sha256(str(Path(__file__).resolve().parents[2]).encode()).hexdigest()[:12]
 REPO_ROOT = Path(__file__).resolve().parents[2]
-TRACE_FILE = Path.home() / ".cache" / "agent-trace" / REPO_HASH / f"{SESSION_ID}.jsonl"
+TRACE_FILE = Path(os.environ.get("TRACE_FILE", Path.home() / ".cache" / "agent-trace" / REPO_HASH / f"{SESSION_ID}.jsonl"))
 
 
 def trace_function(function):
     """type-10022026-Maurice: Trace safe entry, exit, and exception events."""
     @wraps(function)
     def traced(*args, **kwargs):
-        TRACE_FILE.parent.mkdir(parents=True, exist_ok=True)
         name = function.__qualname__
-        _write("entry", name)
+        _try_write("entry", name)
         try:
             result = function(*args, **kwargs)
-            _write("exit", name)
+            _try_write("exit", name)
             return result
         except Exception as error:
-            _write_exception(name, error)
+            try:
+                _write_exception(name, error)
+            except OSError:
+                pass
             raise
     return traced
 
@@ -38,6 +40,15 @@ def _write(event, function, error=None):
         record["error"] = error
     with TRACE_FILE.open("a", encoding="utf-8") as stream:
         stream.write(json.dumps(record) + "\n")
+
+
+def _try_write(event, function):
+    """Tracing must never turn a health or task call into an application failure."""
+    try:
+        TRACE_FILE.parent.mkdir(parents=True, exist_ok=True)
+        _write(event, function)
+    except OSError:
+        pass
 
 
 def _safe_code(error):

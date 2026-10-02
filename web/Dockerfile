@@ -8,6 +8,8 @@ RUN npm run build
 FROM nginx:1.27.4-alpine
 COPY web/nginx.conf /etc/nginx/nginx.conf
 COPY --from=build /src/dist /usr/share/nginx/html
-RUN chown -R nginx:nginx /usr/share/nginx/html /var/cache/nginx /var/run /etc/nginx
+RUN mkdir -p /tmp/nginx/client_temp /tmp/nginx/proxy_temp /tmp/nginx/fastcgi_temp /tmp/nginx/uwsgi_temp /tmp/nginx/scgi_temp \
+    && chown -R nginx:nginx /tmp/nginx \
+    && chown -R nginx:nginx /usr/share/nginx/html /var/cache/nginx /etc/nginx
 USER nginx
 EXPOSE 8080
