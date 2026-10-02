@@ -42,7 +42,7 @@ cp .env.example .env
 docker compose up --build
 ```
 
-Caddy is the only service exposed on the host (`http://localhost` redirects to `https://localhost`); web, API, PostgreSQL, Redis, Celery worker, and Beat remain on the internal Compose network. The API entrypoint applies migrations and idempotently seeds synthetic demo data before Gunicorn starts. Do not place `.env`, certificates, keys, or Caddy's CA files in git.
+Caddy is the only service exposed on the host (`http://localhost` redirects to `https://localhost`); web, API, PostgreSQL, Redis, Celery worker, and Beat remain on the internal Compose network. Normal demo Compose defaults are host ports 80/443, while acceptance selects free high host ports via `COMPOSE_HTTP_PORT` and `COMPOSE_HTTPS_PORT` so it never probes or touches an unrelated port-80 process. The API entrypoint applies migrations and idempotently seeds synthetic demo data before Gunicorn starts. Do not place `.env`, certificates, keys, or Caddy's CA files in git.
 
 Caddy creates a local CA in the named `caddy_data` volume. Trust it locally, after the stack is running, by exporting the CA without committing it:
 

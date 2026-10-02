@@ -14,6 +14,7 @@ Author Name: Aguda, Maurice
 
 ## Ticket 17
 
+- Isolated live Compose acceptance from unrelated host services: Compose now keeps normal demo defaults of 80/443 but accepts configurable host bindings, and the acceptance runner selects/checks free high ports, passes them through its environment, and validates the exported Caddy CA at the selected HTTPS URL.
 - Added canonical `TC-EXP-0140..0160` integrated-Compose acceptance cases, each with a discoverable backend test reference.
 - Added `scripts/compose_acceptance.py`: isolated project naming, preflight port checks, external generated secrets, BuildKit builds, bounded health waits, local-CA HTTPS validation, idempotent migration/seed, worker restart/persistence probes, structured evidence, and scoped cleanup.
 - Expanded the README architecture/demo flow with the one-command acceptance invocation and exact macOS/Linux/Windows CA trust commands.

@@ -62,7 +62,12 @@ def test_TC_EXP_0145_seed_migration_idempotency_contract() -> None:
 
 
 def test_TC_EXP_0146_gateway_port_boundary_contract() -> None:
-    _contract(); text = HARNESS.read_text(); assert 'published: "5432"' in text and 'published: "6379"' in text
+    _contract(); text = HARNESS.read_text(); compose = (ROOT / "docker-compose.yml").read_text()
+    assert 'published: "5432"' in text and 'published: "6379"' in text
+    assert "COMPOSE_HTTP_PORT" in text and "COMPOSE_HTTPS_PORT" in text
+    assert "free high host ports" in text
+    assert "${COMPOSE_HTTP_PORT:-80}:80" in compose and "${COMPOSE_HTTPS_PORT:-443}:443" in compose
+    assert "https://localhost:{https_port}" in text
 
 
 def test_TC_EXP_0147_role_route_smoke_contract() -> None:
