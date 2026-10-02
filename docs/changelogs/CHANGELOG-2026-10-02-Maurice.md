@@ -52,3 +52,4 @@ Author Name: Aguda, Maurice
 ## Ticket11 — bounded C-CDA transition reconciliation
 - Added deterministic, checksum-bound C-CDA generation/import jobs with secure bounded parsing and encrypted artifacts.
 - Added immutable document metadata, FHIR-shaped reconciliation candidates, clinician decisions, audit/outbox boundaries, and atomic bounded batches.
+- Verification follow-up added canonical acceptance coverage for TC-EXP-0111/0112/0113, fixed secure parser checksum handling and medication mapping, and pinned the defused XML runtime dependency.

@@ -23,6 +23,11 @@ def _safe_name(job_id): return hashlib.sha256(str(job_id).encode()).hexdigest()+
 
 def _entry(section, resource, obj):
     payload = {"id": str(obj.pk), "code": getattr(obj, "code", ""), "label": getattr(obj, "label", ""), "date": str(getattr(obj, "recorded_date", "") or "")}
+    if resource == "MedicationRequest":
+        # Medication versions use medication_code/name rather than the common record fields.
+        payload["code"] = getattr(obj, "medication_code", "")
+        payload["label"] = getattr(obj, "medication_name", "")
+        payload["date"] = str(getattr(obj, "start_date", "") or "")
     if section == "allergies": payload["reaction"] = getattr(obj, "reaction", "")
     if section == "problems": payload["status"] = getattr(obj, "status", "")
     if section == "observations": payload.update(value=getattr(obj, "value", ""), unit=getattr(obj, "unit", ""))
@@ -47,11 +52,12 @@ def generate_ccda(*, patient, job):
 def parse_ccda(data, *, patient, job):
     started = time.monotonic()
     if not isinstance(data, (bytes, bytearray)) or len(data) > MAX_BYTES: raise ValueError("oversize")
-    if re.search(br"<!DOCTYPE|<!ENTITY|SYSTEM|PUBLIC", data, re.I): raise ValueError("unsafe_xml")
+    # Match XML declarations/keywords, not ordinary attributes such as publicId.
+    if re.search(br"<!DOCTYPE\b|<!ENTITY\b|\bSYSTEM\b|\bPUBLIC\b", data, re.I): raise ValueError("unsafe_xml")
     try: root = SafeET.fromstring(data)
     except Exception: raise ValueError("invalid_xml")
     if root.tag != "ClinicalDocument" or root.get("templateId") != TEMPLATE_ID or root.get("version") != TEMPLATE_VERSION: raise ValueError("unsupported_template")
-    supplied = root.get("checksum", ""); root.set("checksum", ""); canonical = ET.tostring(root, encoding="utf-8", xml_declaration=True)
+    supplied = root.get("checksum", ""); root.attrib.pop("checksum", None); canonical = ET.tostring(root, encoding="utf-8", xml_declaration=True)
     if not supplied or supplied != hashlib.sha256(canonical).hexdigest(): raise ValueError("checksum")
     sections = root.findall("section")
     if len(sections) != len(SECTIONS) or {s.get("code") for s in sections} != set(SECTIONS): raise ValueError("sections")
