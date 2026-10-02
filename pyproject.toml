@@ -1,0 +1,7 @@
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "backend.config.settings"
+python_files = ["test_*.py"]
+addopts = "--strict-markers"
+
+[tool.ruff]
+line-length = 100

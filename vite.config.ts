@@ -1,0 +1,10 @@
+// type-10022026-Maurice: Developer-supplied local HTTPS paths, never committed certificates.
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import fs from "node:fs";
+
+export default defineConfig(() => {
+  const cert = process.env.HTTPS_CERT;
+  const key = process.env.HTTPS_KEY;
+  return { plugins: [react()], server: { https: cert && key ? { cert: fs.readFileSync(cert), key: fs.readFileSync(key) } : undefined } };
+});
