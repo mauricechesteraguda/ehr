@@ -56,6 +56,49 @@ docker compose cp caddy:/data/caddy/pki/authorities/local/root.crt ./local-caddy
 
 Remove the copied certificate when finished. **DESTRUCTIVE:** for a safe reset preview run `./scripts/compose-reset.sh`; only `./scripts/compose-reset.sh --confirm` (equivalent to the destructive `docker compose down -v`) removes the disposable named volumes. PostgreSQL and Caddy volumes persist across ordinary restarts. Redis is intentionally disposable.
 
+### Ticket17 integrated acceptance
+
+Run the project-owned acceptance command from the repository root. It checks ports
+before startup, creates a uniquely named Compose project, generates an external
+temporary env file, enables BuildKit, waits fail-fast for all seven health checks,
+exports Caddy's local root CA, validates HTTPS with `curl --cacert`, repeats
+migrations/seed, and removes only its own project and volumes in a `finally` block:
+
+```sh
+python3 scripts/compose_acceptance.py
+```
+
+Use `python3 scripts/compose_acceptance.py --static-only` for the deterministic
+Compose/service/port contract without starting containers. The live command needs
+Docker, free host ports 80 and 443, and access to the pinned image/package
+registries; a registry outage is reported as **blocked**, never as a fabricated
+pass. Do not use `docker compose down -v`, `docker system prune`, or volume-wide
+cleanup for this demo. The explicit reset preview/confirmation remains:
+
+```sh
+./scripts/compose-reset.sh                 # dry run
+./scripts/compose-reset.sh --confirm       # disposable local stack only
+```
+
+The integrated boundary is `Browser → Caddy (80/443) → web/api → PostgreSQL 17 /
+Redis → worker/beat`; only Caddy binds host ports. The API owns migration, seed,
+authorization, audit-chain, artifact hash/expiry, and redacted structured-log
+checks. The browser role flow is patient/clinician/admin/developer; P1 and P2
+representatives remain local synthetic fixtures and do not send Direct messages or
+use production CDS infrastructure.
+
+For CA trust, export the certificate first:
+
+```sh
+docker compose cp caddy:/data/caddy/pki/authorities/local/root.crt ./local-caddy-root.crt
+```
+
+- macOS: `sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain ./local-caddy-root.crt`
+- Linux (Debian/Ubuntu): `sudo cp ./local-caddy-root.crt /usr/local/share/ca-certificates/ehr-caddy.crt && sudo update-ca-certificates`
+- Windows PowerShell: `certutil -addstore -user Root .\local-caddy-root.crt`
+
+Remove `local-caddy-root.crt` after the demo; it is never a repository artifact.
+
 ## Architecture
 
 The system flow below shows how each role reaches the committed application boundary and where operational logs and the append-only audit trail go.
@@ -71,24 +114,32 @@ flowchart LR
 
     subgraph Frontend[Browser boundary]
         Browser[Browser]
-        Vite[React / Vite frontend<br/>localhost:5173<br/>HTTP or configured HTTPS]
+        Vite[React frontend<br/>internal :8080]
+        Caddy[Caddy local TLS gateway<br/>host :80/:443]
     end
 
     subgraph Backend[Backend boundary]
-        API[Django / DRF REST API<br/>127.0.0.1:8000<br/>session authentication]
+        API[Django / DRF REST API<br/>internal :8000<br/>session authentication]
         Logs[Structured operational logs<br/>console stream, redacted]
         Audit[Append-only hash-chained audit trail]
     end
 
-    DB[(PostgreSQL<br/>127.0.0.1:5432)]
+    DB[(PostgreSQL 17<br/>internal :5432)]
+    Queue[(Redis<br/>internal :6379)]
+    Worker[Celery worker + Beat]
 
     Clinician --> Browser
     Patient --> Browser
      Admin --> Browser
      Developer --> Browser
-    Browser --> Vite
-    Vite -->|REST requests / session cookie| API
+    Browser -->|HTTPS| Caddy
+    Caddy --> Vite
+    Caddy -->|/api /fhir /oauth| API
+    Vite -->|same-origin REST / session cookie| Caddy
     API -->|Django ORM| DB
+    API --> Queue
+    Queue --> Worker
+    Worker --> DB
     API --> Logs
     API --> Audit
     Audit -->|hash-linked events| DB

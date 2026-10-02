@@ -12,6 +12,13 @@
 
 Author Name: Aguda, Maurice
 
+## Ticket 17
+
+- Added canonical `TC-EXP-0140..0160` integrated-Compose acceptance cases, each with a discoverable backend test reference.
+- Added `scripts/compose_acceptance.py`: isolated project naming, preflight port checks, external generated secrets, BuildKit builds, bounded health waits, local-CA HTTPS validation, idempotent migration/seed, worker restart/persistence probes, structured evidence, and scoped cleanup.
+- Expanded the README architecture/demo flow with the one-command acceptance invocation and exact macOS/Linux/Windows CA trust commands.
+- Static verification is deterministic. Live Compose results must be recorded as pass or registry/Docker blocker; no live result is claimed by documentation alone.
+
 ## Ticket 15
 
 - Added bounded FHIR Bulk Data-style asynchronous export on the unified Job/Outbox system, with allowlisted `_type`, optional `_since`, purpose/approval, idempotency, opaque status location, cancellation, encrypted expiring NDJSON artifacts, checksums, caps, and authorization rechecks.
