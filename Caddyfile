@@ -5,6 +5,10 @@ https://localhost, https://127.0.0.1 {
     }
     encode gzip
     @api path /api /api/* /fhir /fhir/* /oauth /oauth/* /.well-known /.well-known/*
-    handle @api { reverse_proxy api:8000 }
-    handle { reverse_proxy web:8080 }
+    handle @api {
+        reverse_proxy api:8000
+    }
+    handle {
+        reverse_proxy web:8080
+    }
 }

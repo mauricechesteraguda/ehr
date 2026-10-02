@@ -96,7 +96,9 @@ def assert_only_gateway(compose: Path, env: dict[str, str], project: str) -> Non
 def live_checks(compose: Path, env: dict[str, str], project: str, temp: Path) -> dict[str, int]:
     run(["docker", "compose", "-p", project, "-f", str(compose), "exec", "-T", "api", "python", "/app/backend/manage.py", "migrate", "--check"], env=env, timeout=45)
     for _ in range(2):
-        run(["docker", "compose", "-p", project, "-f", str(compose), "exec", "-T", "api", "python", "/app/backend/manage.py", "seed_demo", "--password", env["DEMO_PASSWORD"]], env=env, timeout=60)
+        # The value is already supplied by the container env file; never put it in
+        # the host command line or structured acceptance output.
+        run(["docker", "compose", "-p", project, "-f", str(compose), "exec", "-T", "api", "sh", "-c", "python /app/backend/manage.py seed_demo --password \"$DEMO_PASSWORD\""], env=env, timeout=60)
     ca = temp / "caddy-root.crt"
     run(["docker", "compose", "-p", project, "-f", str(compose), "cp", "caddy:/data/caddy/pki/authorities/local/root.crt", str(ca)], env=env, timeout=30)
     if not ca.exists() or ca.stat().st_size < 100:
