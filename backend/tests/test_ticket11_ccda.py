@@ -83,6 +83,87 @@ def test_TC_EXP_0111_roundtrip_all_sections(tmp_path, settings):
     assert CcdaDocument.objects.filter(patient=patient).count() == 2
 
 
+def test_TC_EXP_0106_dtd_is_rejected_before_import():
+    """TC-EXP-0106: C-CDA DTD/XXE declarations are rejected before persistence."""
+    from backend.users.ccda import parse_ccda
+    from backend.users.models import CcdaDocument, ReconciliationCandidate
+
+    patient, owner = _patient_with_six_sections()
+    job = _job(patient, owner, "dtd-10-06")
+    data = b'<?xml version="1.0"?><!DOCTYPE ClinicalDocument SYSTEM "file:///etc/passwd"><ClinicalDocument />'
+    with pytest.raises(ValueError, match="unsafe_xml"):
+        parse_ccda(data, patient=patient, job=job)
+    assert not CcdaDocument.objects.filter(job=job).exists()
+    assert not ReconciliationCandidate.objects.filter(document__job=job).exists()
+
+
+def test_TC_EXP_0107_entity_expansion_is_rejected_before_import():
+    """TC-EXP-0107: entity expansion payloads fail closed without candidates."""
+    from backend.users.ccda import parse_ccda
+    from backend.users.models import CcdaDocument, ReconciliationCandidate
+
+    patient, owner = _patient_with_six_sections()
+    job = _job(patient, owner, "entity-10-07")
+    data = b'<?xml version="1.0"?><!DOCTYPE lolz [<!ENTITY lol "lol"><!ENTITY lol1 "&lol;&lol;&lol;&lol;">]><ClinicalDocument />'
+    with pytest.raises(ValueError, match="unsafe_xml"):
+        parse_ccda(data, patient=patient, job=job)
+    assert not CcdaDocument.objects.filter(job=job).exists()
+    assert not ReconciliationCandidate.objects.filter(document__job=job).exists()
+
+
+def test_TC_EXP_0108_checksum_tamper_is_rejected_before_import(tmp_path):
+    """TC-EXP-0108: tampering with a signed C-CDA body fails checksum validation."""
+    from backend.users.ccda import parse_ccda
+    from backend.users.models import CcdaDocument, ReconciliationCandidate
+
+    patient, owner = _patient_with_six_sections()
+    body = _export_body(patient, owner, tmp_path)
+    tampered = body.replace(b"Synthetic allergy", b"Tampered allergy", 1)
+    job = _job(patient, owner, "checksum-10-08")
+    with pytest.raises(ValueError, match="checksum"):
+        parse_ccda(tampered, patient=patient, job=job)
+    assert not CcdaDocument.objects.filter(job=job).exists()
+    assert not ReconciliationCandidate.objects.filter(document__job=job).exists()
+
+
+def test_TC_EXP_0109_invalid_import_rolls_back_document_and_candidates(tmp_path):
+    """TC-EXP-0109: a late invalid entry atomically rolls back all import evidence."""
+    from backend.users.ccda import parse_ccda
+    from backend.users.models import CcdaDocument, ReconciliationCandidate
+    from xml.etree import ElementTree as ET
+
+    patient, owner = _patient_with_six_sections()
+    body = _export_body(patient, owner, tmp_path)
+    root = ET.fromstring(body)
+    root.find("section").append(ET.Element("entry", {"resource": "Unknown"}))
+    root.attrib.pop("checksum", None)
+    canonical = ET.tostring(root, encoding="utf-8", xml_declaration=True)
+    root.set("checksum", hashlib.sha256(canonical).hexdigest())
+    invalid = ET.tostring(root, encoding="utf-8", xml_declaration=True)
+    job = _job(patient, owner, "rollback-10-09")
+    with pytest.raises(ValueError, match="unknown_resource"):
+        parse_ccda(invalid, patient=patient, job=job)
+    assert not CcdaDocument.objects.filter(job=job).exists()
+    assert not ReconciliationCandidate.objects.filter(document__job=job).exists()
+
+
+def test_TC_EXP_0110_reconciliation_decision_is_idempotent_after_commit():
+    """TC-EXP-0110: repeated reconciliation of one candidate is a safe stale/idempotent outcome."""
+    from backend.users.ccda import decide_candidate
+    from backend.users.models import CcdaDocument, Condition, Job, ReconciliationCandidate
+
+    patient, owner = _patient_with_six_sections()
+    job = Job.objects.create(owner=owner, patient=patient, kind="ccda.import", idempotency_key="idempotent-10-10", input_checksum="i" * 64)
+    document = CcdaDocument.objects.create(job=job, patient=patient, direction="import", template_id="urn:ehr:ccda:transition", template_version="1.0", provenance={"actor": str(owner.pk)}, sha256="i" * 64, artifact_path="", size_bytes=1)
+    candidate = ReconciliationCandidate.objects.create(document=document, patient=patient, section="problems", resource_type="Condition", payload={"code": "IDEMPOTENT", "label": "Idempotent", "date": "2026-02-03"}, source_fingerprint="c" * 64)
+    before = Condition.objects.count()
+    decide_candidate(candidate_id=candidate.pk, clinician=owner, decision="accepted")
+    assert Condition.objects.count() == before + 1
+    with pytest.raises(ValueError, match="stale"):
+        decide_candidate(candidate_id=candidate.pk, clinician=owner, decision="accepted")
+    assert Condition.objects.filter(code="IDEMPOTENT").count() == 1
+
+
 def test_TC_EXP_0112_rejects_hostile_inputs(tmp_path):
     from backend.users.ccda import MAX_BYTES, parse_ccda
     from backend.users.models import CcdaDocument, ReconciliationCandidate
