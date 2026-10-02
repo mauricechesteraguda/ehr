@@ -1,0 +1,135 @@
+Test Case ID,Title,Module / Feature,Test Case Description,Pre-Conditions,Test Steps,Test Data,Expected Result,Actual Result,Status (Pass/Fail),Severity,Priority,Tester Name,Test Date,Remarks / Defects ID,Requirement ID,Test Type,Automated Test Ref.
+TC-EHR-0001,"Create, sign, change, cancel and refill medication order",Clinical medication CPOE,Clinician completes the medication lifecycle for a synthetic patient.,"1. Clinician is authenticated with TOTP.
+2. Synthetic patient and medication catalog exist.","1. Open patient record.
+2. Create a valid order and sign it.
+3. Change dose and save.
+4. Cancel the order.
+5. Create a refill for the eligible order.",drug=amoxicillin; dose=500 mg; route=oral; frequency=BID; synthetic patient,"1. Each valid action succeeds.
+2. Current status and fields are stored on the patient record.
+3. Prior versions remain visible in immutable history.",,Not Run,HIGH,P0,,,,REQ-01,Happy,
+TC-EHR-0002,Required medication fields are enforced,Clinical medication CPOE,Reject an order missing each required clinical field.,"1. Clinician is authenticated.
+2. Patient record is open.","1. Submit an order with one required field omitted.
+2. Repeat for drug, dose, route, frequency and patient.",One missing field per attempt,"1. Order is not signed or persisted.
+2. Field-specific validation identifies the missing value.",,Not Run,HIGH,P0,,,,REQ-01,Validation,
+TC-EHR-0003,Medication lifecycle invalid transition,Clinical medication CPOE,Prevent refill or change after a terminal cancellation.,1. A medication order is cancelled.,"1. Attempt to refill the cancelled order.
+2. Attempt to edit the cancelled order.",cancelled order id,"1. Action is rejected without mutation.
+2. Clear message explains the terminal-state restriction.",,Not Run,HIGH,P0,,,,REQ-01,State/Preconditions,
+TC-EHR-0004,Interaction alert blocks or permits by configured threshold,Interaction checks,Check drug-drug and drug-allergy rules before signing.,"1. Clinician is entering an order.
+2. Active medication/allergy and seeded interaction rule exist.
+3. Admin threshold is configured.","1. Enter a conflicting drug.
+2. Observe alert before signing.
+3. Try sign at blocking severity.
+4. Repeat with a severity below configured threshold.",drug-drug HIGH; drug-allergy MODERATE,"1. Alert names the interaction and severity before signing.
+2. Blocking severity prevents sign.
+3. Permitted severity requires explicit acknowledgement and then signs.",,Not Run,HIGH,P0,,,,REQ-02,Happy,
+TC-EHR-0005,Interaction table and threshold boundary validation,Interaction checks,Verify seeded rules and allowed administrator threshold range.,1. Administrator is authenticated.,"1. Set threshold to minimum allowed value.
+2. Set threshold to maximum allowed value.
+3. Submit below-minimum and above-maximum values.
+4. Check a known seeded pair.",allowed range endpoints; -1; 999; seeded pair,"1. Boundary values save.
+2. Out-of-range values are rejected with no change.
+3. Known rule returns expected severity.",,Not Run,HIGH,P0,,,,REQ-02,Boundaries,
+TC-EHR-0006,Severity floors and critical interaction blocking,Interaction checks,"Verify alert severities use only LOW, MODERATE and HIGH, and critical safety findings always block signing.","1. Clinician is entering orders.
+2. Seeded rules cover LOW, MODERATE, HIGH and critical cases.","1. Trigger each severity.
+2. Attempt to sign without acknowledgement and with acknowledgement.
+3. Attempt to change a critical rule through threshold configuration.",severity=LOW|MODERATE|HIGH; critical rule,"1. Only LOW, MODERATE and HIGH are displayed/stored.
+2. Critical findings always block signing regardless of configured threshold.
+3. Critical severity cannot be lowered or bypassed.",,Not Run,HIGH,P0,,,,REQ-02,Validation,
+TC-EHR-0007,Demographics coded fields and date rules,Patient demographics,Create and edit all P0 demographic fields with coded values.,"1. Clinician has patient edit permission.
+2. Standard public terminology subsets are loaded.","1. Enter race, ethnicity, preferred language, sex, sexual orientation and gender identity from code lists.
+2. Enter date of birth and optional date of death.
+3. Save and reopen.",synthetic coded values; DOB=1980-01-01; death date=2020-01-01,"1. All values persist and display using codes/labels, not disallowed free text.
+2. Dates are stored accurately.",,Not Run,HIGH,P0,,,,REQ-03,Happy,backend/tests/test_ticket02_red.py::test_TC_EHR_0007_synthetic_demographics_are_coded_and_displayed
+TC-EHR-0008,Demographics invalid code and date validation,Patient demographics,Reject unknown terminology codes and impossible dates.,1. Patient edit form is open.,"1. Submit an unknown code.
+2. Submit death date before birth date.
+3. Submit malformed date.",code=NOT-A-CODE; DOB=2020-01-01; death=2019-12-31; date=tomorrowish,"1. No invalid value persists.
+2. Inline errors identify code/date problems.",,Not Run,HIGH,P0,,,,REQ-03,Invalid,backend/tests/test_ticket02_red.py::test_TC_EHR_0008_invalid_demographic_codes_and_dates_are_rejected
+TC-EHR-0009,Single-patient JSON export with dictionary,EHI export,Authorized user exports one synthetic patient in JSON.,"1. Authorized clinician or patient is authenticated with TOTP.
+2. Patient has demographics, medications, allergies and problems.","1. Start export for exactly one patient.
+2. Download JSON and data dictionary.
+3. Parse JSON and inspect metadata.",patient=P001; format=JSON,"1. Export contains only selected patient data.
+2. JSON is machine-readable and includes the data dictionary.
+3. Export action is audited.",,Not Run,HIGH,P0,,,,REQ-04,Happy,
+TC-EHR-0010,Export authorization and fifteen-minute expiry,EHI export,Verify exports are restricted and links expire after 15 minutes.,"1. A valid export exists.
+2. A user without patient authorization is available.","1. Request another patient export without authorization.
+2. Access a valid export before 15 minutes.
+3. Access the same link at 15 minutes plus one second.",P001 link; unauthorized P002; t=15:01,"1. Unauthorized request is denied.
+2. Valid link works within 15 minutes.
+3. Expired link is unusable and returns an informative error.",,Not Run,HIGH,P0,,,,REQ-04,Security,
+TC-EHR-0011,Human-readable and machine-readable patient download,View/download,Patient views and downloads their own record in JSON and PDF.,"1. Patient is authenticated with TOTP.
+2. Own record has synthetic data.","1. Open record.
+2. Download JSON.
+3. Download PDF.
+4. Open both files.","patient=P001; formats=JSON,PDF","1. Record is viewable.
+2. Both downloads are readable and contain only the patient record.
+3. Download actions are audited.",,Not Run,HIGH,P0,,,,REQ-05,Happy,
+TC-EHR-0012,PDF export hash is exact SHA256,Export integrity,Verify JSON/PDF export integrity metadata.,1. An authorized export has completed.,"1. Compute SHA256 over each downloaded file bytes.
+2. Compare with the supplied hash.
+3. Alter one byte and verify mismatch.",SHA256(file bytes),"1. Supplied hash exactly matches SHA-256 for each file.
+2. Any byte alteration is detected.",,Not Run,HIGH,P0,,,,REQ-05,Integrity/Concurrency/Partial Failure/Rollback,
+TC-EHR-0013,FHIR six-resource read and search success,FHIR R4 API,Read and search the six P0 FHIR resources.,"1. FHIR client has valid access token and consent.
+2. Seeded synthetic data includes all six resources.","1. GET each resource by id.
+2. Search each resource with supported parameters.
+3. Validate response content type and FHIR metadata.",Patient; MedicationRequest; AllergyIntolerance; Condition; Observation; Device,"1. Each read/search returns valid FHIR R4 data.
+2. Device is readable and explicitly read-only.
+3. No unsupported write is implied.",,Not Run,HIGH,P0,,,,REQ-06,API Success/Failure/Timeout/Bad Payload,
+TC-EHR-0014,"FHIR malformed request, failure and timeout handling",FHIR R4 API,"Verify deterministic API responses for bad payload, unavailable dependency and timeout.",1. FHIR endpoint is reachable.,"1. Send malformed JSON where applicable.
+2. Request an unknown resource/id.
+3. Simulate upstream/database timeout.
+4. Inspect status, FHIR error shape and logs.",malformed body; id=missing; dependency timeout,"1. Malformed input returns 4xx with safe OperationOutcome.
+2. Missing resource returns expected not-found response.
+3. Timeout returns controlled 5xx/timeout response without partial data.
+4. No secrets or EHI appear in client error.",,Not Run,HIGH,P0,,,,REQ-06,API Success/Failure/Timeout/Bad Payload,
+TC-EHR-0015,SMART app registration and explicit-consent standalone launch,SMART OAuth,Register a developer app and complete standalone OAuth with explicit consent.,"1. Public demo terminology/subsets and developer portal are available.
+2. Developer has a valid synthetic account.","1. Register app with valid redirect URI and scopes.
+2. Start standalone authorization.
+3. Review consent screen.
+4. Approve and exchange code for tokens.
+5. Call permitted FHIR read.",redirect=https://localhost/callback; scope=Patient/*.read,"1. Registration is self-service/free.
+2. Consent explicitly names app, patient context and scopes.
+3. Tokens are issued only after approval.
+4. Permitted read succeeds.",,Not Run,HIGH,P0,,,,REQ-06,Happy,
+TC-EHR-0016,"SMART EHR launch, refresh and consent denial",SMART OAuth,Cover EHR launch and denied/expired OAuth paths.,"1. Registered app exists.
+2. Synthetic clinician session exists for EHR launch.","1. Start EHR launch from clinician context.
+2. Deny consent.
+3. Repeat approval, let access token expire, use refresh token.
+4. Revoke/expire refresh token and retry.",launch=EHR; expired access token; revoked refresh token,"1. EHR context is bounded to authorized patient.
+2. Denial yields no token and no data.
+3. Valid refresh obtains a new access token.
+4. Invalid refresh is rejected and audited.",,Not Run,HIGH,P0,,,,REQ-06,Security,
+TC-EHR-0017,Role access matrix and patient self-only restriction,Authentication/access control,"Verify clinician, patient and administrator permissions.",,,,Clinician can access demo patients; patient only own record; admin manages approved settings; denied actions are safely handled.,,Not Run,HIGH,P0,,,,REQ-07,Roles/Permissions,backend/tests/test_ticket02_red.py::test_TC_EHR_0017_clinician_search_and_patient_self_only_detail
+TC-EHR-0018,"Unauthenticated, injection and session-expiry denial",Authentication/access control,Ensure access is denied before identity verification and after session expiry.,,,,Unauthenticated calls return 401; inputs are treated as data; expired session requires re-authentication.,,Not Run,HIGH,P0,,,,REQ-07,Security,backend/tests/test_ticket01_red.py::test_TC_EHR_0018_unauthenticated_and_session_expiry_denial
+TC-EHR-0019,Mandatory TOTP enrollment and verification,MFA,Require TOTP for every role and reject invalid/replayed codes.,,,,Password-only login cannot establish a session; valid TOTP establishes session; invalid codes fail safely.,,Not Run,HIGH,P0,,,,REQ-08,Security,backend/tests/test_ticket01_red.py::test_TC_EHR_0019_mandatory_totp_enrollment_and_verification
+TC-EHR-0020,Salted one-way credential storage,Credential protection,Verify credentials are never stored plaintext and salts/work factor are used.,,,,Stored values are salted one-way hashes with modern work factor; equal passwords differ.,,Not Run,HIGH,P0,,,,REQ-09,Security,backend/tests/test_ticket01_red.py::test_TC_EHR_0020_salted_one_way_credential_storage
+TC-EHR-0021,Configurable inactivity timeout and re-authentication,Session management,End idle sessions at configured timeout.,,,,Pre-timeout request works; post-timeout request is denied and session invalidated; re-authentication restores access.,,Not Run,HIGH,P0,,,,REQ-10,Boundaries,backend/tests/test_ticket01_red.py::test_TC_EHR_0021_configurable_inactivity_timeout_and_reauthentication
+TC-EHR-0022,Append-only audit hash chain and verification,Audit trail,Verify every auditable event is chained and tampering is detected.,,,,"Each event contains actor, timestamp, patient, resource, action, previous hash and hash; tampering fails verification.",,Not Run,HIGH,P0,,,,REQ-11,Integrity/Concurrency/Partial Failure/Rollback,backend/tests/test_ticket03_red.py::test_TC_EHR_0022_append_only_chain_and_tamper_detection
+TC-EHR-0023,Audit report filters sorting and structured-log separation,Audit reporting,Admin reviews audit events using all report filters and confirms app logs are separate.,,,,Filters and sorting are deterministic; audit records are distinct from structured application logs.,,Not Run,HIGH,P0,,,,REQ-12,Roles/Permissions,backend/tests/test_ticket03_red.py::test_TC_EHR_0023_admin_paginated_filtered_sorted_report_and_separation
+TC-EHR-0024,Browser EHI storage prohibition,Client privacy,Verify no EHI is persisted in browser storage by default.,,,,No EHI is stored in browser storage by default; sign-out removes transient session material.,,Not Run,HIGH,P0,,,,REQ-13,Security,src/auth.test.ts::does-not-persist-session-data
+TC-EHR-0025,Exact SHA256 on API transmission,API integrity,Verify each FHIR transmission carries a verifiable exact SHA-256 or stronger hash.,,,,Digest matches exact response bytes and detects alteration.,,Not Run,HIGH,P0,,,,REQ-14,Integrity/Concurrency/Partial Failure/Rollback,
+TC-EHR-0026,TLS 1.2 minimum and local certificate behavior,Trusted connection,Ensure local demo traffic uses TLS 1.2 or higher.,,,,TLS 1.2+ succeeds; older protocols fail; protected traffic is not plaintext.,,Not Run,HIGH,P0,,,,REQ-15,Security,backend/tests/test_ticket01_red.py::test_TC_EHR_0026_tls_local_certificate_configuration
+TC-EHR-0027,Django DRF PostgreSQL React TypeScript integration,Platform foundation,Verify the approved stack interoperates across a representative read and write flow.,,,,"Client, API and database exchange data through typed-safe responses with PostgreSQL persistence.",,Not Run,MODERATE,P0,,,,REQ-16,Regression,backend/tests/test_ticket01_red.py::test_TC_EHR_0027_django_drf_postgres_react_typescript_foundation
+TC-EHR-0028,Synthetic-only data and public demo terminology subsets,Privacy and terminology,Prevent real EHI and verify approved public terminology subsets are used.,,,,Fixtures and outputs are synthetic only; real-data import is rejected or isolated.,,Not Run,HIGH,P0,,,,REQ-17,Security,backend/tests/test_ticket02_red.py::test_TC_EHR_0028_patient_payload_declares_synthetic_only
+TC-EHR-0029,Performance under 500ms for typical page and FHIR read,Performance,Measure typical demo page and FHIR read latency.,,,,Typical page and FHIR read responses are under 500 ms.,,Not Run,MODERATE,P0,,,,REQ-18,Boundaries,
+TC-EHR-0030,"Empty, loading and no-results states are safe",Clinical and API UI,"Verify empty patient search, loading state and no FHIR search results.",,,,Empty input is safe; loading is visible; no-results is clear and reveals no data.,,Not Run,LOW,P0,,,,REQ-07,Empty/Loading/No-results,backend/tests/test_ticket02_red.py::test_TC_EHR_0030_patient_search_has_safe_empty_loading_contract
+TC-EHR-0031,Concurrent medication edits preserve immutable history,Clinical integrity,Ensure concurrent edits do not silently overwrite clinical history.,,,,One update accepted by policy; stale update conflicts or safely merges; prior version is retained.,,Not Run,HIGH,P0,,,,REQ-01,Integrity/Concurrency/Partial Failure/Rollback,
+TC-EHR-0032,Partial export failure rolls back incomplete artifact,EHI export,Ensure a failed export leaves no misleading partial download or audit success.,,,,No incomplete artifact is successful; state cleans up consistently; retry can succeed.,,Not Run,HIGH,P0,,,,REQ-04,Integrity/Concurrency/Partial Failure/Rollback,
+TC-EHR-0033,Regression: core flow remains audited after correction,Cross-cutting regression,Re-run the end-to-end clinician and patient flows after updates.,,,,Core flow succeeds; correction preserves history; patient scope and audit remain valid.,,Not Run,HIGH,P0,,,,REQ-01,Regression,backend/tests/test_ticket03_red.py::test_TC_EHR_0033_read_hook_contains_patient_and_correlation
+TC-EHR-0034,Alternate medication search by coded identifier,Clinical medication CPOE,Use an alternate supported lookup path before ordering.,,,,Lookup returns same medication identity; selection does not alter unrelated data.,,Not Run,MODERATE,P0,,,,REQ-01,Alternate,
+TC-EHR-0035,API bad payload does not partially persist medication,Medication API,Reject malformed DRF medication payload atomically.,,,,API returns validation 4xx; no medication or partial version persists.,,Not Run,HIGH,P0,,,,REQ-01,API Success/Failure/Timeout/Bad Payload,
+TC-EHR-0036,Admin threshold permission denied to non-admin,Interaction checks,Ensure only administrators can alter interaction severity thresholds.,,,,Non-admin updates are denied; admin can update within allowed range.,,Not Run,HIGH,P0,,,,REQ-02,Roles/Permissions,
+TC-EHR-0037,FHIR Device is seeded read-only,FHIR Device,Verify seeded Device is available but cannot be changed through P0 API.,,,,Read/search return seeded Device; writes are rejected.,,Not Run,HIGH,P0,,,,REQ-06,Edit/Delete/Correction,backend/tests/test_ticket02_red.py::test_TC_EHR_0037_device_is_read_only
+TC-EHR-0038,Security error messages do not disclose account or patient existence,Errors and security,"Check uniform safe messages for unauthorized login, patient lookup and OAuth denial.",,,,Messages do not reveal whether an account/patient exists or expose EHI/secrets.,,Not Run,HIGH,P0,,,,REQ-07,Errors/Messages,backend/tests/test_ticket01_red.py::test_TC_EHR_0038_safe_security_error_messages
+TC-EHR-0039,Database/API outage returns controlled rollback,Reliability,Verify a medication save and audit write do not diverge during database/API failure.,,,,Operation reports failure; record and audit remain consistent; retry is safe.,,Not Run,HIGH,P0,,,,REQ-11,Integrity/Concurrency/Partial Failure/Rollback,backend/tests/test_ticket03_red.py::test_TC_EHR_0039_patient_update_and_audit_are_atomic
+TC-EHR-0040,Structured auth events recursively redact sensitive fields,Authentication observability,Emit allowlisted operational events with nested sensitive values supplied by an auth failure.,,,,Events retain approved outcome metadata while recursively denying or redacting passwords OTP secrets tokens cookies PII clinical payloads and connection strings.,,Not Run,HIGH,P0,,,,REQ-07,Security/Logging,backend/tests/test_ticket01_red.py::test_TC_EHR_0040_structured_events_redact_nested_sensitive_values
+TC-EHR-0041,Correlation identifier is sanitized or generated at backend boundary,Authentication observability,Send valid and malformed correlation headers through an auth request.,,,,A safe correlation identifier is present in every backend event and response header without accepting attacker-controlled content.,,Not Run,HIGH,P0,,,,REQ-07,API Success/Failure/Bad Payload,backend/tests/test_ticket01_red.py::test_TC_EHR_0041_correlation_is_sanitized_and_returned
+TC-EHR-0042,TOTP enrollment emits entry success and failure events,TOTP enrollment,Perform enrollment and enrollment verification with valid and invalid inputs.,,,,Each enrollment operation emits explicit entry and success or failure events with correlation context and no secret or OTP values.,,Not Run,HIGH,P0,,,,REQ-07,Events/Success/Failure,backend/tests/test_ticket01_red.py::test_TC_EHR_0042_totp_enrollment_has_explicit_outcomes
+TC-EHR-0043,Authentication exceptions preserve safe exception context,Authentication observability,Force an external authentication failure and inspect the emitted operational event.,,,,Failure event contains safe exception classification and correlation context while omitting request bodies credentials and traceback payloads.,,Not Run,HIGH,P0,,,,REQ-07,Exception/Failure,backend/tests/test_ticket01_red.py::test_TC_EHR_0043_exception_context_is_classified_without_message
+TC-EHR-0044,Frontend auth logger records classified outcomes,Frontend authentication,Invoke the browser authentication request against successful and failed HTTP responses.,,,,Injected logger receives entry and sanitized exit or failure records including HTTP classification duration and correlation identifier without bodies or secrets.,,Not Run,HIGH,P0,,,,REQ-07,Frontend/HTTP Success/Failure,src/auth.test.ts::TC-EHR-0044 frontend auth observability
+TC-EHR-0045,External authentication call has entry exit and failure observability,Authentication observability,Exercise the Django external authentication boundary for success and failure.,,,,Backend records call entry and exit or failure without logging credentials response bodies or tokens.,,Not Run,HIGH,P0,,,,REQ-07,Integration/Success/Failure,backend/tests/test_ticket01_red.py::test_TC_EHR_0045_external_auth_events_have_lifecycle
+TC-EHR-0046,Correlation context is isolated between sequential requests,Authentication observability,Dispatch sequential requests including an exception and inspect correlation context after each request.,,,,Each request receives only its own correlation identifier; context is reset after normal and exceptional dispatch.,,Not Run,HIGH,P0,,,,REQ-07,Isolation/Exception,backend/tests/test_ticket01_red.py::test_TC_EHR_0046_correlation_context_is_reset_between_requests
+TC-EHR-0047,Frontend auth HTTP status is logged with its class,Frontend authentication,Invoke browser authentication against a failed HTTP response and inspect the injected logger record.,,,,Response-backed auth records contain the exact numeric HTTP status and sanitized 3xx/4xx/5xx class without response bodies.,,Not Run,HIGH,P0,,,,REQ-07,Frontend/HTTP Failure,src/auth.test.ts::TC-EHR-0047 frontend auth logs exact response status
+TC-EHR-0048,Tracer exception metadata is bounded and sanitized,Authentication observability,Raise an exception through a traced function with a cause chain and inspect the trace event.,,,,"Trace exception records contain safe class/code, bounded cause metadata, and controlled stack locations without messages or arguments; the exception is re-raised.",,Not Run,HIGH,P0,,,,REQ-07,Tracing/Exception,backend/tests/test_ticket01_red.py::test_TC_EHR_0048_tracer_exception_metadata_is_sanitized
+TC-EHR-0049,Medication draft required fields and prescriber,Clinical medication ordering,Clinician submits a medication draft with all required fields and rejects incomplete payloads.,Clinician and synthetic patient exist.,Submit valid and one-field-missing drafts.,coded medication; positive dose and quantity; route; frequency; start date; indication; clinician prescriber,"Valid draft persists; invalid payload is rejected without medication or audit mutation.",,Not Run,HIGH,P0,,,,REQ-01,Validation,
+TC-EHR-0050,Medication immutable version history,Clinical medication ordering,Changing an order appends a version and supersedes the prior version.,A medication draft exists.,Change dose then retrieve history.,version 1 and version 2,"Prior version remains unchanged and both versions are retrievable.",,Not Run,HIGH,P0,,,,REQ-01,Integrity/Concurrency/Partial Failure/Rollback,
+TC-EHR-0051,Medication cancellation and refill transitions,Clinical medication ordering,Cancellation is terminal and refill creates a new draft only when eligible.,A medication order with refills exists.,Cancel or refill then attempt an invalid terminal transition.,refills integer >=0,"Cancel is terminal; cancelled orders cannot change or refill; refill never signs or activates unsafely.",,Not Run,HIGH,P0,,,,REQ-01,State/Preconditions,
+TC-EHR-0052,Medication authorization and atomic audit,Clinical medication ordering,Only clinicians mutate and every successful mutation has one atomic audit event.,Clinician patient and admin sessions exist.,Attempt mutations by each role and simulate audit failure.,role matrix,"Unauthorized mutations are rejected; failed mutation and audit leave no partial state.",,Not Run,HIGH,P0,,,,REQ-11,Roles/Permissions,
+TC-EHR-0053,Medication clinician form safe states,Clinical medication ordering,Clinician form exposes validation loading error empty and explicit pre-sign states.,Clinician opens a patient record.,Load submit invalid/valid data and inspect history.,synthetic patient,"States are clear; signing and interaction rules are deferred to Ticket05.",,Not Run,MODERATE,P0,,,,REQ-01,Frontend/Empty/Loading/No-results,

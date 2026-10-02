@@ -1,0 +1,17 @@
+.env
+.env.*
+!.env.example
+*.crt
+*.key
+.local-certs/
+.venv/
+node_modules/
+dist/
+__pycache__/
+.pytest_cache/
+.coverage
+htmlcov/
+*.tsbuildinfo
+.serena/
+.trailmap/
+.DS_Store
