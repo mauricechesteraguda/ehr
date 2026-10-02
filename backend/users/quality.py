@@ -66,10 +66,10 @@ def _rows(resource):
             "MedicationOrderVersion": MedicationOrderVersion.objects.all(), "Observation": Observation.objects.all()}[resource]
 
 
-def _match(obj, predicate):
+def _match(obj, predicate, period_end=None):
     field, op, expected = predicate["field"], predicate["op"], predicate.get("value")
-    if field == "allergy_exists": actual = AllergyIntolerance.objects.filter(patient_id=obj.pk).exists()
-    elif field == "active_medication_exists": actual = MedicationOrderVersion.objects.filter(order__patient_id=obj.pk, status="active").exists()
+    if field == "allergy_exists": actual = AllergyIntolerance.objects.filter(patient_id=obj.pk).exclude(status="entered-in-error").exists()
+    elif field == "active_medication_exists": actual = MedicationOrderVersion.objects.filter(order__patient_id=obj.pk, status="active", **({"start_date__lte": period_end} if period_end else {})).exists()
     elif field == "recent_bp_exists": actual = Observation.objects.filter(patient_id=obj.pk, code="BP").exists()
     else: actual = getattr(obj, field, None)
     if isinstance(actual, date): actual = actual.isoformat()
@@ -93,30 +93,34 @@ def _population(schema, period_start, period_end):
                 lower = period_end - timedelta(days=schema.get("window_days", 90))
                 actual = Observation.objects.filter(patient_id=item.pk, code="BP", recorded_date__gte=lower, recorded_date__lte=period_end).exists()
                 if actual != bool(p.get("value")): return False
-            elif not _match(item, p): return False
+            elif not _match(item, p, period_end): return False
         return True
     rows = [r for r in rows if selected(r, schema.get("denominator", []))]
     exclusions = schema.get("exclusions", [])
-    rows = [r for r in rows if not exclusions or not selected(r, exclusions)]
+    excluded = [r for r in rows if exclusions and selected(r, exclusions)]
+    rows = [r for r in rows if r not in excluded]
     numerator = [r for r in rows if selected(r, schema.get("numerator", []))]
-    return len(rows), len(numerator)
+    return len(rows), len(numerator), len(excluded)
 
 
 def evaluate_version(version, period_start, period_end, snapshot_checksum):
     validate_schema(version.schema)
-    denominator, numerator = _population(version.schema, period_start, period_end)
+    denominator, numerator, exclusions = _population(version.schema, period_start, period_end)
     return {"initialPopulation": denominator, "denominator": denominator, "numerator": numerator,
-            "exclusions": 0, "measureScore": (numerator / denominator if denominator else None),
+            "exclusions": exclusions, "measureScore": (numerator / denominator if denominator else None),
             "period": {"start": str(period_start), "end": str(period_end)}, "snapshotChecksum": snapshot_checksum}
 
 
 def run_measure(run_id):
-    run = MeasureRun.objects.select_related("version").get(pk=run_id)
-    if run.report_id: return run.report
-    result = evaluate_version(run.version, run.period_start, run.period_end, run.snapshot_checksum)
-    return MeasureReport.objects.create(run=run, measure=run.version.measure, version=run.version,
-                                        status="complete", period_start=run.period_start, period_end=run.period_end,
-                                        snapshot_checksum=run.snapshot_checksum, populations=result)
+    with transaction.atomic():
+        run = MeasureRun.objects.select_for_update().select_related("version").get(pk=run_id)
+        existing = MeasureReport.objects.filter(run=run).first()
+        if existing:
+            return existing
+        result = evaluate_version(run.version, run.period_start, run.period_end, run.snapshot_checksum)
+        return MeasureReport.objects.create(run=run, measure=run.version.measure, version=run.version,
+                                            status="complete", period_start=run.period_start, period_end=run.period_end,
+                                            snapshot_checksum=run.snapshot_checksum, populations=result)
 
 
 def _admin(request):

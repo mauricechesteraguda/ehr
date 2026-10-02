@@ -70,3 +70,4 @@ Author Name: Aguda, Maurice
 - Added three seeded published measures for allergy documentation, active-medication review, and recent blood-pressure observation coverage.
 - Added allowlisted, executable-free measure schemas; immutable versions and reports; deterministic snapshot checksums; durable async job execution; admin catalog/run/report UI.
 - Added FHIR-style `Measure`, `MeasureReport`, and asynchronous `$evaluate` responses with role/scope enforcement.
+- Verification follow-up added executable T14-001..010 coverage for canonical measure IDs, inclusive windows and exclusions, immutable lifecycle/version/report records, reproducibility, async idempotency/retry, role/scope and FHIR content-type boundaries. Added explicit allergy status handling and period-end medication filtering.

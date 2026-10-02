@@ -61,7 +61,7 @@ function CcdaReconciliationPanel({ patientId }: { patientId: string }) {
   return <section aria-label="C-CDA transition and reconciliation"><h3>C-CDA transition</h3><p>Bounded, review-only import/export. Imported data never updates the chart automatically.</p><button onClick={exportCcda}>Queue deterministic export</button><label>Import C-CDA file <input type="file" accept="application/xml,.xml" onChange={e => e.target.files?.[0] && importCcda(e.target.files[0])} /></label><button onClick={() => setStatus("Refresh candidates from the document status endpoint after import.")}>Refresh reconciliation</button>{status && <p role="status">{status}</p>}{candidates.length > 0 && <ul>{candidates.map(c => <li key={c.id}>{c.section} · {c.resource_type} · {c.state} {c.state === "pending" && <><button onClick={() => decide(c.id, "accepted")}>Accept</button><button onClick={() => decide(c.id, "deferred")}>Defer</button></>}</li>)}</ul>}</section>;
 }
 
-function MeasureCatalogPanel() {
+export function MeasureCatalogPanel() {
   const [measures, setMeasures] = useState<any[]>([]); const [reports, setReports] = useState<any[]>([]); const [message, setMessage] = useState("");
   const load = () => Promise.all([fetch("/api/admin/measures/", { credentials: "include" }), fetch("/api/admin/measure-reports/", { credentials: "include" })]).then(async ([m, r]) => { if (!m.ok || !r.ok) throw new Error(); setMeasures((await m.json()).entry ?? []); setReports((await r.json()).entry ?? []); }).catch(() => setMessage("Unable to load quality measure catalog."));
   useEffect(() => { load(); }, []);
@@ -180,4 +180,4 @@ function App() {
   </main>;
 }
 
-if (document.getElementById("root")) createRoot(document.getElementById("root")!).render(<StrictMode><App /></StrictMode>);
+if (typeof document !== "undefined" && document.getElementById("root")) createRoot(document.getElementById("root")!).render(<StrictMode><App /></StrictMode>);
