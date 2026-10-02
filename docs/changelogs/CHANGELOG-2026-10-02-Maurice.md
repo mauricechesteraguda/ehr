@@ -64,3 +64,4 @@ Author Name: Aguda, Maurice
 
 - Added versioned service discovery, bounded hook invocation, immutable cards/invocation evidence, admin rule lifecycle, and atomic audit/outbox records.
 - Added clinician card actions and accessible React UI. All output is explicitly non-clinical and uses redacted evidence links.
+- Fixed TC-EXP-1309's accidental skip by adding a deterministic synthetic allergy/medication P0 fixture; the complete CDS acceptance suite now executes without skips.

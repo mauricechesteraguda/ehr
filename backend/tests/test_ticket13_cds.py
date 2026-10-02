@@ -65,9 +65,30 @@ def test_TC_EXP_1308_published_rule_is_immutable():
 
 def test_TC_EXP_1309_invalid_suggestion_rejected():
     from backend.users.cds import act
-    from backend.users.models import CDSCard
-    actor, patient = _fixture(); card = CDSCard.objects.filter(invocation__patient=patient).first()
-    if card is None: pytest.skip("empty deterministic fixture has no card")
+    from backend.users.cds import invoke
+    from backend.users.models import AllergyIntolerance, CDSCard, InteractionRule, MedicationOrder, MedicationOrderVersion
+    actor, patient = _fixture()
+    AllergyIntolerance.objects.create(patient=patient, code="ALLERGY-CDS", label="Synthetic allergy")
+    InteractionRule.objects.create(
+        kind=InteractionRule.Kind.DRUG_ALLERGY,
+        medication_code="MED-CDS",
+        allergy_code="ALLERGY-CDS",
+        severity=InteractionRule.Severity.HIGH,
+    )
+    order = MedicationOrder.objects.create(patient=patient, prescriber=actor)
+    MedicationOrderVersion.objects.create(
+        order=order, version=1, created_by=actor, medication_code="MED-CDS",
+        medication_name="Synthetic medication", dose=1, dose_unit="mg", route="oral",
+        frequency="daily", start_date=date(2026, 1, 1), quantity=1,
+        indication="deterministic CDS acceptance fixture", status=MedicationOrderVersion.Status.ACTIVE,
+    )
+    invoke(
+        service_id="demo-patient-view",
+        payload={"context": {"patientId": patient.public_id}, "prefetch": {}},
+        actor=actor,
+        request_key="card-1309",
+    )
+    card = CDSCard.objects.filter(invocation__patient=patient).first()
     with pytest.raises(ValueError): act(card_id=card.pk, actor=actor, action="accept", suggestion_id="not-offered")
 
 
