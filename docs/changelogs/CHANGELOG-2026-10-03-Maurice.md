@@ -23,6 +23,7 @@ Author Name: Aguda, Maurice
 - Added integrated Compose acceptance coverage in `backend/tests/test_ticket17_compose.py`: isolated project naming, preflight port checks, external generated secrets, BuildKit builds, bounded health waits, local-CA HTTPS validation, idempotent migration/seed, worker restart/persistence probes, structured evidence, and scoped cleanup.
 - Expanded the README architecture/demo flow with the one-command acceptance invocation and exact macOS/Linux/Windows CA trust commands.
 - Static verification is deterministic. Live Compose results must be recorded as pass or registry/Docker blocker; no live result is claimed by documentation alone.
+- Verified at `d265cf2` with isolated high ports: all seven services reached healthy, API migrations were current, repeated seeding and worker restart succeeded, HTTPS routes stayed within the 500 ms budget (maximum observed 199 ms), and scoped volume cleanup completed. The relocated acceptance runner introduces no live API readiness regression; startup and health behavior remain provided by `backend/api-entrypoint.sh`, `backend/manage.py`, and `backend/users/health.py` without repository helper directories.
 
 ## Ticket 15
 
