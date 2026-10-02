@@ -54,7 +54,7 @@ docker compose cp caddy:/data/caddy/pki/authorities/local/root.crt ./local-caddy
 - Linux (Debian/Ubuntu): `sudo cp ./local-caddy-root.crt /usr/local/share/ca-certificates/ehr-caddy.crt && sudo update-ca-certificates`
 - Windows PowerShell: `certutil -addstore -user Root .\local-caddy-root.crt`
 
-Remove the copied certificate when finished. **DESTRUCTIVE:** for a safe reset preview run `./scripts/compose-reset.sh`; only `./scripts/compose-reset.sh --confirm` (equivalent to the destructive `docker compose down -v`) removes the disposable named volumes. PostgreSQL and Caddy volumes persist across ordinary restarts. Redis is intentionally disposable.
+Remove the copied certificate when finished. **DESTRUCTIVE:** for a safe reset preview, inspect `docker compose config`; only run `docker compose down --volumes --remove-orphans` against this project when you intend to remove its disposable named volumes. PostgreSQL and Caddy volumes persist across ordinary restarts. Redis is intentionally disposable.
 
 ### Ticket17 integrated acceptance
 
@@ -65,19 +65,20 @@ exports Caddy's local root CA, validates HTTPS with `curl --cacert`, repeats
 migrations/seed, and removes only its own project and volumes in a `finally` block:
 
 ```sh
-python3 scripts/compose_acceptance.py
+pytest -q backend/tests/test_ticket17_compose.py
 ```
 
-Use `python3 scripts/compose_acceptance.py --static-only` for the deterministic
-Compose/service/port contract without starting containers. The live command needs
+The default `pytest -q backend/tests/test_ticket17_compose.py` runs the deterministic
+Compose/service/port contract without starting containers. Set `EHR_LIVE_COMPOSE=1`
+for the live command, which needs
 Docker, free host ports 80 and 443, and access to the pinned image/package
 registries; a registry outage is reported as **blocked**, never as a fabricated
 pass. Do not use `docker compose down -v`, `docker system prune`, or volume-wide
 cleanup for this demo. The explicit reset preview/confirmation remains:
 
 ```sh
-./scripts/compose-reset.sh                 # dry run
-./scripts/compose-reset.sh --confirm       # disposable local stack only
+docker compose config                              # dry-run inspection
+docker compose down --volumes --remove-orphans     # disposable local stack only
 ```
 
 The integrated boundary is `Browser → Caddy (80/443) → web/api → PostgreSQL 17 /
@@ -422,7 +423,7 @@ curl -i -c /tmp/ehr-demo.cookies \
 3. As clinician, open `P001`, create an `AMOX` draft, evaluate the synthetic allergy/drug alert, acknowledge a non-critical finding or observe the critical block, and sign only after the UI permits it. Inspect immutable history and audit events.
 4. As patient, sign in to view only `P001`; request JSON and PDF downloads and compare displayed SHA-256 values with `sha256sum`.
 5. As admin, review the paginated audit report, verify the chain, manage users, and set the LOW/MODERATE/HIGH floor.
-6. As developer, open the SMART workspace and follow the authorization/consent steps below; use `scripts/smart_demo.py` for token refresh and bounded FHIR Patient read.
+6. As developer, open the SMART workspace and follow the authorization/consent steps below; use `python3 backend/manage.py smart_demo` for token refresh and bounded FHIR Patient read.
 
 Useful routes include `/api/auth/session/`, `/api/patients/P001/`, `/api/audit/verify/`, `/.well-known/smart-configuration`, `/oauth/authorize/`, `/oauth/token/`, and `/fhir/R4/Patient/P001`.
 
@@ -437,7 +438,7 @@ curl -b /tmp/ehr-demo.cookies -c /tmp/ehr-demo.cookies -H 'Content-Type: applica
 curl -b /tmp/ehr-demo.cookies -H 'Content-Type: application/json' \
   -d '{"client_id":"<client-id>","redirect_uri":"https://localhost/callback","scope":"openid fhirUser patient/Patient.r","code_challenge":"<S256-challenge>","code_challenge_method":"S256","patient":"P001","decision":"approve","state":"demo"}' \
   http://127.0.0.1:8000/oauth/authorize/
-python3 scripts/smart_demo.py --base-url http://127.0.0.1:8000 --client-id '<client-id>' --client-secret '<one-time-secret>' --code '<returned-code>' --verifier '<original-verifier>'
+python3 backend/manage.py smart_demo --base-url http://127.0.0.1:8000 --client-id '<client-id>' --client-secret '<one-time-secret>' --code '<returned-code>' --verifier '<original-verifier>'
 ```
 
 The sample client performs authorization-code exchange, refresh rotation, and a Patient read while keeping token values in memory. It does not bypass the explicit consent screen.

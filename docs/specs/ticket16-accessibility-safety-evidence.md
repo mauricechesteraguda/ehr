@@ -31,4 +31,4 @@ non-clinical.
 | `docs/contribution-testing-release-checklist.md` | Contributor and release gates |
 | `docs/incident-demo-defect-log.md` | Non-production incident/demo defect record |
 | `docs/evidence-manifest-ticket16.json` | Machine-readable evidence index |
-| `scripts/validate_ticket16_evidence.py` | Deterministic manifest/schema/link validator |
+| `backend/tests/test_ticket16.py::validate_ticket16_evidence` | Deterministic manifest/schema/link validator |

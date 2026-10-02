@@ -14,7 +14,7 @@
     "docs/contribution-testing-release-checklist.md",
     "docs/incident-demo-defect-log.md",
     "src/ticket16.test.tsx",
-    "scripts/validate_ticket16_evidence.py"
+    "backend/tests/test_ticket16.py::validate_ticket16_evidence"
   ],
   "required_sections": [
     "Scope", "Acceptance boundaries", "Manual checklist", "Known exceptions",
@@ -29,6 +29,6 @@
     "src/ticket16.test.tsx::test_TC_EXP_0137_focus_and_target_markers_exist",
     "src/ticket16.test.tsx::test_TC_EXP_0138_responsive_and_reduced_motion_markers_exist",
     "backend/tests/test_ticket16.py::test_TC_EXP_0139_ticket16_manifest_validator_is_deterministic",
-    "scripts/validate_ticket16_evidence.py"
+    "backend/tests/test_ticket16.py::validate_ticket16_evidence"
   ]
 }

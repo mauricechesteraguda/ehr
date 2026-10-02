@@ -17,7 +17,7 @@
 
 - Added an idempotent/resettable synthetic `seed_demo` command with clinician, patient, administrator, and developer accounts, TOTP setup output only at local execution time, synthetic patients/clinical rows/devices/medication/interaction rules, and redacted startup/seed/demo lifecycle logging.
 - Integrated the React login shell, role navigation, developer SMART workspace, Vite API proxy, responsive keyboard-visible focus styling, reduced-motion handling, and explicit loading/empty/error/re-authentication states without browser EHI storage.
-- Added the dependency-free `scripts/smart_demo.py` sample client for PKCE code exchange, refresh rotation, and bounded FHIR Patient read; documented local HTTPS and the under-ten-minute role walkthrough.
+- Added the dependency-free the Django `smart_demo` management command sample client for PKCE code exchange, refresh rotation, and bounded FHIR Patient read; documented local HTTPS and the under-ten-minute role walkthrough.
 - Added Ticket10 CSV scenarios TC-EHR-0092–TC-EHR-0096 and discoverable backend seam tests for seed idempotency, SMART refresh/FHIR read, HTTPS/disclaimer, role boundaries, and password-required setup.
 - Final verification: 74 backend tests passed on disposable PostgreSQL; 7 frontend tests passed; TypeScript lint, Vite production build, Python compile check, CSV 18-column validation, secret/path scan, and `git diff --check` passed. Browser E2E was not added because no browser test dependency/toolchain is installed locally.
 

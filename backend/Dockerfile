@@ -21,7 +21,6 @@ RUN --mount=type=cache,target=/root/.cache/pip \
       --timeout="${PIP_INSTALL_TIMEOUT}" --retries="${PIP_INSTALL_RETRIES}" \
       --requirement /app/requirements.txt gunicorn==23.0.0 celery==5.4.0 redis==5.2.1
 COPY backend /app/backend
-COPY scripts /app/scripts
 RUN mkdir -p /run/ehr && chown -R app:app /app /run/ehr
 USER app
 EXPOSE 8000
