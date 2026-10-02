@@ -26,7 +26,7 @@ from .models import Patient, SmartTokenContext, User
 from .tracing import trace_function
 from .rate_limit import limited
 
-SCOPES = frozenset(("openid", "fhirUser", "patient/Patient.r", "patient/Patient.s", "patient/MedicationRequest.r", "patient/AllergyIntolerance.r", "patient/Condition.r", "patient/Observation.r", "patient/Device.r", "patient/Questionnaire.r", "patient/QuestionnaireResponse.r"))
+SCOPES = frozenset(("openid", "fhirUser", "system/*.read", "patient/Patient.r", "patient/Patient.s", "patient/MedicationRequest.r", "patient/AllergyIntolerance.r", "patient/Condition.r", "patient/Observation.r", "patient/Device.r", "patient/Questionnaire.r", "patient/QuestionnaireResponse.r"))
 RESOURCE_SCOPES = {"Patient": "patient/Patient.r", "MedicationRequest": "patient/MedicationRequest.r", "AllergyIntolerance": "patient/AllergyIntolerance.r", "Condition": "patient/Condition.r", "Observation": "patient/Observation.r", "Device": "patient/Device.r", "FamilyMemberHistory": "patient/FamilyMemberHistory.r", "Questionnaire": "patient/Questionnaire.r", "QuestionnaireResponse": "patient/QuestionnaireResponse.r"}
 
 

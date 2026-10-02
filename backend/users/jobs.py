@@ -33,8 +33,14 @@ def _redact_input(value):
     """Keep only bounded, non-sensitive contract metadata in PostgreSQL and Redis."""
     if not isinstance(value, dict):
         return {}
-    allowed = {"format", "demo", "version", "requested_scope", "scope", "start_date", "end_date", "purpose", "cap", "schedule_id"}
-    return {key: str(value[key])[:80] for key in sorted(value) if key in allowed}
+    allowed = {"format", "demo", "version", "requested_scope", "scope", "start_date", "end_date", "purpose", "cap", "schedule_id", "resource_types", "since", "approval"}
+    result = {}
+    source = value
+    for key in sorted(source):
+        if key not in allowed: continue
+        item = source[key]
+        result[key] = [str(child)[:40] for child in item[:20]] if key == "resource_types" and isinstance(item, list) else str(item)[:80]
+    return result
 
 
 @transaction.atomic
@@ -110,6 +116,10 @@ def _run_demo(job):
     if job.kind == "population.export":
         from .population_exports import run_population_export
         run_population_export(job)
+        return
+    if job.kind == "fhir.bulk.export":
+        from .bulk_exports import run_bulk_export
+        run_bulk_export(job)
         return
     if job.kind == "ccda.export":
         from .ccda import generate_ccda
@@ -235,6 +245,11 @@ def expire_break_glass_task():
 def expire_population_exports_task():
     from .population_exports import expire_population_exports
     return expire_population_exports()
+
+@app.task(name="ehr.jobs.expire_bulk_exports", ignore_result=True)
+def expire_bulk_exports_task():
+    from .bulk_exports import expire_bulk_exports
+    return expire_bulk_exports()
 
 
 @app.task(name="ehr.jobs.enqueue_due_population_schedules", ignore_result=True)

@@ -11,3 +11,8 @@
 - Ticket 11 coverage passes 8 tests; the backend suite passes 178 tests, frontend tests pass 13 tests, and frontend typecheck/build, Django checks, migration checks, Compose configuration, and whitespace checks pass.
 
 Author Name: Aguda, Maurice
+
+## Ticket 15
+
+- Added bounded FHIR Bulk Data-style asynchronous export on the unified Job/Outbox system, with allowlisted `_type`, optional `_since`, purpose/approval, idempotency, opaque status location, cancellation, encrypted expiring NDJSON artifacts, checksums, caps, and authorization rechecks.
+- Added canonical TC-EXP-0121..0131 acceptance rows, Ticket 15 specification, and an administrator bulk export panel. This remains a synthetic demo and does not implement SMART Backend Services assertions.

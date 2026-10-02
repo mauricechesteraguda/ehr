@@ -804,6 +804,23 @@ class PopulationExportArtifact(models.Model):
     expires_at = models.DateTimeField()
 
 
+class FHIRBulkExport(models.Model):
+    """Ticket15: immutable manifest metadata for a bounded FHIR bulk job."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    job = models.OneToOneField(Job, on_delete=models.CASCADE, related_name="bulk_export")
+    resource_types = models.JSONField(default=list)
+    since = models.DateTimeField(null=True, blank=True)
+    purpose = models.CharField(max_length=500)
+    approval = models.CharField(max_length=500)
+    transaction_time = models.DateTimeField(null=True, blank=True)
+    request_url = models.CharField(max_length=500)
+    requires_access_token = models.BooleanField(default=True)
+    entries = models.JSONField(default=list)
+    errors = models.JSONField(default=list)
+    total_bytes = models.PositiveBigIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
 class Questionnaire(models.Model):
     """Ticket05: Stable questionnaire identity; published snapshots never change."""
     code = models.CharField(max_length=80, unique=True)
