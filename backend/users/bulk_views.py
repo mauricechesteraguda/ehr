@@ -1,5 +1,6 @@
 """Ticket15 FHIR Bulk Data endpoints; authorization is checked on every operation."""
 from datetime import timedelta
+from cryptography.exceptions import InvalidTag
 from django.conf import settings
 from django.http import HttpResponse
 from django.utils import timezone
@@ -25,7 +26,7 @@ class BulkExportView(APIView):
         except Exception: return Response({"detail": "Bulk export authorization unavailable."}, status=503)
         return Response({"detail": "Bulk export authorization is required."}, status=403)
     def post(self, request): return self._start(request, request.data if isinstance(request.data, dict) else {})
-    def get(self, request, export_id=None, resource_type=None):
+    def get(self, request, export_id=None, resource_type=None, **_kwargs):
         if export_id is not None: return self.get_status(request, export_id, resource_type)
         return self._start(request, request.query_params.dict())
     def _start(self, request, data):
@@ -58,14 +59,14 @@ class BulkExportView(APIView):
         if not manifest: return Response({"detail": "Export not found."}, status=404)
         if resource_type:
             try: body = download_bulk_entry(manifest, resource_type)
-            except (FileNotFoundError, RuntimeError, ValueError): return Response({"detail": "Export unavailable."}, status=404)
+            except (FileNotFoundError, RuntimeError, ValueError, InvalidTag, OSError): return Response({"detail": "Export unavailable."}, status=404)
             audit.append_audit_event(actor=request.user, action="read", resource_type="FHIRBulkExport", resource_id=str(manifest.id))
             return HttpResponse(body, content_type="application/fhir+ndjson")
         if manifest.job.state in (Job.State.QUEUED, Job.State.RUNNING):
             response = Response(public_manifest(request, manifest), status=202); response["Retry-After"] = "5"; return response
         return Response(public_manifest(request, manifest), status=200)
 
-    def delete(self, request, export_id):
+    def delete(self, request, export_id, **_kwargs):
         if not _authorized(request): return self._deny(request)
         manifest = FHIRBulkExport.objects.select_related("job").filter(pk=export_id).first()
         if not manifest: return Response({"detail": "Export not found."}, status=404)
