@@ -3,14 +3,24 @@ import contextvars
 import logging
 import re
 import traceback
+import json
 from functools import wraps
 
-from .tracing import trace_function
+from .tracing import safe_location, trace_function
 
 logger = logging.getLogger("ehr.auth")
 _correlation_id = contextvars.ContextVar("ehr_correlation_id", default="")
 _SENSITIVE = re.compile(r"password|passphrase|secret|otp|totp|token|cookie|authorization|username|email|name|ssn|address|patient|clinical|payload|body|connection|string", re.I)
-_ALLOWED = {"outcome", "http_status", "http_class", "duration_ms", "correlation_id", "component", "operation", "user_role", "exception_type", "exception_class", "exception_code", "cause_chain", "stack_trace", "request"}
+_ALLOWED = {"outcome", "status", "http_status", "http_class", "duration_ms", "correlation_id", "component", "operation", "user_role", "exception_type", "exception_class", "error_class", "exception_code", "cause_chain", "stack_trace", "request", "db_outcome"}
+
+
+class JsonConsoleFormatter(logging.Formatter):
+    """type-10022026-Maurice: Serialize only the safe event envelope as one JSON line."""
+    def format(self, record):
+        context = getattr(record, "context", {})
+        safe = {key: _redact(value, key) for key, value in context.items() if key in _ALLOWED}
+        safe.setdefault("correlation_id", "")
+        return json.dumps({"event": getattr(record, "event", record.getMessage()), **safe}, separators=(",", ":"), sort_keys=True)
 
 
 def set_correlation_id(value):
@@ -49,7 +59,8 @@ def log_event(event, level=logging.INFO, **context):
             causes.append(type(cause).__name__)
             cause = cause.__cause__ or cause.__context__
         context["cause_chain"] = causes
-        context["stack_trace"] = [f"{frame.filename}:{frame.lineno}:{frame.name}" for frame in traceback.extract_tb(error.__traceback__)[-8:]]
+        context["stack_trace"] = [safe_location(frame.filename, frame.lineno, frame.name) for frame in traceback.extract_tb(error.__traceback__)[-8:]]
+        context["error_class"] = type(error).__name__
     safe = {key: _redact(value, key) for key, value in context.items() if key in _ALLOWED}
     safe.setdefault("correlation_id", _correlation_id.get())
     logger.log(level, event, extra={"event": event, "context": safe})
@@ -58,13 +69,14 @@ def log_event(event, level=logging.INFO, **context):
 @trace_function
 def external_authenticate(authenticator):
     """type-10022026-Maurice: Observe an authentication call without arguments or returned bodies."""
-    log_event("auth.external.entry", component="authentication", operation="authenticate")
+    started = __import__("time").monotonic()
+    log_event("auth.external.entry", component="authentication", operation="authenticate", outcome="started")
     try:
         result = authenticator()
-        log_event("auth.external.exit", outcome="success", component="authentication", operation="authenticate")
+        log_event("auth.external.exit", outcome="success", status=200, http_status=200, duration_ms=int((__import__("time").monotonic()-started)*1000), component="authentication", operation="authenticate")
         return result
     except Exception as error:
-        log_event("auth.external.failure", outcome="failure", component="authentication", operation="authenticate", exception_type=type(error).__name__)
+        log_event("auth.external.failure", outcome="failure", status=500, http_status=500, duration_ms=int((__import__("time").monotonic()-started)*1000), component="authentication", operation="authenticate", exception=error)
         raise
 
 

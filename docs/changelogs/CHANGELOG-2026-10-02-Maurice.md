@@ -2,6 +2,8 @@
 
 ## Implemented
 
+- Closed final P0 logging acceptance blockers: seed enrollment is opt-in to a mode-600 file with no secret output, console events are structured JSON, and FHIR/patient/medication/SMART/external-auth/export/rate-limit boundaries emit safe status, duration, outcome, error-class, and database outcome evidence.
+
 - Established the Tickets 01–04 EHR demo foundation with Django/DRF, React/Vite TypeScript, and PostgreSQL configuration.
 - Added password authentication with mandatory TOTP enrollment and verification, role-scoped sessions, configurable inactivity expiry, and protected patient access.
 - Added synthetic coded demographics and read-only allergy, condition, observation, and device records for the demo patients.
@@ -10,6 +12,24 @@
 - Added structured operational logging with sensitive-field redaction, safe correlation identifiers, and local HTTPS certificate-path configuration.
 - Added the README with synthetic-data safeguards, architecture, local setup, demo-user/TOTP instructions, API routes, verification commands, and troubleshooting guidance.
 - Included the MVP requirements, migrations, test-case CSV, dependency manifests and lockfile, configuration example, and LICENSE.
+
+## Final integration — Ticket10
+
+- Added an idempotent/resettable synthetic `seed_demo` command with clinician, patient, administrator, and developer accounts, TOTP setup output only at local execution time, synthetic patients/clinical rows/devices/medication/interaction rules, and redacted startup/seed/demo lifecycle logging.
+- Integrated the React login shell, role navigation, developer SMART workspace, Vite API proxy, responsive keyboard-visible focus styling, reduced-motion handling, and explicit loading/empty/error/re-authentication states without browser EHI storage.
+- Added the dependency-free `scripts/smart_demo.py` sample client for PKCE code exchange, refresh rotation, and bounded FHIR Patient read; documented local HTTPS and the under-ten-minute role walkthrough.
+- Added Ticket10 CSV scenarios TC-EHR-0092–TC-EHR-0096 and discoverable backend seam tests for seed idempotency, SMART refresh/FHIR read, HTTPS/disclaimer, role boundaries, and password-required setup.
+- Final verification: 74 backend tests passed on disposable PostgreSQL; 7 frontend tests passed; TypeScript lint, Vite production build, Python compile check, CSV 18-column validation, secret/path scan, and `git diff --check` passed. Browser E2E was not added because no browser test dependency/toolchain is installed locally.
+
+## Complete P0 delivery — Tickets05–10
+
+- Ticket05 completed interaction safety and medication signing: immutable evaluations and acknowledgements, LOW/MODERATE/HIGH floors, unsuppressible CRITICAL findings, fail-closed activation, and administrator-only rule management.
+- Ticket06 completed authorized JSON/PDF export and patient download flows with exact-byte SHA-256 metadata, fifteen-minute artifact expiry and cleanup, bounded duplicate storage, transient browser state, and rollback on audit failure.
+- Ticket07 completed six-resource read-only FHIR R4 access with SMART bearer scope/patient compartment enforcement, safe OperationOutcome failures, content integrity metadata, and bounded diagnostics.
+- Ticket08 completed confidential SMART registration, discovery, consent, exact redirect validation, PKCE S256, code replay/expiry handling, refresh rotation/revocation, audit fail-closed behavior, and developer demo client coverage.
+- Ticket09 completed administrator role and safety-rule management, self-lockout/last-admin safeguards, audit viewer separation, inactivity enforcement, security headers and request bounds, rate limits, and injection-safe validation.
+- Ticket10 completed seeded synthetic demo workflows, the role-based React shell, developer SMART workspace, responsive safe states, dependency-free SMART demo client, and final integration documentation.
+- Full P0 evidence is represented by CSV cases TC-EHR-0001–TC-EHR-0106 with exactly 18 columns, continuous identifiers, blank QA result fields, and `Not Run` status pending execution in the target environment. Final evidence includes backend/frontend acceptance results, production/type/compile checks, CSV validation, secret/private-key/certificate/PII/trace/temp/cache/artifact scans, and whitespace validation; no environment secrets or trace files are included.
 
 ## Verification
 

@@ -1,6 +1,6 @@
 // type-10022026-Maurice: Browser-safe auth logger/tracer using injectable structured sink.
 import { logger, type LogSink } from "./logger";
-export type Role = "clinician" | "patient" | "admin";
+export type Role = "clinician" | "patient" | "admin" | "developer";
 export type TraceSink = (event: { event: "entry" | "exit" | "error"; function: string }) => void;
 export const traceSink: TraceSink = () => undefined;
 
