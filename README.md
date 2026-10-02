@@ -14,6 +14,7 @@ This repository is the currently implemented foundation for a small electronic-h
 - Medication creation, interaction evaluation, explicit acknowledgement, safe signing, change, cancel, refill, immutable history, and audit evidence.
 - Read-only FHIR R4 resources plus SMART app registration, consent, PKCE authorization-code exchange, refresh rotation, and launch metadata.
 - Durable background jobs with outbox dispatch, bounded retries, idempotency, and safe failure state.
+- Direct delivery is a local simulation only: no SMTP, Direct network, or real message is sent; recipient addresses and C-CDA bytes are not exposed in status or logs.
 - Family-history, device UDI, questionnaire/terminology, amendment, passkey/recovery, break-glass, and patient-selection workflows with role and audit boundaries.
 - Authorized JSON/PDF patient exports and population export jobs with expiry, integrity metadata, and cleanup.
 - Idempotent `seed_demo` reset/seed command for clinician, patient, admin, and developer workflows.

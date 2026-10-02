@@ -1,6 +1,6 @@
 """Ticket11 bounded C-CDA transition package and clinician reconciliation service."""
 import hashlib, json, os, re, time
-from datetime import date
+from datetime import date, timedelta
 from pathlib import Path
 from xml.etree import ElementTree as ET
 from cryptography.fernet import Fernet
@@ -46,7 +46,7 @@ def generate_ccda(*, patient, job):
     body = ET.tostring(root, encoding="utf-8", xml_declaration=True)
     checksum = hashlib.sha256(body).hexdigest(); root.set("checksum", checksum); body = ET.tostring(root, encoding="utf-8", xml_declaration=True)
     path = Path(getattr(settings, "CCDA_ROOT", os.path.join(settings.BASE_DIR, "var", "ccda"))); path.mkdir(parents=True, exist_ok=True); artifact = path / _safe_name(job.id); artifact.write_bytes(_crypt(body))
-    return CcdaDocument.objects.create(job=job, patient=patient, direction="export", template_id=TEMPLATE_ID, template_version=TEMPLATE_VERSION, provenance={"actor": str(job.owner_id), "job": str(job.id)}, sha256=hashlib.sha256(body).hexdigest(), size_bytes=len(body), artifact_path=str(artifact))
+    return CcdaDocument.objects.create(job=job, patient=patient, direction="export", template_id=TEMPLATE_ID, template_version=TEMPLATE_VERSION, provenance={"actor": str(job.owner_id), "job": str(job.id)}, sha256=hashlib.sha256(body).hexdigest(), size_bytes=len(body), artifact_path=str(artifact), expires_at=timezone.now() + timedelta(hours=1))
 
 @transaction.atomic
 def parse_ccda(data, *, patient, job):
