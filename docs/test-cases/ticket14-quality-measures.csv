@@ -1,0 +1,11 @@
+case_id,area,scenario,expected
+T14-001,schema,allowlisted exists/equal/date predicates accepted,201
+T14-002,schema,unknown predicate or executable expression rejected,400
+T14-003,lifecycle,draft publish retire and immutable version,409
+T14-004,allergy,coverage uses inclusive period and excludes entered-in-error,deterministic counts
+T14-005,medication,active medication review uses active orders at period end,deterministic counts
+T14-006,blood-pressure,recent BP window is inclusive and empty population is zero,deterministic counts
+T14-007,reproducibility,repeat run pins version and snapshot checksum,identical report
+T14-008,async,duplicate idempotency and bounded retry preserve one report,one report
+T14-009,security,admin writes and quality scopes enforced,403/200
+T14-010,fhir,Measure and MeasureReport return FHIR JSON shapes,application/fhir+json

@@ -304,6 +304,50 @@ class AuditEvent(models.Model):
         indexes = [models.Index(fields=["occurred_at"], name="audit_occurred_at_idx"), models.Index(fields=["action"], name="audit_action_idx")]
 
 
+class MeasureDefinition(models.Model):
+    """Ticket14 stable identity; versions contain the immutable executable-free schema."""
+    url = models.CharField(max_length=240, unique=True)
+    title = models.CharField(max_length=200)
+    description = models.TextField(blank=True)
+    provenance = models.JSONField(default=dict)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
+class MeasureVersion(models.Model):
+    class Status(models.TextChoices):
+        DRAFT = "draft", "Draft"; PUBLISHED = "published", "Published"; RETIRED = "retired", "Retired"
+    measure = models.ForeignKey(MeasureDefinition, related_name="versions", on_delete=models.PROTECT)
+    version = models.PositiveIntegerField()
+    status = models.CharField(max_length=12, choices=Status.choices, default=Status.DRAFT)
+    effective_start = models.DateField(); effective_end = models.DateField(null=True, blank=True)
+    schema = models.JSONField(); provenance = models.JSONField(default=dict)
+    published_at = models.DateTimeField(null=True, blank=True)
+    class Meta: constraints = [models.UniqueConstraint(fields=["measure", "version"], name="measure_version_unique")]
+    def save(self, *args, **kwargs):
+        if self.pk: raise ValueError("Measure versions are immutable")
+        return super().save(*args, **kwargs)
+    def delete(self, *args, **kwargs): raise ValueError("Measure versions are immutable")
+
+
+class MeasureRun(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    job = models.OneToOneField("Job", on_delete=models.PROTECT, related_name="measure_run")
+    version = models.ForeignKey(MeasureVersion, on_delete=models.PROTECT)
+    period_start = models.DateField(); period_end = models.DateField(); snapshot_checksum = models.CharField(max_length=64)
+    status = models.CharField(max_length=20, default="queued"); created_at = models.DateTimeField(auto_now_add=True)
+
+
+class MeasureReport(models.Model):
+    run = models.OneToOneField(MeasureRun, on_delete=models.PROTECT, related_name="report")
+    measure = models.ForeignKey(MeasureDefinition, on_delete=models.PROTECT)
+    version = models.ForeignKey(MeasureVersion, on_delete=models.PROTECT)
+    status = models.CharField(max_length=20); period_start = models.DateField(); period_end = models.DateField()
+    snapshot_checksum = models.CharField(max_length=64); populations = models.JSONField(); created_at = models.DateTimeField(auto_now_add=True)
+    def save(self, *args, **kwargs):
+        if self.pk: raise ValueError("Measure reports are immutable")
+        return super().save(*args, **kwargs)
+
+
 class MedicationOrder(models.Model):
     """type-10022026-Maurice: Stable medication identity whose versions are immutable."""
     patient = models.ForeignKey(Patient, on_delete=models.PROTECT, related_name="medication_orders")

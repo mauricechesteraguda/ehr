@@ -21,6 +21,7 @@ This repository is the currently implemented foundation for a small electronic-h
 - React login, role navigation, loading/empty/error/re-authentication states, keyboard-visible focus, responsive layout, and reduced-motion support.
 - Structured operational logging with sensitive values redacted.
 - Optional Vite HTTPS from developer-supplied certificate paths.
+- Declarative demo clinical quality measures with immutable published versions, deterministic snapshot checksums, async runs, and FHIR-style Measure/MeasureReport resources. Quality reports expose population counts only unless a separately authorized subject-level workflow is added.
 
 This remains a local synthetic prototype. The Ticket01–10 Docker Compose platform and the listed P1 workflows are for local synthetic use only; production deployment, real EHI, and other deferred P2 capabilities remain out of scope.
 

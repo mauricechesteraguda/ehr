@@ -1,9 +1,15 @@
 """type-10022026-Maurice: Authentication API routes."""
 from django.urls import path
 from . import views
+from .quality import MeasureAdminView, MeasureRunView, MeasureReportView
 from .smart import DeveloperAppsView, DeveloperAppRevokeView, AuthorizationView, TokenView, RevokeTokenView, LaunchView, PatientSelectionView, smart_configuration
 
 urlpatterns = [
+    path("admin/measures/", MeasureAdminView.as_view()),
+    path("admin/measures/<int:measure_id>/", MeasureAdminView.as_view()),
+    path("admin/measures/<int:measure_id>/run/", MeasureRunView.as_view()),
+    path("admin/measure-reports/", MeasureReportView.as_view()),
+    path("admin/measure-reports/<int:report_id>/", MeasureReportView.as_view()),
     path("cds-services/", views.CDSDiscoveryView.as_view()),
     path("cds-services/<str:service_id>", views.CDSInvokeView.as_view()),
     path("cds-services/<str:service_id>/", views.CDSInvokeView.as_view()),
