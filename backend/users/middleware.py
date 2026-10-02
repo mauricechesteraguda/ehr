@@ -18,6 +18,9 @@ class InactivityMiddleware:
         if request.user.is_authenticated and last and now - last > settings.SESSION_INACTIVITY_SECONDS:
             logout(request)
             log_event("session.expired", user_role=getattr(request.user, "role", "unknown"))
+        if request.user.is_authenticated and request.session.get("mfa_generation") is not None and request.session.get("mfa_generation") != request.user.mfa_generation:
+            logout(request)
+            log_event("session.mfa_invalidated", outcome="failure")
         if request.user.is_authenticated:
             request.session["last_activity"] = now
         return self.get_response(request)

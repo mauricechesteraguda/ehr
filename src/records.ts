@@ -18,22 +18,123 @@ export type PatientRecord = {
   conditions: Array<Record<string, string | null>>;
   observations: Array<Record<string, string | null>>;
   devices: Array<Record<string, string | null>>;
+  family_history: FamilyHistoryVersion[];
 };
+export type FamilyHistoryVersion = { id: number; version: number; relationship: string; relative_sex: string; relative_status: string; relative_deceased: boolean | null; condition_system: string; condition_code: string; condition_display: string; submitted_display: string; terminology_version: string; onset_date: string | null; recorded_date: string | null; status: "active" | "entered-in-error"; supersedes: number | null };
 
 export type AuditEvent = { sequence: number; actor: string | null; occurred_at: string; patient: string | null; action: string; resource_type: string; resource_id: string; correlation_id: string; previous_hash: string; current_hash: string };
+export type BreakGlassGrant = { id: number; state: "active" | "expired" | "revoked"; expires_at: string; patient: string };
 export type AdminUser = { id: number; username: string; role: "clinician" | "patient" | "admin" | "developer"; is_active: boolean; is_staff: boolean; totp_enrolled: boolean };
+
+export async function requestBreakGlass(patient: string, justification: string): Promise<BreakGlassGrant> {
+  const response = await fetch(`/api/patients/${encodeURIComponent(patient)}/break-glass/`, { method: "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ justification }) });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(body.detail ?? "Emergency access request was denied.");
+  return body;
+}
+
+export async function revokeBreakGlass(patient: string): Promise<void> {
+  const response = await fetch(`/api/patients/${encodeURIComponent(patient)}/break-glass/`, { method: "DELETE", credentials: "include" });
+  if (!response.ok) throw new Error("Unable to revoke emergency access.");
+}
+
+export async function fetchBreakGlassReview(): Promise<any[]> { const response = await fetch("/api/admin/break-glass/", { credentials: "include" }); if (!response.ok) throw new Error("Unable to load emergency review queue."); return response.json(); }
+export async function reviewBreakGlass(id: number, outcome: string): Promise<any> { const response = await fetch(`/api/admin/break-glass/${id}/`, { method: "PATCH", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ outcome }) }); if (!response.ok) throw new Error("Unable to review emergency access."); return response.json(); }
 export type InteractionRule = { id: number; kind: string; medication_code: string; related_medication_code: string; allergy_code: string; severity: "LOW" | "MODERATE" | "HIGH" | "CRITICAL"; description: string; active: boolean };
 export type MedicationVersion = { id: number; version: number; medication_code: string; medication_name: string; dose: string; dose_unit: string; route: string; frequency: string; start_date: string; quantity: string; refills: number; indication: string; status: "draft" | "active" | "cancelled"; supersedes: number | null; created_at: string };
 export type MedicationOrder = { id: number; prescriber: string; active_version: MedicationVersion | null };
 export type InteractionFinding = { rule_id: number; kind: string; severity: "LOW" | "MODERATE" | "HIGH" | "CRITICAL"; description: string; suppressed: boolean };
 export type InteractionEvaluation = { id: number; floor: "LOW" | "MODERATE" | "HIGH"; stale: boolean; findings: InteractionFinding[] };
 export type PatientExport = { id: string; status: "ready"; format: "json" | "pdf"; sha256: string; expires_at: string; download_url: string };
+export type JobStatus = { id: string; kind: string; state: string; attempts: number; max_attempts: number; queued_at: string; started_at: string | null; finished_at: string | null; heartbeat_at: string | null; error_code: string | null; dependency: string };
+export type PopulationExport = { id?: string; job_id?: string; state: string; format: "csv" | "jsonl"; sha256?: string | null; size_bytes?: number | null; expires_at?: string; download_url?: string | null; attempts?: number; error_code?: string | null };
+export type DeviceVersion = { id: number; device_id?: number; version: number; code: string; label: string; status: "active" | "inactive" | "entered-in-error"; issuer: string; device_identifier: string; lot_number: string; serial_number: string; expiry_date: string | null; manufacture_date: string | null; parser_version: string; parse_status: "parsed" | "parse_failed" | "unsupported"; parse_error_code: string; gudid_status: string; supersedes: number | null; created_at: string };
+export type DeviceParsePreview = { status: string; issuer: string; device_identifier: string; lot_number: string; serial_number: string; expiry_date: string | null; manufacture_date: string | null; parser_version: string; error_code: string };
+export type PatientAmendment = { id: number; resource_type: string; resource_id: string; source_version: number; source_reference: string; status: "submitted" | "under_review" | "accepted" | "denied" | "appended"; submitted_at: string; due_at: string; overdue: boolean; reason: string; decision_reason: string; accepted_version: number | null; addendum: Record<string, unknown> | null };
+export type PatientSelectionResult = { patient_id: string; request_id: string };
+
+export async function selectPatient(payload: Record<string, string>, fetcher: typeof fetch = fetch): Promise<PatientSelectionResult> {
+  const response = await fetcher("/api/smart/patient-selection/", { method: "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(body.detail ?? "Patient selection is unavailable.");
+  return body as PatientSelectionResult;
+}
+
+export async function fetchAmendments(publicId: string, fetcher: typeof fetch = fetch): Promise<PatientAmendment[]> {
+  const response = await fetcher(`/api/patients/${encodeURIComponent(publicId)}/amendments/`, { credentials: "include" });
+  if (!response.ok) throw new Error("Unable to load amendment requests.");
+  return response.json();
+}
+export async function createAmendment(publicId: string, payload: { resource_type: string; resource_id: string | number; source_version: number; reason: string; proposed_data?: Record<string, unknown> }, fetcher: typeof fetch = fetch): Promise<PatientAmendment> {
+  const response = await fetcher(`/api/patients/${encodeURIComponent(publicId)}/amendments/`, { method: "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+  if (!response.ok) throw new Error((await response.json().catch(() => null))?.detail ?? "Unable to submit amendment request.");
+  return response.json();
+}
+export async function fetchAmendmentQueue(fetcher: typeof fetch = fetch): Promise<PatientAmendment[]> {
+  const response = await fetcher("/api/amendments/", { credentials: "include" });
+  if (!response.ok) throw new Error("Unable to load amendment review queue.");
+  return response.json();
+}
+export async function reviewAmendment(id: number, decision: "accepted" | "denied" | "appended", decisionReason = "", fetcher: typeof fetch = fetch): Promise<PatientAmendment> {
+  const response = await fetcher(`/api/amendments/${id}/`, { method: "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ decision, decision_reason: decisionReason }) });
+  if (!response.ok) throw new Error((await response.json().catch(() => null))?.detail ?? "Unable to decide amendment.");
+  return response.json();
+}
+export async function startAmendmentReview(id: number, fetcher: typeof fetch = fetch): Promise<PatientAmendment> {
+  const response = await fetcher(`/api/amendments/${id}/`, { method: "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "start_review" }) });
+  if (!response.ok) throw new Error("Unable to start amendment review.");
+  return response.json();
+}
+
+export async function previewDevice(publicId: string, udi: string, fetcher: typeof fetch = fetch): Promise<DeviceParsePreview> {
+  const response = await fetcher(`/api/patients/${encodeURIComponent(publicId)}/devices/parse/`, { method: "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ udi }) });
+  if (!response.ok) throw new Error("UDI parser preview unavailable.");
+  return response.json();
+}
+export async function createDevice(publicId: string, payload: Record<string, string>, fetcher: typeof fetch = fetch): Promise<DeviceVersion> {
+  const response = await fetcher(`/api/patients/${encodeURIComponent(publicId)}/devices/`, { method: "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+  if (!response.ok) throw new Error((await response.json().catch(() => null))?.detail ?? "Unable to save device.");
+  return response.json();
+}
+export async function fetchDeviceHistory(publicId: string, deviceId: number, fetcher: typeof fetch = fetch): Promise<DeviceVersion[]> {
+  const response = await fetcher(`/api/patients/${encodeURIComponent(publicId)}/devices/${deviceId}/history/`, { credentials: "include" });
+  if (!response.ok) throw new Error("Unable to load device history.");
+  return response.json();
+}
+
+export async function fetchFamilyHistory(publicId: string, fetcher: typeof fetch = fetch): Promise<FamilyHistoryVersion[]> {
+  const response = await fetcher(`/api/patients/${encodeURIComponent(publicId)}/family-history/`, { credentials: "include" });
+  if (!response.ok) throw new Error("Unable to load family history.");
+  return response.json();
+}
+
+export async function createFamilyHistory(publicId: string, payload: Record<string, string | boolean>, fetcher: typeof fetch = fetch): Promise<FamilyHistoryVersion> {
+  const response = await fetcher(`/api/patients/${encodeURIComponent(publicId)}/family-history/`, { method: "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+  if (!response.ok) throw new Error("Unable to save family history; terminology validation failed or is unavailable.");
+  return response.json();
+}
+
+export async function fetchJobs(fetcher: typeof fetch = fetch): Promise<JobStatus[]> {
+  const response = await fetcher("/api/jobs/", { credentials: "include" });
+  if (!response.ok) throw new Error("Unable to load job status.");
+  return response.json() as Promise<JobStatus[]>;
+}
+
+export async function cancelJob(id: string, fetcher: typeof fetch = fetch): Promise<JobStatus> {
+  const response = await fetcher(`/api/jobs/${encodeURIComponent(id)}/`, { method: "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "cancel" }) });
+  if (!response.ok) throw new Error("Unable to cancel job.");
+  return response.json() as Promise<JobStatus>;
+}
 
 export async function requestPatientExport(publicId: string, format: PatientExport["format"], fetcher: typeof fetch = fetch): Promise<PatientExport> {
   const response = await fetcher(`/api/patients/${encodeURIComponent(publicId)}/exports/`, { method: "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ format }) });
   if (!response.ok) throw new Error((await response.json().catch(() => null))?.detail ?? "Export unavailable; retry safely.");
   return response.json() as Promise<PatientExport>;
 }
+
+export async function requestPopulationExport(payload: Record<string, string | number>, idempotencyKey: string, fetcher: typeof fetch = fetch): Promise<PopulationExport> { const response = await fetcher("/api/admin/population-exports/", { method: "POST", credentials: "include", headers: { "Content-Type": "application/json", "Idempotency-Key": idempotencyKey }, body: JSON.stringify(payload) }); if (!response.ok) throw new Error((await response.json().catch(() => null))?.detail ?? "Population export unavailable; retry safely."); return response.json(); }
+export async function fetchPopulationExports(fetcher: typeof fetch = fetch): Promise<PopulationExport[]> { const response = await fetcher("/api/admin/population-exports/", { credentials: "include" }); if (!response.ok) throw new Error("Unable to load population exports."); return response.json(); }
+export async function populationExportAction(id: string, action: "cancel" | "retry", fetcher: typeof fetch = fetch): Promise<PopulationExport> { const response = await fetcher(`/api/admin/population-exports/${encodeURIComponent(id)}/`, { method: "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action }) }); if (!response.ok) throw new Error("Unable to update population export."); return response.json(); }
 
 export async function fetchMedications(publicId: string, fetcher: typeof fetch = fetch): Promise<MedicationOrder[]> {
   const response = await fetcher(`/api/patients/${encodeURIComponent(publicId)}/medications/`, { credentials: "include" });
@@ -152,3 +253,19 @@ export async function fetchPatient(publicId: string, fetcher: typeof fetch = fet
     throw error;
   }
 }
+
+export type QuestionnaireItem = { id: number; link_id: string; text: string; item_type: "boolean" | "integer" | "decimal" | "date" | "string" | "choice" | "quantity"; ordinal: number; required: boolean; repeats: boolean; min_length?: number | null; max_length?: number | null; min_value?: string | null; max_value?: string | null; options: Array<string | { value: string }> };
+export type Questionnaire = { id: number; code: string; title: string; version: number; items: QuestionnaireItem[] };
+export type QuestionnaireResponse = { id: number; version: number; questionnaire_id: number; questionnaire_version_number: number; status: string; answers: Record<string, unknown>; response_id?: number };
+
+async function questionnaireRequest<T>(url: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(url, { credentials: "include", ...init });
+  if (response.status === 401) throw new Error("Your session expired; please sign in again.");
+  if (!response.ok) throw new Error((await response.json().catch(() => null))?.detail ?? "Questionnaire request failed.");
+  return response.json() as Promise<T>;
+}
+export const fetchQuestionnaires = () => questionnaireRequest<Questionnaire[]>("/api/questionnaires/");
+export const fetchQuestionnaireResponses = (patient: string) => questionnaireRequest<QuestionnaireResponse[]>(`/api/patients/${encodeURIComponent(patient)}/questionnaire-responses/`);
+export const saveQuestionnaireResponse = (patient: string, payload: { questionnaire_id: number; questionnaire_version: number; answers: Record<string, unknown>; status: "draft" | "submitted" }) => questionnaireRequest<QuestionnaireResponse>(`/api/patients/${encodeURIComponent(patient)}/questionnaire-responses/`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+export const fetchQuestionnaireReviewQueue = () => questionnaireRequest<QuestionnaireResponse[]>("/api/questionnaire-review-queue/");
+export const reviewQuestionnaireResponse = (id: number, decision: string, reason = "") => questionnaireRequest<{ id: number }>(`/api/questionnaire-response-versions/${id}/review/`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ decision, reason }) });

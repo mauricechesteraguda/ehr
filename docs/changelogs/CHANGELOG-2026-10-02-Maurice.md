@@ -40,7 +40,12 @@
 
 ## Deferred
 
-- Interaction evaluation and medication signing (Ticket 05), FHIR, SMART on FHIR, exports, Docker Compose, repository seeding, and a built-in demo account remain deferred.
-- The React client still lacks a login/enrollment screen and a Vite `/api` proxy; direct transmission is not included.
+- Production deployment, real EHI, and deferred P2 capabilities remain out of scope; the local synthetic prototype does not transmit data directly.
+
+## Expansion checkpoint — Tickets01–10
+
+- Added the Docker Compose platform with Caddy local HTTPS, health-checked PostgreSQL/Redis/API/web/worker/Beat services, persistent named volumes, idempotent startup seeding, and the documented preview/confirmed reset flow.
+- Completed Tickets02–10: durable jobs and outbox processing; family history; device UDI; questionnaires and terminology; amendments; passkeys and recovery; break-glass access; patient selection; and population export workflows with role, audit, retry, expiry, and synthetic-data safeguards.
+- Static Compose/configuration tests, source checks, and local test suites pass; the live Compose image build remains unverified because PyPI connectivity is intermittent.
 
 Author Name: Aguda, Maurice

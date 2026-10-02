@@ -1,0 +1,13 @@
+# type-10022026-Maurice: Keep secrets, local state, and generated artifacts out of builds.
+.env
+.git
+.trailmap
+.serena
+node_modules
+__pycache__
+.pytest_cache
+dist
+*.pem
+*.key
+*.crt
+*.sqlite3

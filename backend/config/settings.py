@@ -29,14 +29,23 @@ X_FRAME_OPTIONS = "DENY"
 DATA_UPLOAD_MAX_MEMORY_SIZE = int(os.environ.get("DATA_UPLOAD_MAX_MEMORY_SIZE", str(1024 * 1024)))
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 200
 SESSION_INACTIVITY_SECONDS = int(os.environ.get("SESSION_INACTIVITY_SECONDS", "900"))
+WEBAUTHN_RP_ID = os.environ.get("WEBAUTHN_RP_ID", "localhost")
+WEBAUTHN_ORIGIN = os.environ.get("WEBAUTHN_ORIGIN", "https://localhost")
+WEBAUTHN_CHALLENGE_TTL_SECONDS = int(os.environ.get("WEBAUTHN_CHALLENGE_TTL_SECONDS", "60"))
+SMS_RECOVERY_TTL_SECONDS = int(os.environ.get("SMS_RECOVERY_TTL_SECONDS", "300"))
+SMS_RECOVERY_MAX_ATTEMPTS = int(os.environ.get("SMS_RECOVERY_MAX_ATTEMPTS", "5"))
 EXPORT_ROOT = os.environ.get("EHR_EXPORT_ROOT", os.path.join(tempfile.gettempdir(), "ehr-exports"))
+POPULATION_EXPORT_ROOT = os.environ.get("EHR_POPULATION_EXPORT_ROOT", os.path.join(tempfile.gettempdir(), "ehr-population-exports"))
+POPULATION_EXPORT_KEY = os.environ.get("EHR_POPULATION_EXPORT_KEY", "")
+POPULATION_EXPORT_CAP = int(os.environ.get("EHR_POPULATION_EXPORT_CAP", "10000"))
+POPULATION_EXPORT_MAX_BYTES = 100 * 1024 * 1024
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 USE_TZ = True
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
 REST_FRAMEWORK = {"DEFAULT_AUTHENTICATION_CLASSES": ["backend.users.authentication.OAuthBearerOrSessionAuthentication"]}
 OAUTH2_PROVIDER = {
-    "SCOPES": {"openid": "OpenID", "fhirUser": "FHIR user identity", "patient/Patient.r": "Read Patient", "patient/MedicationRequest.r": "Read MedicationRequest", "patient/AllergyIntolerance.r": "Read AllergyIntolerance", "patient/Condition.r": "Read Condition", "patient/Observation.r": "Read Observation", "patient/Device.r": "Read Device"},
+    "SCOPES": {"openid": "OpenID", "fhirUser": "FHIR user identity", "patient/Patient.r": "Read Patient", "patient/Patient.s": "Select one Patient", "patient/MedicationRequest.r": "Read MedicationRequest", "patient/AllergyIntolerance.r": "Read AllergyIntolerance", "patient/Condition.r": "Read Condition", "patient/Observation.r": "Read Observation", "patient/Device.r": "Read Device", "patient/FamilyMemberHistory.r": "Read FamilyMemberHistory", "patient/Questionnaire.r": "Read Questionnaire", "patient/QuestionnaireResponse.r": "Read QuestionnaireResponse"},
     "DEFAULT_SCOPES": "openid fhirUser",
     "ACCESS_TOKEN_EXPIRE_SECONDS": 300,
     "REFRESH_TOKEN_EXPIRE_SECONDS": 86400,

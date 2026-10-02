@@ -1,0 +1,356 @@
+Test Case ID,Title,Module / Feature,Test Case Description,Pre-Conditions,Test Steps,Test Data,Expected Result,Actual Result,Status (Pass/Fail),Severity,Priority,Tester Name,Test Date,Remarks / Defects ID,Requirement ID,Test Type,Automated Test Ref.
+TC-EXP-0001,Compose health checks and startup,"Ticket 01 — Compose health, TLS and reset",Compose runs the approved local services and safely resets disposable data.,"1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.",1. Start the disposable stack and inspect health endpoints.,Compose file; PostgreSQL; API; web,"1. All declared services become healthy
+2. dependency order is respected
+3. readiness is reported.",,Not Run,HIGH,P2,,,,REQ-CMP;REQ-SEC,Happy,backend/tests/test_compose_ticket01_red.py::test_TC_EXP_0001_compose_declares_healthy_ordered_platform
+TC-EXP-0002,Compose missing dependency,"Ticket 01 — Compose health, TLS and reset",Compose runs the approved local services and safely resets disposable data.,"1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.",1. Stop PostgreSQL and restart the API.,database unavailable,1. API remains unready with a safe dependency message and does not accept writes.,,Not Run,HIGH,P2,,,,REQ-CMP;REQ-SEC,Errors/Messages,backend/tests/test_compose_ticket01_red.py::test_TC_EXP_0002_api_ready_fails_safe_when_dependency_is_missing
+TC-EXP-0003,TLS minimum and certificate mounts,"Ticket 01 — Compose health, TLS and reset",Compose runs the approved local services and safely resets disposable data.,"1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.","1. Connect with TLS 1.2 and attempt TLS 1.1
+2. inspect mounted certificate paths.",TLS 1.2; TLS 1.1; external cert/key,"1. TLS 1.2 succeeds, TLS 1.1 fails, and cert/key are read-only external mounts, not repository files.",,Not Run,HIGH,P2,,,,REQ-CMP;REQ-SEC,Security,backend/tests/test_compose_ticket01_red.py::test_TC_EXP_0003_caddy_enforces_local_tls12_with_external_cert_boundary
+TC-EXP-0004,Named volume persistence and reset,"Ticket 01 — Compose health, TLS and reset",Compose runs the approved local services and safely resets disposable data.,"1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.","1. Write synthetic P001 data, restart, then run the documented reset.",P001; disposable named volume,"1. Restart retains expected data
+2. reset removes only demo-owned rows/files and leaves schema healthy.",,Not Run,HIGH,P2,,,,REQ-CMP;REQ-SEC,State/Prerequisites,backend/tests/test_compose_ticket01_red.py::test_TC_EXP_0004_named_persistence_and_explicit_reset_are_documented
+TC-EXP-0005,Compose regression launch,"Ticket 01 — Compose health, TLS and reset",Compose runs the approved local services and safely resets disposable data.,"1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.",1. Run the documented one-command launch from a clean checkout.,clean checkout; synthetic-only flag,"1. Web, API, database, disclaimer, and demo login are available without network installs or secrets.",,Not Run,HIGH,P2,,,,REQ-CMP;REQ-SEC,Regression,backend/tests/test_compose_ticket01_red.py::test_TC_EXP_0005_clean_launch_has_production_web_and_gateway_routes
+TC-EXP-0006,Outbox dispatches once,"Ticket 02 — Jobs, outbox, retries and idempotency","Background work is durable, retryable, observable, and safe to repeat.","1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.",1. Commit an export job and process its outbox entry.,job=EXP-001; patient=P001,1. Exactly one durable job is dispatched and completion is recorded after the transaction commits.,,Not Run,HIGH,P2,,,,REQ-JOB;REQ-SEC,Happy,
+TC-EXP-0007,Retryable worker failure,"Ticket 02 — Jobs, outbox, retries and idempotency","Background work is durable, retryable, observable, and safe to repeat.","1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.","1. Make the worker dependency fail, then restore it.",attempts=1..3; transient timeout,"1. Backoff retries are bounded
+2. final failure is visible
+3. no success is reported before completion.",,Not Run,HIGH,P2,,,,REQ-JOB;REQ-SEC,API Timeout,
+TC-EXP-0008,Idempotent duplicate delivery,"Ticket 02 — Jobs, outbox, retries and idempotency","Background work is durable, retryable, observable, and safe to repeat.","1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.",1. Deliver the same outbox event twice concurrently.,event_id=evt-001,"1. One artifact/audit effect exists
+2. duplicate delivery is acknowledged without duplicate side effects.",,Not Run,HIGH,P2,,,,REQ-JOB;REQ-SEC,Integrity/Concurrency/Rollback,
+TC-EXP-0009,Malformed job payload,"Ticket 02 — Jobs, outbox, retries and idempotency","Background work is durable, retryable, observable, and safe to repeat.","1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.",1. Queue a payload with an unknown type and missing patient.,"{""type"":""unknown"",""patient"":null}","1. Job is quarantined with a safe error
+2. no data mutation or secret-bearing log is emitted.",,Not Run,HIGH,P2,,,,REQ-JOB;REQ-SEC,API Bad Payload,
+TC-EXP-0010,Worker authorization and audit,"Ticket 02 — Jobs, outbox, retries and idempotency","Background work is durable, retryable, observable, and safe to repeat.","1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.","1. Attempt to enqueue/process a job as patient, clinician, and admin.",role matrix; synthetic P001,"1. Only permitted actors can request the operation
+2. each accepted/rejected outcome is audited safely.",,Not Run,HIGH,P2,,,,REQ-JOB;REQ-SEC,Roles/Permissions,
+TC-EXP-0011,Add coded family history,Ticket 03 — Family health history (FR-04),Patients and clinicians manage a bounded SNOMED CT family-history subset.,"1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.",1. Add a family member condition with a supported SNOMED subset code.,P001; mother; SNOMED=IHD-001,"1. Entry is stored with relationship, code, onset/notes, and displays the approved label.",,Not Run,HIGH,P1,,,,REQ-P1;REQ-FHH,Happy,
+TC-EXP-0012,Family history field validation,Ticket 03 — Family health history (FR-04),Patients and clinicians manage a bounded SNOMED CT family-history subset.,"1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.","1. Submit unknown code, missing relationship, and malformed onset date.","code=NOT-CODE; relationship=""""; date=2026-99-99","1. Each invalid field is rejected inline
+2. no partial entry or audit success persists.",,Not Run,HIGH,P1,,,,REQ-P1;REQ-FHH,Field Validation,
+TC-EXP-0013,Update and remove family history,Ticket 03 — Family health history (FR-04),Patients and clinicians manage a bounded SNOMED CT family-history subset.,"1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.","1. Edit a supported condition, then request deletion.",history_id=FH-001; revised code=SNOMED-002,"1. Correction appends history
+2. deletion is permission-checked and prior audit evidence remains immutable.",,Not Run,HIGH,P1,,,,REQ-P1;REQ-FHH,Edit/Delete/Correction,
+TC-EXP-0014,Family history role restriction,Ticket 03 — Family health history (FR-04),Patients and clinicians manage a bounded SNOMED CT family-history subset.,"1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.","1. Attempt changes as patient, clinician, and admin.",P001; role=patient|clinician|admin,"1. Patient self-service follows policy
+2. unauthorized cross-patient mutation is denied
+3. clinician allowed actions are audited.",,Not Run,HIGH,P1,,,,REQ-P1;REQ-FHH,Roles/Permissions,
+TC-EXP-0015,Empty and no-results family history,Ticket 03 — Family health history (FR-04),Patients and clinicians manage a bounded SNOMED CT family-history subset.,"1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.",1. Open a patient with no family entries and search an unmatched code.,P002; query=rare-code,"1. Loading, empty, and no-results states are explicit and reveal no other patient data.",,Not Run,HIGH,P1,,,,REQ-P1;REQ-FHH,Empty/Loading/No-results,
+TC-EXP-0016,Add parseable UDI device,Ticket 04 — Implantable device list and UDI (FR-05),Devices support add/change/view and validated sample UDI parsing.,"1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.",1. Enter a supported sample UDI.,P001; UDI=01098765432109876521123110,"1. Device, issuer, production identifier, and parsed elements are stored and viewable.",,Not Run,HIGH,P1,,,,REQ-P1;REQ-DEV,Happy,
+TC-EXP-0017,Alternate UDI format,Ticket 04 — Implantable device list and UDI (FR-05),Devices support add/change/view and validated sample UDI parsing.,"1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.",1. Enter an approved HIBCC-style sample and view the same device through search.,HIBCC sample UDI; P001,1. Alternate parser returns the correct identity without changing unrelated clinical rows.,,Not Run,HIGH,P1,,,,REQ-P1;REQ-DEV,Alternate,
+TC-EXP-0018,Reject invalid UDI,Ticket 04 — Implantable device list and UDI (FR-05),Devices support add/change/view and validated sample UDI parsing.,"1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.","1. Submit malformed, duplicate, and unsupported UDI strings.","UDI=""bad""; duplicate UDI; unsupported format",1. Specific validation prevents persistence and explains the supported sample formats.,,Not Run,HIGH,P1,,,,REQ-P1;REQ-DEV,Invalid,
+TC-EXP-0019,Device correction boundary,Ticket 04 — Implantable device list and UDI (FR-05),Devices support add/change/view and validated sample UDI parsing.,"1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.",1. Change a device status at minimum and maximum allowed lengths.,status=active|retired; serial length endpoints,"1. Boundary values save
+2. overlong values fail
+3. prior device version and audit remain available.",,Not Run,HIGH,P1,,,,REQ-P1;REQ-DEV,Boundary,
+TC-EXP-0020,Device API bad payload,Ticket 04 — Implantable device list and UDI (FR-05),Devices support add/change/view and validated sample UDI parsing.,"1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.",1. POST unknown fields and wrong data types to the device endpoint.,"{""udi"":123,""unexpected"":true}","1. API returns structured 4xx
+2. transaction has no partial device or audit mutation.",,Not Run,HIGH,P1,,,,REQ-P1;REQ-DEV,API Bad Payload,
+TC-EXP-0021,Schedule authorized export,Ticket 05 — Scheduled/time-limited population export,"P1 export scheduling, bounded population selection, expiry, and delivery are fail-closed.","1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.",1. Create a clinician-authorized export schedule for a bounded cohort.,cohort=synthetic-demo; cadence=daily; format=JSON,"1. Schedule is created with owner, scope, next run, and retention policy
+2. no export runs before due time.",,Not Run,HIGH,P1,,,,REQ-P1;REQ-EXP;REQ-JOB,Happy,
+TC-EXP-0022,Export prerequisite and expiry,Ticket 05 — Scheduled/time-limited population export,"P1 export scheduling, bounded population selection, expiry, and delivery are fail-closed.","1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.","1. Run a due job, download before expiry, then after expiry.","expires=15m; cohort=P001,P002","1. Only authorized, complete artifacts download
+2. expired artifact is unavailable and cleaned up.",,Not Run,HIGH,P1,,,,REQ-P1;REQ-EXP;REQ-JOB,State/Prerequisites,
+TC-EXP-0023,Population export isolation,Ticket 05 — Scheduled/time-limited population export,"P1 export scheduling, bounded population selection, expiry, and delivery are fail-closed.","1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.",1. Request another tenant/cohort and include an unauthorized patient.,"P001,P002,P999","1. Unauthorized members are excluded or request denied
+2. response discloses no patient existence.",,Not Run,HIGH,P1,,,,REQ-P1;REQ-EXP;REQ-JOB,Security,
+TC-EXP-0024,Export dependency failure rollback,Ticket 05 — Scheduled/time-limited population export,"P1 export scheduling, bounded population selection, expiry, and delivery are fail-closed.","1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.",1. Fail storage or audit persistence during generation.,storage timeout; audit unavailable,"1. No partial file, row, job success, or false audit event remains
+2. retry is safe.",,Not Run,HIGH,P1,,,,REQ-P1;REQ-EXP;REQ-JOB,Integrity/Concurrency/Rollback,
+TC-EXP-0025,Export API failure message,Ticket 05 — Scheduled/time-limited population export,"P1 export scheduling, bounded population selection, expiry, and delivery are fail-closed.","1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.",1. Call export API with unavailable worker and inspect response.,HTTP 503; correlation id=exp-err-01,"1. Safe retryable error includes correlation identifier and no EHI, credentials, or stack trace.",,Not Run,HIGH,P1,,,,REQ-P1;REQ-EXP;REQ-JOB,API Failure,
+TC-EXP-0026,Submit questionnaire,Ticket 06 — Patient health information capture (FR-15),Questionnaire submission creates a clinician review queue item.,"1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.",1. Patient submits a supported questionnaire response.,P001; PHQ-demo; answers=synthetic,"1. Submission is stored once, linked to P001, queued for clinician review, and audited.",,Not Run,HIGH,P1,,,,REQ-P1;REQ-PHI,Happy,
+TC-EXP-0027,Questionnaire field validation,Ticket 06 — Patient health information capture (FR-15),Questionnaire submission creates a clinician review queue item.,"1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.","1. Submit missing required answer, wrong type, and oversized free-text note.",required unanswered; answer=object; note=10001 chars,"1. Field-specific errors return
+2. no incomplete submission or review item is created.",,Not Run,HIGH,P1,,,,REQ-P1;REQ-PHI,Field Validation,
+TC-EXP-0028,Review queue permissions,Ticket 06 — Patient health information capture (FR-15),Questionnaire submission creates a clinician review queue item.,"1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.","1. Open and resolve a queue item as patient, clinician, and admin.",queue=Q-001; roles,"1. Patient cannot see another patient’s queue
+2. clinician can review
+3. admin access follows least privilege.",,Not Run,HIGH,P1,,,,REQ-P1;REQ-PHI,Roles/Permissions,
+TC-EXP-0029,Empty/loading review queue,Ticket 06 — Patient health information capture (FR-15),Questionnaire submission creates a clinician review queue item.,"1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.",1. Open queue with zero pending items and simulate delayed load.,clinician; zero items; 2s delay,"1. Loading indicator and clear empty state appear
+2. no stale patient data flashes.",,Not Run,HIGH,P1,,,,REQ-P1;REQ-PHI,Empty/Loading/No-results,
+TC-EXP-0030,Questionnaire regression,Ticket 06 — Patient health information capture (FR-15),Questionnaire submission creates a clinician review queue item.,"1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.","1. Submit, review, and correct a response after a release.",P001; response v1 then v2,"1. Core submission, queue routing, audit, and patient scoping remain intact.",,Not Run,HIGH,P1,,,,REQ-P1;REQ-PHI,Regression,
+TC-EXP-0031,Request amendment,Ticket 07 — Amendments (FR-16),Patient requests and clinician resolves append/accept/deny/notify amendment outcomes.,"1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.",1. Patient submits a correction request for their demographic field.,P001; field=preferred_language; requested=eng-US,"1. Request is created with reason, target, status=pending, and audit event.",,Not Run,HIGH,P1,,,,REQ-P1;REQ-AMD,Happy,
+TC-EXP-0032,Alternate amendment outcome,Ticket 07 — Amendments (FR-16),Patient requests and clinician resolves append/accept/deny/notify amendment outcomes.,"1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.",1. Clinician chooses append and then notify.,request=AMD-001; outcome=append|notify,"1. Append preserves original value, records clinician decision, and sends a safe notification event.",,Not Run,HIGH,P1,,,,REQ-P1;REQ-AMD,Alternate,
+TC-EXP-0033,Amendment state prerequisites,Ticket 07 — Amendments (FR-16),Patient requests and clinician resolves append/accept/deny/notify amendment outcomes.,"1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.","1. Attempt duplicate resolution, edit a denied request, and resolve without review permission.",AMD-001 status=resolved,1. Invalid transitions are rejected without mutation and explain current state.,,Not Run,HIGH,P1,,,,REQ-P1;REQ-AMD,State/Prerequisites,
+TC-EXP-0034,Amendment concurrency,Ticket 07 — Amendments (FR-16),Patient requests and clinician resolves append/accept/deny/notify amendment outcomes.,"1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.",1. Two clinicians resolve the same pending request concurrently.,AMD-002; clinician-A/B,"1. One decision wins under policy
+2. stale decision conflicts
+3. exactly one resolution audit is retained.",,Not Run,HIGH,P1,,,,REQ-P1;REQ-AMD,Integrity/Concurrency/Rollback,
+TC-EXP-0035,Amendment errors,Ticket 07 — Amendments (FR-16),Patient requests and clinician resolves append/accept/deny/notify amendment outcomes.,"1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.",1. Submit an empty reason and request a nonexistent target field.,"reason=""""; field=not-a-field",1. Safe 4xx messages identify correction errors without exposing unrelated EHI.,,Not Run,HIGH,P1,,,,REQ-P1;REQ-AMD,Errors/Messages,
+TC-EXP-0036,Select one patient,Ticket 08 — Patient selection API (FR-17),A registered app selects one authorized patient with bounded parameters.,"1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.",1. Submit required app and patient-selection parameters.,client=app-001; patient=P001; scope=Patient.read,1. Response returns one stable patient identifier within the authorized compartment and is audited.,,Not Run,HIGH,P1,,,,REQ-P1;REQ-SEL,Happy,
+TC-EXP-0037,Selection API success contract,Ticket 08 — Patient selection API (FR-17),A registered app selects one authorized patient with bounded parameters.,"1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.",1. Call with valid paging/filter parameters and inspect content type.,Accept=application/fhir+json; patient=P001,1. API returns the documented machine-readable success shape and correlation header.,,Not Run,HIGH,P1,,,,REQ-P1;REQ-SEL,API Success,
+TC-EXP-0038,Selection API unavailable,Ticket 08 — Patient selection API (FR-17),A registered app selects one authorized patient with bounded parameters.,"1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.",1. Simulate database timeout and retry.,DB timeout; request=SEL-001,"1. Controlled timeout/5xx response contains safe error shape
+2. no partial selection is returned.",,Not Run,HIGH,P1,,,,REQ-P1;REQ-SEL,API Failure,
+TC-EXP-0039,Patient selection authorization,Ticket 08 — Patient selection API (FR-17),A registered app selects one authorized patient with bounded parameters.,"1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.","1. Use missing scope, expired token, and wrong patient context.",scope absent; expired token; P002 context,1. Request is denied before query evaluation with uniform safe message and audit outcome.,,Not Run,HIGH,P1,,,,REQ-P1;REQ-SEL,Security,
+TC-EXP-0040,No matching patient,Ticket 08 — Patient selection API (FR-17),A registered app selects one authorized patient with bounded parameters.,"1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.",1. Search a validly scoped query that matches no patient.,query=synthetic-none,"1. No-results response is deterministic, empty, and does not reveal whether other identifiers exist.",,Not Run,HIGH,P1,,,,REQ-P1;REQ-SEL,Empty/Loading/No-results,
+TC-EXP-0041,Keyboard clinician flow,Ticket 09 — Accessibility-centered core screens (FR-20),"Core workflows meet WCAG 2.0 AA-oriented keyboard, labels, contrast, motion, and assistive-technology checks.","1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.","1. Complete login, patient search, order review, and export using keyboard only.",synthetic P001; Tab/Enter/Escape,"1. Focus order is logical, visible, trapped in dialogs, and no action requires a pointer.",,Not Run,HIGH,P1,,,,REQ-P1;REQ-A11Y,Happy,
+TC-EXP-0042,Accessibility viewport boundary,Ticket 09 — Accessibility-centered core screens (FR-20),"Core workflows meet WCAG 2.0 AA-oriented keyboard, labels, contrast, motion, and assistive-technology checks.","1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.","1. Check 200% zoom, narrow viewport, and long error labels.",viewport=320px; zoom=200%,1. Content remains operable without clipped controls or two-dimensional scrolling except permitted data tables.,,Not Run,HIGH,P1,,,,REQ-P1;REQ-A11Y,Boundary,
+TC-EXP-0043,Accessible invalid states,Ticket 09 — Accessibility-centered core screens (FR-20),"Core workflows meet WCAG 2.0 AA-oriented keyboard, labels, contrast, motion, and assistive-technology checks.","1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.",1. Submit invalid medication and questionnaire forms with screen-reader inspection.,missing required fields; invalid date,"1. Labels, descriptions, and errors are programmatically associated and announced without relying on color.",,Not Run,HIGH,P1,,,,REQ-P1;REQ-A11Y,Invalid,
+TC-EXP-0044,Loading empty error states,Ticket 09 — Accessibility-centered core screens (FR-20),"Core workflows meet WCAG 2.0 AA-oriented keyboard, labels, contrast, motion, and assistive-technology checks.","1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.",1. Inspect async patient search and FHIR screens with reduced motion enabled.,prefers-reduced-motion=true; no results,"1. Loading, empty, and error status are announced
+2. motion is reduced
+3. retry is keyboard reachable.",,Not Run,HIGH,P1,,,,REQ-P1;REQ-A11Y,Empty/Loading/No-results,
+TC-EXP-0045,Accessibility regression,Ticket 09 — Accessibility-centered core screens (FR-20),"Core workflows meet WCAG 2.0 AA-oriented keyboard, labels, contrast, motion, and assistive-technology checks.","1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.",1. Run automated WCAG checks and keyboard smoke suite after UI changes.,core screen route set,"1. No critical AA regression
+2. conformance evidence identifies any accepted limitation.",,Not Run,HIGH,P1,,,,REQ-P1;REQ-A11Y,Regression,
+TC-EXP-0046,Register WebAuthn credential,Ticket 10 — WebAuthn/FIDO2 MFA (FR-24 P1),P1 WebAuthn is an optional additional factor while mandatory TOTP policy remains intact.,"1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.",1. Register a platform authenticator after authenticated TOTP enrollment.,user=clinician-demo; authenticator=synthetic,"1. Credential is bound to the correct user/origin
+2. only public credential metadata is stored.",,Not Run,HIGH,P1,,,,REQ-P1;REQ-MFA;REQ-SEC,Happy,
+TC-EXP-0047,WebAuthn alternate authenticator,Ticket 10 — WebAuthn/FIDO2 MFA (FR-24 P1),P1 WebAuthn is an optional additional factor while mandatory TOTP policy remains intact.,"1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.",1. Authenticate with a roaming key and then platform key.,resident-key=false/true; origin=https://localhost,1. Both approved authenticator paths work with correct RP/origin and do not broaden role access.,,Not Run,HIGH,P1,,,,REQ-P1;REQ-MFA;REQ-SEC,Alternate,
+TC-EXP-0048,Reject invalid WebAuthn assertion,Ticket 10 — WebAuthn/FIDO2 MFA (FR-24 P1),P1 WebAuthn is an optional additional factor while mandatory TOTP policy remains intact.,"1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.","1. Use wrong challenge, origin, RP ID, and replayed assertion.",challenge=stale; rpId=evil.example,"1. Assertion is rejected, session is not created, and safe security audit event is written.",,Not Run,HIGH,P1,,,,REQ-P1;REQ-MFA;REQ-SEC,Invalid,
+TC-EXP-0049,WebAuthn secret boundary,Ticket 10 — WebAuthn/FIDO2 MFA (FR-24 P1),P1 WebAuthn is an optional additional factor while mandatory TOTP policy remains intact.,"1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.","1. Inspect database, logs, and responses after registration/authentication.",credential public key; synthetic assertion,"1. No private key, authenticator secret, token, or assertion payload is logged or returned.",,Not Run,HIGH,P1,,,,REQ-P1;REQ-MFA;REQ-SEC,Security,
+TC-EXP-0050,WebAuthn timeout,Ticket 10 — WebAuthn/FIDO2 MFA (FR-24 P1),P1 WebAuthn is an optional additional factor while mandatory TOTP policy remains intact.,"1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.",1. Let registration/authentication challenge expire.,challenge_ttl=60s,1. Expired challenge fails deterministically and user can request a fresh challenge without duplicate credential.,,Not Run,HIGH,P1,,,,REQ-P1;REQ-MFA;REQ-SEC,API Timeout,
+TC-EXP-0051,Grant break-glass access,Ticket 11 — Emergency break-glass access (FR-27 P1),Defined users can obtain time-limited emergency access with justification and complete auditing.,"1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.",1. Eligible clinician requests emergency access with a reason.,user=oncall-clinician; patient=P002; reason=synthetic emergency,"1. Time-limited access is granted only after required justification
+2. banner and audit event identify break-glass use.",,Not Run,HIGH,P1,,,,REQ-P1;REQ-SEC;REQ-EMERG,Happy,
+TC-EXP-0052,Break-glass justification validation,Ticket 11 — Emergency break-glass access (FR-27 P1),Defined users can obtain time-limited emergency access with justification and complete auditing.,"1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.","1. Submit blank, too-short, and overlong justification.","reason=""""; 1 char; 10001 chars",1. Request is rejected with field-specific feedback and no temporary authorization.,,Not Run,HIGH,P1,,,,REQ-P1;REQ-SEC;REQ-EMERG,Field Validation,
+TC-EXP-0053,Break-glass role restriction,Ticket 11 — Emergency break-glass access (FR-27 P1),Defined users can obtain time-limited emergency access with justification and complete auditing.,"1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.","1. Attempt emergency access as patient, developer, and unauthorized clinician.",roles; P002,"1. Only defined eligible users can request
+2. denial is uniform and audited without patient existence disclosure.",,Not Run,HIGH,P1,,,,REQ-P1;REQ-SEC;REQ-EMERG,Roles/Permissions,
+TC-EXP-0054,Break-glass expiry and revocation,Ticket 11 — Emergency break-glass access (FR-27 P1),Defined users can obtain time-limited emergency access with justification and complete auditing.,"1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.","1. Use access at expiry, revoke it early, then retry.",ttl=15m; revoked=true,"1. Expired/revoked access fails closed
+2. ordinary session and audit chain remain consistent.",,Not Run,HIGH,P1,,,,REQ-P1;REQ-SEC;REQ-EMERG,State/Prerequisites,
+TC-EXP-0055,Break-glass audit integrity,Ticket 11 — Emergency break-glass access (FR-27 P1),Defined users can obtain time-limited emergency access with justification and complete auditing.,"1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.",1. Tamper with the emergency access event and verify the chain.,audit event=BG-001,"1. Chain verification detects tampering
+2. break-glass cannot be silently erased or disabled.",,Not Run,HIGH,P1,,,,REQ-P1;REQ-SEC;REQ-EMERG,Integrity/Concurrency/Rollback,
+TC-EXP-0056,Create transition package,Ticket 12 — Transitions of care (FR-06 P2),"Deferred P2 transition records are modeled as an explicit safe boundary, not silently shipped.","1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.",1. Create a synthetic transition summary for a receiving facility.,P001; destination=demo-facility; synthetic,"1. If enabled by the P2 feature flag, package validates, versions, and audits without real transmission.",,Not Run,HIGH,P2,,,,REQ-P2;REQ-TOC,Happy,
+TC-EXP-0057,Transition invalid destination,Ticket 12 — Transitions of care (FR-06 P2),"Deferred P2 transition records are modeled as an explicit safe boundary, not silently shipped.","1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.","1. Submit missing destination, unsupported format, and real-data marker.","destination=""""; format=bad; contains_real_ehi=true","1. Request is rejected or remains explicitly deferred
+2. no transmission or artifact is created.",,Not Run,HIGH,P2,,,,REQ-P2;REQ-TOC,Invalid,
+TC-EXP-0058,Transition permission boundary,Ticket 12 — Transitions of care (FR-06 P2),"Deferred P2 transition records are modeled as an explicit safe boundary, not silently shipped.","1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.","1. Attempt create/read as patient, clinician, admin, and developer.",role matrix; P001,"1. Only approved role/policy can access
+2. deferred capability does not bypass existing patient scope.",,Not Run,HIGH,P2,,,,REQ-P2;REQ-TOC,Roles/Permissions,
+TC-EXP-0059,Transition API dependency failure,Ticket 12 — Transitions of care (FR-06 P2),"Deferred P2 transition records are modeled as an explicit safe boundary, not silently shipped.","1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.",1. Simulate downstream exchange timeout.,HTTP 504; correlation=TOC-01,"1. No partial outgoing transmission or false success
+2. safe retry/deferral status is returned.",,Not Run,HIGH,P2,,,,REQ-P2;REQ-TOC,API Timeout,
+TC-EXP-0060,Transition regression guard,Ticket 12 — Transitions of care (FR-06 P2),"Deferred P2 transition records are modeled as an explicit safe boundary, not silently shipped.","1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.",1. Run P0 core flow with P2 feature disabled.,feature_flag=off,"1. P0 medication, export, FHIR, audit, and login flows remain unaffected
+2. UI clearly marks P2 as unavailable.",,Not Run,HIGH,P2,,,,REQ-P2;REQ-TOC,Regression,
+TC-EXP-0061,Reconcile candidate record,Ticket 13 — Clinical information reconciliation (FR-07 P2),Deferred reconciliation records conflicts explicitly and never silently overwrites source data.,"1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.",1. Review two synthetic medication sources and accept a candidate.,P001; source=A/B; medication=demo-amoxicillin,"1. Accepted decision records source provenance, reviewer, and immutable prior values.",,Not Run,HIGH,P2,,,,REQ-P2;REQ-REC,Happy,
+TC-EXP-0062,Reconciliation conflict,Ticket 13 — Clinical information reconciliation (FR-07 P2),Deferred reconciliation records conflicts explicitly and never silently overwrites source data.,"1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.",1. Submit concurrent accept decisions for the same candidate.,candidate=REC-001; users=A/B,"1. Conflict is surfaced
+2. one policy-approved result applies
+3. no silent overwrite occurs.",,Not Run,HIGH,P2,,,,REQ-P2;REQ-REC,Integrity/Concurrency/Rollback,
+TC-EXP-0063,Reject malformed reconciliation payload,Ticket 13 — Clinical information reconciliation (FR-07 P2),Deferred reconciliation records conflicts explicitly and never silently overwrites source data.,"1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.","1. Send missing source, unknown entity, and invalid decision.",source=null; entity=unknown; decision=maybe,1. Structured validation rejects request with no mutation or audit success.,,Not Run,HIGH,P2,,,,REQ-P2;REQ-REC,API Bad Payload,
+TC-EXP-0064,Reconciliation access,Ticket 13 — Clinical information reconciliation (FR-07 P2),Deferred reconciliation records conflicts explicitly and never silently overwrites source data.,"1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.","1. Try to reconcile as patient, clinician, admin, and developer.",role matrix,"1. Only authorized clinical reviewer can mutate
+2. all reads are compartment-scoped and audited.",,Not Run,HIGH,P2,,,,REQ-P2;REQ-REC,Roles/Permissions,
+TC-EXP-0065,No candidates state,Ticket 13 — Clinical information reconciliation (FR-07 P2),Deferred reconciliation records conflicts explicitly and never silently overwrites source data.,"1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.",1. Open reconciliation queue when no candidates exist.,P002; empty queue,"1. Explicit empty state and loading/error handling appear
+2. no other patient’s candidates are shown.",,Not Run,HIGH,P2,,,,REQ-P2;REQ-REC,Empty/Loading/No-results,
+TC-EXP-0066,Calculate synthetic measure,Ticket 14 — CQMs record/calculate/report (FR-11–13 P2),Deferred quality-measure workflows validate synthetic inputs and keep calculations reproducible.,"1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.",1. Run a documented measure over a fixed synthetic cohort.,"measure=DEMO-HTN-01; cohort=P001,P002","1. If enabled, numerator, denominator, exclusions, version, and calculation timestamp are reproducible.",,Not Run,HIGH,P2,,,,REQ-P2;REQ-CQM,Happy,
+TC-EXP-0067,Measure boundary dates,Ticket 14 — CQMs record/calculate/report (FR-11–13 P2),Deferred quality-measure workflows validate synthetic inputs and keep calculations reproducible.,"1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.",1. Calculate at start/end dates and empty cohort.,2026-01-01..2026-12-31; cohort=none,"1. Inclusive date boundaries are deterministic
+2. empty cohort returns zero/empty safely, not divide-by-zero.",,Not Run,HIGH,P2,,,,REQ-P2;REQ-CQM,Boundary,
+TC-EXP-0068,CQM import bad payload,Ticket 14 — CQMs record/calculate/report (FR-11–13 P2),Deferred quality-measure workflows validate synthetic inputs and keep calculations reproducible.,"1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.",1. Upload malformed measure definition and unknown code.,JSON invalid; code=NOT-CODE,"1. Import fails with structured validation, no executable measure is stored, and no partial update occurs.",,Not Run,HIGH,P2,,,,REQ-P2;REQ-CQM,API Bad Payload,
+TC-EXP-0069,CQM calculation error message,Ticket 14 — CQMs record/calculate/report (FR-11–13 P2),Deferred quality-measure workflows validate synthetic inputs and keep calculations reproducible.,"1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.",1. Simulate unavailable terminology or database during calculation.,terminology timeout; DB unavailable,1. Controlled error includes correlation and retry guidance without patient-level payload in logs.,,Not Run,HIGH,P2,,,,REQ-P2;REQ-CQM,Errors/Messages,
+TC-EXP-0070,CQM privacy/security,Ticket 14 — CQMs record/calculate/report (FR-11–13 P2),Deferred quality-measure workflows validate synthetic inputs and keep calculations reproducible.,"1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.",1. Attempt population report as unauthorized user and inspect export.,role=patient; cohort=all,"1. Access is denied or de-identified by policy
+2. deferred status never becomes a data leak.",,Not Run,HIGH,P2,,,,REQ-P2;REQ-CQM,Security,
+TC-EXP-0071,QMS evidence package,Ticket 15 — Quality management system (FR-34 P2),Lightweight contributing/testing guidance and evidence controls are explicit while formal QMS remains deferred.,"1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.",1. Run the documented validation checklist for an expansion release.,version=expansion-1; synthetic evidence,"1. Checklist records requirements, test evidence, reviewer, date, and disposition without claiming certification.",,Not Run,HIGH,P2,,,,REQ-P2;REQ-QMS,Happy,
+TC-EXP-0072,QMS alternate evidence path,Ticket 15 — Quality management system (FR-34 P2),Lightweight contributing/testing guidance and evidence controls are explicit while formal QMS remains deferred.,"1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.",1. Attach automated and manual evidence for the same requirement.,REQ-P1; automated ref; manual note,1. Evidence links remain traceable and duplicate evidence is merged without losing provenance.,,Not Run,HIGH,P2,,,,REQ-P2;REQ-QMS,Alternate,
+TC-EXP-0073,QMS incomplete evidence validation,Ticket 15 — Quality management system (FR-34 P2),Lightweight contributing/testing guidance and evidence controls are explicit while formal QMS remains deferred.,"1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.","1. Submit a release with missing requirement, tester, or date.",missing REQ; blank tester/date,"1. Release evidence is blocked with clear remediation
+2. no false pass is recorded.",,Not Run,HIGH,P2,,,,REQ-P2;REQ-QMS,Invalid,
+TC-EXP-0074,QMS permissions and immutability,Ticket 15 — Quality management system (FR-34 P2),Lightweight contributing/testing guidance and evidence controls are explicit while formal QMS remains deferred.,"1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.","1. Try to alter a signed evidence record as tester, developer, and admin.",evidence=E-001; role matrix,"1. Only correction workflow can append a revision
+2. original evidence remains immutable and access is audited.",,Not Run,HIGH,P2,,,,REQ-P2;REQ-QMS,Roles/Permissions,
+TC-EXP-0075,QMS regression checklist,Ticket 15 — Quality management system (FR-34 P2),Lightweight contributing/testing guidance and evidence controls are explicit while formal QMS remains deferred.,"1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.","1. Re-run CSV structural, secret, requirement, and traceability validators.",CSV expansion matrix; no secrets,"1. All mandatory columns, IDs, allowed values, requirement coverage, and no-secret checks remain passing.",,Not Run,HIGH,P2,,,,REQ-P2;REQ-QMS,Regression,
+TC-EXP-0076,Direct/DSI feature flag boundary,Ticket 16 — P2 Direct Project and decision-support boundary (FR-09/10),Deferred Direct messaging and decision-support interventions have explicit no-surprise boundaries.,"1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.",1. Inspect routes and UI with deferred features disabled.,direct=false; dsi=false,"1. No deferred route accepts clinical data
+2. UI identifies capability as deferred and P0 flows remain available.",,Not Run,HIGH,P2,,,,REQ-P2;REQ-DIR;REQ-DSI,Happy,
+TC-EXP-0077,Reject unsupported Direct message,Ticket 16 — P2 Direct Project and decision-support boundary (FR-09/10),Deferred Direct messaging and decision-support interventions have explicit no-surprise boundaries.,"1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.",1. POST an unsupported Direct message payload.,recipient=synthetic; payload=unsupported,"1. Endpoint returns safe 404/501 or documented deferred response
+2. no message or audit success is created.",,Not Run,HIGH,P2,,,,REQ-P2;REQ-DIR;REQ-DSI,API Failure,
+TC-EXP-0078,Decision-support invalid recommendation,Ticket 16 — P2 Direct Project and decision-support boundary (FR-09/10),Deferred Direct messaging and decision-support interventions have explicit no-surprise boundaries.,"1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.",1. Submit a recommendation without source/rule version.,rule_version=null; source=null,"1. No intervention is shown as clinical authority
+2. request is rejected or labeled deferred.",,Not Run,HIGH,P2,,,,REQ-P2;REQ-DIR;REQ-DSI,Field Validation,
+TC-EXP-0079,Deferred capability authorization,Ticket 16 — P2 Direct Project and decision-support boundary (FR-09/10),Deferred Direct messaging and decision-support interventions have explicit no-surprise boundaries.,"1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.",1. Attempt Direct/DSI access with every role.,patient|clinician|admin|developer,1. Deferred capability cannot grant access or bypass role/patient authorization.,,Not Run,HIGH,P2,,,,REQ-P2;REQ-DIR;REQ-DSI,Security,
+TC-EXP-0080,P2 boundary regression,Ticket 16 — P2 Direct Project and decision-support boundary (FR-09/10),Deferred Direct messaging and decision-support interventions have explicit no-surprise boundaries.,"1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.",1. Run P0 medication interaction and FHIR flows while Direct/DSI remains off.,feature flags off; P001,"1. P0 safety and API results are unchanged
+2. no deferred dependency is required.",,Not Run,HIGH,P2,,,,REQ-P2;REQ-DIR;REQ-DSI,Regression,
+TC-EXP-0081,Bulk/C-CDA deferred status,"Ticket 17 — P2 bulk export, C-CDA and safety design boundary",Deferred bulk export/C-CDA/formal safety work is explicitly bounded and does not weaken privacy or quality controls.,"1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.",1. Request bulk export and C-CDA creation through documented interfaces.,cohort=all; format=C-CDA,"1. Capability is denied or marked deferred
+2. no unbounded artifact or transmission is produced.",,Not Run,HIGH,P2,,,,REQ-P2;REQ-EXP;REQ-QMS,Happy,
+TC-EXP-0082,Bulk request boundary,"Ticket 17 — P2 bulk export, C-CDA and safety design boundary",Deferred bulk export/C-CDA/formal safety work is explicitly bounded and does not weaken privacy or quality controls.,"1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.","1. Submit oversized cohort, invalid format, and missing authorization.",cohort=all; format=exe; auth=missing,"1. Request fails safely with bounded response, no partial file, and no patient enumeration.",,Not Run,HIGH,P2,,,,REQ-P2;REQ-EXP;REQ-QMS,Boundary,
+TC-EXP-0083,Formal safety evidence prerequisite,"Ticket 17 — P2 bulk export, C-CDA and safety design boundary",Deferred bulk export/C-CDA/formal safety work is explicitly bounded and does not weaken privacy or quality controls.,"1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.",1. Attempt to enable deferred safety workflow without usability evidence.,safety_evidence=missing,1. Feature remains disabled and requirement gap is recorded rather than represented as certified safety.,,Not Run,HIGH,P2,,,,REQ-P2;REQ-EXP;REQ-QMS,State/Prerequisites,
+TC-EXP-0084,Bulk/C-CDA failure rollback,"Ticket 17 — P2 bulk export, C-CDA and safety design boundary",Deferred bulk export/C-CDA/formal safety work is explicitly bounded and does not weaken privacy or quality controls.,"1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.",1. Simulate storage failure during a deferred generation attempt.,storage=unavailable,"1. No row, file, audit success, or leaked payload remains
+2. retry/deferral is safe.",,Not Run,HIGH,P2,,,,REQ-P2;REQ-EXP;REQ-QMS,Integrity/Concurrency/Rollback,
+TC-EXP-0085,Deferred scope regression,"Ticket 17 — P2 bulk export, C-CDA and safety design boundary",Deferred bulk export/C-CDA/formal safety work is explicitly bounded and does not weaken privacy or quality controls.,"1. Disposable local environment is available.
+2. Only synthetic identifiers and approved demo fixtures are loaded.
+3. The actor and prerequisite state named in the test data are prepared.",1. Run expansion validator against all P1/P2 requirement IDs and 17 ticket labels.,requirements set; tickets 01-17,"1. Every applicable expansion requirement is covered, no open question is silently converted to a pass, and P0 CSV is unchanged.",,Not Run,HIGH,P2,,,,REQ-P2;REQ-EXP;REQ-QMS,Regression,
+TC-EXP-0086,Register WebAuthn credential,Ticket 07 — WebAuthn/recovery (FR-24 P1/P2),WebAuthn registration uses a real library ceremony boundary and stores only public credential metadata.,"1. Disposable local environment is available.
+2. The actor and prerequisite state named in the test data are prepared.",1. Request registration options and complete a deterministic authenticator registration.,user=synthetic-clinician; origin=https://localhost; rpId=localhost,"1. Registration validates origin/RP/challenge.
+2. Only public credential metadata is stored.",,Not Run,HIGH,P1,,,REQ-P1;REQ-MFA;REQ-SEC,,Happy,backend/tests/test_ticket07_expansion.py::test_TC_EXP_0086_registration_options_are_bound_and_secret_free
+TC-EXP-0087,Manage multiple WebAuthn credentials,Ticket 07 — WebAuthn/recovery (FR-24 P1/P2),Multiple credentials can be named and revoked independently without broadening access.,"1. Disposable local environment is available.
+2. The actor and prerequisite state named in the test data are prepared.","1. Rename one credential, list both, revoke one, and verify only the other remains active.",credential-a; credential-b,"1. Names are bounded and persisted.
+2. Revocation is audit-visible and does not delete the public record.",,Not Run,HIGH,P1,,,REQ-P1;REQ-MFA;REQ-SEC,,Edit/Delete/Correction,backend/tests/test_ticket07_expansion.py::test_TC_EXP_0087_multiple_credentials_rename_and_revoke
+TC-EXP-0088,Reject malformed and cross-boundary WebAuthn ceremonies,Ticket 07 — WebAuthn/recovery (FR-24 P1/P2),"Malformed, wrong-origin/RP, replayed, expired, or session-bound ceremonies fail closed.","1. Disposable local environment is available.
+2. The actor and prerequisite state named in the test data are prepared.","1. Submit malformed, wrong-origin/RP, wrong-session, replayed, and expired ceremony payloads.",malformed JSON; evil.example; stale challenge,"1. No session is created.
+2. No credential is created or mutated.
+3. Failures are safely audited.",,Not Run,HIGH,P1,,,REQ-P1;REQ-MFA;REQ-SEC,,Invalid,backend/tests/test_ticket07_expansion.py::test_TC_EXP_0088_challenge_replay_expiry_and_session_binding
+TC-EXP-0089,Reject WebAuthn counter regression,Ticket 07 — WebAuthn/recovery (FR-24 P1/P2),Authenticator signature counters cannot move backwards or repeat when the authenticator reports a nonzero counter.,"1. Disposable local environment is available.
+2. The actor and prerequisite state named in the test data are prepared.",1. Authenticate with a lower and repeated deterministic counter.,counter=7 then 7; prior=8,"1. Regression is rejected.
+2. The credential and session remain unchanged.",,Not Run,HIGH,P1,,,REQ-P1;REQ-MFA;REQ-SEC,,Integrity/Concurrency/Rollback,backend/tests/test_ticket07_expansion.py::test_TC_EXP_0089_counter_regression_is_rejected
+TC-EXP-0090,WebAuthn secret and trace boundary,Ticket 07 — WebAuthn/recovery (FR-24 P1/P2),"Credential secrets and assertion payloads never appear in responses, traces, audit details, or logs.","1. Disposable local environment is available.
+2. The actor and prerequisite state named in the test data are prepared.","1. Inspect response, database, trace, audit, and log output.",synthetic private key; assertion payload,"1. No private key, raw challenge, assertion, or code is returned or logged.
+2. Correlation metadata remains available.",,Not Run,HIGH,P1,,,REQ-P1;REQ-MFA;REQ-SEC,,Security,backend/tests/test_ticket07_expansion.py::test_TC_EXP_0090_web_authn_secret_redaction
+TC-EXP-0091,WebAuthn challenge expiry,Ticket 07 — WebAuthn/recovery (FR-24 P1/P2),Expired registration and authentication challenges fail deterministically and a fresh challenge can be requested.,"1. Disposable local environment is available.
+2. The actor and prerequisite state named in the test data are prepared.","1. Expire a challenge, submit it, then request a fresh one.",challenge_ttl=60s,"1. Expired challenge fails.
+2. Fresh challenge differs and does not create a duplicate credential.",,Not Run,HIGH,P1,,,REQ-P1;REQ-MFA;REQ-SEC,,API Timeout,backend/tests/test_ticket07_expansion.py::test_TC_EXP_0091_expired_challenge_is_single_use
+TC-EXP-0092,TOTP fallback remains available,Ticket 07 — WebAuthn/recovery (FR-24 P1/P2),WebAuthn is optional and a correctly enrolled TOTP remains a valid fallback.,"1. Disposable local environment is available.
+2. The actor and prerequisite state named in the test data are prepared.",1. Authenticate without a passkey using the current TOTP.,totp=deterministic current code,"1. Login succeeds with TOTP.
+2. No passkey is implicitly enrolled or exposed.",,Not Run,HIGH,P1,,,REQ-P1;REQ-MFA;REQ-SEC,,Alternate,backend/tests/test_ticket07_expansion.py::test_TC_EXP_0092_totp_fallback_remains_available
+TC-EXP-0093,SMS recovery rate expiry and reuse,Ticket 07 — WebAuthn/recovery (FR-24 P1/P2),"SMS recovery is rate limited, time limited, single-use, and stores only a code hash.","1. Disposable local environment is available.
+2. The actor and prerequisite state named in the test data are prepared.","1. Request repeatedly, verify invalid/expired code, then verify a valid code twice.",phone=synthetic-5550100; ttl=300s,"1. Rate limit and expiry fail closed.
+2. A valid code works once and cannot be reused.
+3. The response contains no code or phone.",,Not Run,HIGH,P2,,,REQ-P2;REQ-MFA;REQ-SEC,,State/Prerequisites,backend/tests/test_ticket07_expansion.py::test_TC_EXP_0093_sms_recovery_is_rate_limited_expiring_and_single_use
+TC-EXP-0094,Recovery reenrollment invalidates sessions,Ticket 07 — WebAuthn/recovery (FR-24 P1/P2),Successful recovery forces MFA reenrollment and invalidates the prior authenticated session generation.,"1. Disposable local environment is available.
+2. The actor and prerequisite state named in the test data are prepared.","1. Complete recovery and attempt to use the old session, then reenroll TOTP.",synthetic recovery code; session-A,"1. TOTP is disabled pending reenrollment.
+2. Existing session generation is invalidated.
+3. Reenrollment requires a fresh factor.",,Not Run,HIGH,P2,,,REQ-P2;REQ-MFA;REQ-SEC,,State/Prerequisites,backend/tests/test_ticket07_expansion.py::test_TC_EXP_0094_recovery_invalidates_mfa_state
+TC-EXP-0095,Recovery audit rollback boundary,Ticket 07 — WebAuthn/recovery (FR-24 P1/P2),"Recovery and WebAuthn mutations are atomic, traceable, and safe when audit persistence fails.","1. Disposable local environment is available.
+2. The actor and prerequisite state named in the test data are prepared.",1. Fail audit persistence during recovery or credential mutation and inspect traces/logs.,audit unavailable; synthetic payload,"1. No partial credential, MFA, or recovery mutation remains.
+2. Audit and trace output is redacted and correlated.",,Not Run,HIGH,P2,,,REQ-P2;REQ-MFA;REQ-SEC,,Integrity/Concurrency/Rollback,backend/tests/test_ticket07_expansion.py::test_TC_EXP_0095_recovery_audit_failure_rolls_back
+TC-EXP-0096,SMART patient selection authorization,Ticket 09 expansion — registered-app patient-selection API (FR-17),Only an active registered SMART app token with patient/Patient.s and a completed MFA context may select a patient.,"1. Disposable local environment is available.
+2. Synthetic duplicate and no-match fixtures are seeded.",1. Submit selection using missing/wrong scope revoked or expired app/token and stale or missing MFA context.,scope=patient/Patient.s; synthetic P001,Every attempt is audited without demographics; unauthorized responses are generic forbidden and break-glass never authorizes selection.,,Not Run,CRITICAL,P1,,,,REQ-P1;REQ-SEL,Security,backend/tests/test_ticket09_selection.py::test_TC_EXP_0096_authorization
+TC-EXP-0097,SMART patient selection exact contract,Ticket 09 expansion — registered-app patient-selection API (FR-17),Identifier plus DOB or normalized full given/family name plus DOB is required; exact matching returns one opaque FHIR Patient ID and request ID only.,"1. A valid active token exists.
+2. P001 and duplicate/no-match fixtures exist.",1. Exercise identifier and name forms with missing fields boundaries case/Unicode policy injection strings and duplicate matches.,identifier=P001; birth_date=1980-01-01,Zero or multiple matches share one generic no-result contract with no counts demographics or timing distinction; successful ID is opaque.,,Not Run,CRITICAL,P1,,,,REQ-P1;REQ-SEL,Validation/Boundaries,backend/tests/test_ticket09_selection.py::test_TC_EXP_0097_exact_contract
+TC-EXP-0098,SMART patient selection resilience,Ticket 09 expansion — registered-app patient-selection API (FR-17),Selection is throttled per app/user/IP-safe key and fails closed when audit persistence is unavailable.,"1. A valid active token exists.
+2. Disposable PostgreSQL and Redis are available.",1. Submit bursts and simulate audit/database failure; inspect rollback and safe logs/traces.,burst=11; audit unavailable,Bounded 429/503 responses contain no submitted demographics identifiers patient IDs or token material; every attempt has safe audit evidence when available.,,Not Run,HIGH,P1,,,,REQ-P1;REQ-SEL,Rate-limit/Failure/Logging,backend/tests/test_ticket09_selection.py::test_TC_EXP_0098_rate_audit_failure
+TC-EXP-0099,SMART developer selection panel states,Ticket 09 expansion — registered-app patient-selection API (FR-17),"React developer test panel warns synthetic-only, stores no browser data, and exposes accessible loading success empty and error states.","1. Developer workspace is reachable.
+2. No real patient data is used.",1. Complete identifier/name forms with keyboard and inspect loading error no-result and success states.,synthetic fixtures; keyboard only,Only opaque ID and request ID appear on success; no demographics or token values are rendered or persisted.,,Not Run,HIGH,P1,,,,REQ-P1;REQ-SEL,Accessibility/Empty/Loading/No-results,src/patient-selection.test.tsx::test_TC_EXP_0099_panel_states
+TC-EXP-0100,Authorized population export request,Ticket 10 expansion — authorized scheduled population exports (FR-08/18),Administrator submits all-demo scope bounded date range purpose format and optional schedule through unified Job/Outbox.,Synthetic demo population and admin session.,Submit valid request as each role.,scope=all-demo; format=csv/jsonl; purpose=synthetic validation,Only admin succeeds and request is queued; break-glass never authorizes it.,,Not Run,CRITICAL,P1,,,,REQ-P1;REQ-EXP;REQ-JOB,Roles/Permissions,backend/tests/test_ticket10_population_exports.py::test_TC_EXP_0100_roles_and_fields
+TC-EXP-0101,Population export boundaries and cap,Ticket 10 expansion — authorized scheduled population exports (FR-08/18),Date boundaries and configurable cap are validated before queueing.,Admin session and synthetic population.,Exercise just-below at and above cap plus empty date range.,cap=9/10/11; empty cohort,Just below and at cap queue; above cap rejects; empty population produces valid empty archive.,,Not Run,CRITICAL,P1,,,,REQ-P1;REQ-EXP,Validation/Boundaries,backend/tests/test_ticket10_population_exports.py::test_TC_EXP_0101_cap_and_empty
+TC-EXP-0102,Population export worker integrity,Ticket 10 expansion — authorized scheduled population exports (FR-08/18),Worker streams bounded pages encrypts at rest computes SHA-256 over exact bytes and enforces 100 MB hard cap.,Queued export and environment encryption key.,Run worker and inspect metadata and configured volume.,chunk=100; hard_cap=100MB,Opaque randomized encrypted storage has no plaintext residual; hash matches download and oversize fails closed.,,Not Run,CRITICAL,P1,,,,REQ-P1;REQ-EXP;REQ-SEC,Integrity/Storage,backend/tests/test_ticket10_population_exports.py::test_TC_EXP_0102_worker_hash_encryption
+TC-EXP-0103,Population export scheduling and idempotency,Ticket 10 expansion — authorized scheduled population exports (FR-08/18),Daily/weekly schedules honor timezone and one active equivalent job policy.,Admin and Celery Beat available.,Submit duplicate idempotency/equivalent requests and exercise due schedules.,timezone=UTC; America/New_York; daily/weekly,Duplicate requests return one job; due schedule queues once; broker sees opaque identifiers only.,,Not Run,HIGH,P1,,,,REQ-P1;REQ-EXP;REQ-JOB,Concurrency/Scheduling,backend/tests/test_ticket10_population_exports.py::test_TC_EXP_0103_schedule_idempotency
+TC-EXP-0104,Population export lifecycle and download,Ticket 10 expansion — authorized scheduled population exports (FR-08/18),Admin can poll cancel retry download once ready and receives no content after expiry.,Queued failed and ready artifacts plus admin/non-admin sessions.,Exercise status cancel retry download and expiry cleanup.,expiry=24h; cancel/retry,All lifecycle transitions are audited; unauthorized and expired downloads are denied; cleanup is idempotent.,,Not Run,CRITICAL,P1,,,,REQ-P1;REQ-EXP;REQ-SEC,State/Failure/Rollback,backend/tests/test_ticket10_population_exports.py::test_TC_EXP_0104_lifecycle
+TC-EXP-0105,Population export UI safety states,Ticket 10 expansion — authorized scheduled population exports (FR-08/18),React admin UI exposes warning fields loading empty error status cancel retry schedule and download without browser persistence.,Admin workspace and synthetic-only data.,Complete request and schedule flow with keyboard and reduced motion.,synthetic-only; no localStorage,UI warns all-patient scope; no export payload path key or clinical data is rendered or logged.,,Not Run,HIGH,P1,,,,REQ-P1;REQ-EXP;REQ-A11Y,UI/Accessibility,src/main.test.tsx::test_TC_EXP_0105_population_export_admin_states

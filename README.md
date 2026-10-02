@@ -13,12 +13,38 @@ This repository is the currently implemented foundation for a small electronic-h
 - Immutable, hash-chained audit events with an administrator-only report and chain verification endpoint.
 - Medication creation, interaction evaluation, explicit acknowledgement, safe signing, change, cancel, refill, immutable history, and audit evidence.
 - Read-only FHIR R4 resources plus SMART app registration, consent, PKCE authorization-code exchange, refresh rotation, and launch metadata.
+- Durable background jobs with outbox dispatch, bounded retries, idempotency, and safe failure state.
+- Family-history, device UDI, questionnaire/terminology, amendment, passkey/recovery, break-glass, and patient-selection workflows with role and audit boundaries.
+- Authorized JSON/PDF patient exports and population export jobs with expiry, integrity metadata, and cleanup.
 - Idempotent `seed_demo` reset/seed command for clinician, patient, admin, and developer workflows.
 - React login, role navigation, loading/empty/error/re-authentication states, keyboard-visible focus, responsive layout, and reduced-motion support.
 - Structured operational logging with sensitive values redacted.
 - Optional Vite HTTPS from developer-supplied certificate paths.
 
-This remains a local synthetic prototype. Docker, production deployment, real EHI, population export, and other P1/P2 capabilities are intentionally out of scope.
+This remains a local synthetic prototype. The Ticket01–10 Docker Compose platform and the listed P1 workflows are for local synthetic use only; production deployment, real EHI, and other deferred P2 capabilities remain out of scope.
+
+## One-command local HTTPS platform (Ticket01)
+
+Copy `.env.example` to `.env`, replace every `replace-with-...` value with a local value, then run:
+
+```sh
+cp .env.example .env
+docker compose up --build
+```
+
+Caddy is the only service exposed on the host (`http://localhost` redirects to `https://localhost`); web, API, PostgreSQL, Redis, Celery worker, and Beat remain on the internal Compose network. The API entrypoint applies migrations and idempotently seeds synthetic demo data before Gunicorn starts. Do not place `.env`, certificates, keys, or Caddy's CA files in git.
+
+Caddy creates a local CA in the named `caddy_data` volume. Trust it locally, after the stack is running, by exporting the CA without committing it:
+
+```sh
+docker compose cp caddy:/data/caddy/pki/authorities/local/root.crt ./local-caddy-root.crt
+```
+
+- macOS: `sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain ./local-caddy-root.crt`
+- Linux (Debian/Ubuntu): `sudo cp ./local-caddy-root.crt /usr/local/share/ca-certificates/ehr-caddy.crt && sudo update-ca-certificates`
+- Windows PowerShell: `certutil -addstore -user Root .\local-caddy-root.crt`
+
+Remove the copied certificate when finished. **DESTRUCTIVE:** for a safe reset preview run `./scripts/compose-reset.sh`; only `./scripts/compose-reset.sh --confirm` (equivalent to the destructive `docker compose down -v`) removes the disposable named volumes. PostgreSQL and Caddy volumes persist across ordinary restarts. Redis is intentionally disposable.
 
 ## Architecture
 
@@ -174,9 +200,8 @@ certificate and key files must remain local.
 
 ## Happy flow
 
-This sequence describes the available local demo path. It intentionally stops short
-of medication signing and does not include exports or interaction signing; the
-patient view is self-only.
+This sequence describes the available local demo path, including medication safety/signing
+and authorized export boundaries; the patient view is self-only.
 
 ```mermaid
 sequenceDiagram

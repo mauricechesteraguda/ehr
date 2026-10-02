@@ -5,6 +5,8 @@ import hmac
 from urllib.parse import urlencode
 
 from django.conf import settings
+from django.db.models import Q
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.renderers import JSONRenderer
 from rest_framework.permissions import IsAuthenticated
@@ -13,7 +15,7 @@ from rest_framework.views import APIView
 
 from . import audit
 from .logging import log_event
-from .models import AllergyIntolerance, Condition, Device, MedicationOrderVersion, Observation, Patient, User
+from .models import AllergyIntolerance, Condition, Device, MedicationOrderVersion, Observation, Patient, User, FamilyHistoryVersion, Questionnaire, QuestionnaireResponseVersion, ClinicianPatientAssignment, EmergencyAccessRequest
 from .tracing import trace_function
 from .views import _ensure_demo_records
 from .smart import RESOURCE_SCOPES
@@ -24,6 +26,9 @@ RESOURCE_MODELS = {
     "Condition": Condition,
     "Observation": Observation,
     "Device": Device,
+    "FamilyMemberHistory": FamilyHistoryVersion,
+    "Questionnaire": Questionnaire,
+    "QuestionnaireResponse": QuestionnaireResponseVersion,
 }
 ALLOWED_PARAMS = {
     "Patient": {"name", "identifier", "page", "_count"},
@@ -32,6 +37,9 @@ ALLOWED_PARAMS = {
     "Condition": {"patient", "page", "_count"},
     "Observation": {"patient", "page", "_count"},
     "Device": {"patient", "page", "_count"},
+    "FamilyMemberHistory": {"patient", "code", "page", "_count"},
+    "Questionnaire": {"code", "status", "page", "_count"},
+    "QuestionnaireResponse": {"patient", "status", "questionnaire", "page", "_count"},
 }
 ALL_RESOURCES = frozenset((*RESOURCE_MODELS, "Patient", "MedicationRequest"))
 DEMO_SYSTEM = "http://example.org/fhir/CodeSystem/ehr-demo"
@@ -82,11 +90,16 @@ def _internal_id(kind, token):
 
 
 @trace_function
-def _patient_queryset(user, patient_context=None):
+def _patient_queryset(user, patient_context=None, *, allow_emergency=False):
     """type-10022026-Maurice: Apply compartment policy before evaluation."""
     queryset = Patient.objects.all()
     if user.role == User.Role.PATIENT:
         queryset = queryset.filter(owner=user)
+    elif user.role == User.Role.CLINICIAN:
+        policy = Q(restricted_access=False) | Q(clinician_assignments__clinician=user)
+        if allow_emergency:
+            policy |= Q(emergency_access_requests__clinician=user, emergency_access_requests__state=EmergencyAccessRequest.State.ACTIVE, emergency_access_requests__expires_at__gt=timezone.now())
+        queryset = queryset.filter(policy).distinct()
     if patient_context:
         queryset = queryset.filter(public_id=patient_context)
     return queryset
@@ -109,17 +122,32 @@ def _resource(resource_name, instance):
     """type-10022026-Maurice: Serialize approved model fields to FHIR R4 resources."""
     if resource_name == "Patient":
         return {"resourceType": "Patient", "id": instance.public_id, "meta": {"tag": [{"system": DEMO_SYSTEM, "code": "synthetic", "display": "Synthetic demo"}]}, "identifier": [{"system": DEMO_SYSTEM, "value": instance.public_id}], "name": [{"text": instance.display_name}], "gender": instance.sex, "birthDate": instance.birth_date.isoformat()}
-    patient = instance.order.patient if resource_name == "MedicationRequest" else instance.patient
+    if resource_name == "Questionnaire":
+        version = instance.active_version
+        return {"resourceType": "Questionnaire", "id": _token(resource_name, instance.pk), "url": f"http://example.org/questionnaire/{instance.code}", "status": "active", "version": str(version.version), "title": instance.title, "item": [{"linkId": item.link_id, "text": item.text, "type": item.item_type, "required": item.required, "repeats": item.repeats, "answerOption": [{"valueString": option.get("value") if isinstance(option, dict) else option} for option in (item.options or [])]} for item in version.items.all()]}
+    if resource_name == "QuestionnaireResponse":
+        response = instance.response
+        questionnaire = response.questionnaire
+        types = {item.link_id: item.item_type for item in instance.questionnaire_version.items.all()}
+        def answer(key, value):
+            kind = {"boolean": "valueBoolean", "integer": "valueInteger", "decimal": "valueDecimal", "date": "valueDate", "string": "valueString", "choice": "valueCoding", "quantity": "valueQuantity"}[types.get(key, "string")]
+            if kind == "valueCoding": value = {"code": value, "display": value}
+            return {kind: value}
+        return {"resourceType": "QuestionnaireResponse", "id": _token(resource_name, instance.pk), "status": "completed" if instance.status == "submitted" else "in-progress", "questionnaire": f"Questionnaire/{_token('Questionnaire', questionnaire.pk)}|{instance.questionnaire_version.version}", "subject": {"reference": f"Patient/{response.patient.public_id}"}, "item": [{"linkId": key, "answer": [answer(key, value)] if not isinstance(value, list) else [answer(key, child) for child in value]} for key, value in instance.answers.items()]}
+    patient = instance.order.patient if resource_name == "MedicationRequest" else (instance.history.patient if resource_name == "FamilyMemberHistory" else instance.patient)
     patient_ref = {"reference": f"Patient/{patient.public_id}"}
     if resource_name == "MedicationRequest":
         return {"resourceType": "MedicationRequest", "id": _token("MedicationRequest", instance.pk), "status": instance.status, "intent": "order", "subject": patient_ref, "medicationCodeableConcept": _code(instance.medication_code, instance.medication_name)}
+    if resource_name == "FamilyMemberHistory":
+        return {"resourceType": resource_name, "id": _token(resource_name, instance.pk), "status": instance.status, "patient": patient_ref, "relationship": _code(instance.relationship, instance.relationship.title()), "sex": _code(instance.relative_sex, instance.relative_sex.title()), "condition": [{"code": {"coding": [{"system": instance.condition_system, "code": instance.condition_code, "display": instance.condition_display}], "text": instance.submitted_display or instance.condition_display}, "onsetDate": instance.onset_date.isoformat() if instance.onset_date else None, "recordedDate": instance.recorded_date.isoformat() if instance.recorded_date else None}], "extension": [{"url": "http://example.org/fhir/StructureDefinition/terminology-version", "valueString": instance.terminology_version}]}
     if resource_name == "AllergyIntolerance":
         return {"resourceType": resource_name, "id": _token(resource_name, instance.pk), "clinicalStatus": _code("active", "Active"), "code": _code(instance.code, instance.label), "patient": patient_ref, "reaction": [{"manifestation": [{"text": instance.reaction}]}] if instance.reaction else []}
     if resource_name == "Condition":
         return {"resourceType": resource_name, "id": _token(resource_name, instance.pk), "clinicalStatus": _code(instance.status, instance.status.title()), "code": _code(instance.code, instance.label), "subject": patient_ref}
     if resource_name == "Observation":
         return {"resourceType": resource_name, "id": _token(resource_name, instance.pk), "status": "final", "code": _code(instance.code, instance.label, "http://loinc.org"), "subject": patient_ref, "valueQuantity": {"value": instance.value, "unit": instance.unit} if instance.unit else {"value": instance.value}}
-    return {"resourceType": "Device", "id": _token(resource_name, instance.pk), "status": instance.status, "type": _code(instance.code, instance.label), "patient": patient_ref}
+    version = getattr(instance, "active_version", None)
+    return {"resourceType": "Device", "id": _token(resource_name, instance.pk), "status": version.status if version else instance.status, "identifier": ([{"system": "urn:gs1", "value": version.device_identifier}] if version and version.device_identifier else []), "type": _code(version.code if version else instance.code, version.label if version else instance.label), "lotNumber": version.lot_number if version and version.lot_number else None, "serialNumber": version.serial_number if version and version.serial_number else None, "expirationDate": version.expiry_date.isoformat() if version and version.expiry_date else None, "manufactureDate": version.manufacture_date.isoformat() if version and version.manufacture_date else None, "patient": patient_ref}
 
 
 @trace_function
@@ -178,19 +206,29 @@ class FHIRFacadeView(APIView):
             _ensure_demo_records(request.user)
             if resource_id is not None:
                 if resource_name == "Patient":
-                    queryset = _patient_queryset(request.user, getattr(request, "smart_patient", None)).filter(public_id=resource_id)
+                    queryset = _patient_queryset(request.user, getattr(request, "smart_patient", None), allow_emergency=True).filter(public_id=resource_id)
                 elif resource_name == "MedicationRequest":
                     pk = _internal_id(resource_name, resource_id)
-                    queryset = MedicationOrderVersion.objects.none() if pk is None else MedicationOrderVersion.objects.filter(pk=pk, order__patient__in=_patient_queryset(request.user, getattr(request, "smart_patient", None))).select_related("order__patient")
+                    queryset = MedicationOrderVersion.objects.none() if pk is None else MedicationOrderVersion.objects.filter(pk=pk, order__patient__in=_patient_queryset(request.user, getattr(request, "smart_patient", None), allow_emergency=True)).select_related("order__patient")
+                elif resource_name == "FamilyMemberHistory":
+                    pk = _internal_id(resource_name, resource_id)
+                    queryset = FamilyHistoryVersion.objects.none() if pk is None else FamilyHistoryVersion.objects.filter(pk=pk, status="active")
+                    queryset = queryset.filter(history__patient__in=_patient_queryset(request.user, getattr(request, "smart_patient", None), allow_emergency=True))
+                elif resource_name == "QuestionnaireResponse":
+                    pk = _internal_id(resource_name, resource_id)
+                    queryset = QuestionnaireResponseVersion.objects.none() if pk is None else QuestionnaireResponseVersion.objects.filter(pk=pk, response__patient__in=_patient_queryset(request.user, getattr(request, "smart_patient", None), allow_emergency=True))
+                elif resource_name == "Questionnaire":
+                    pk = _internal_id(resource_name, resource_id)
+                    queryset = Questionnaire.objects.none() if pk is None else Questionnaire.objects.filter(pk=pk, active_version__status="active")
                 else:
                     pk = _internal_id(resource_name, resource_id)
                     queryset = RESOURCE_MODELS[resource_name].objects.none() if pk is None else RESOURCE_MODELS[resource_name].objects.filter(pk=pk)
                     if "patient" in ALLOWED_PARAMS[resource_name]:
-                        queryset = queryset.filter(patient__in=_patient_queryset(request.user, getattr(request, "smart_patient", None)))
+                        queryset = queryset.filter(patient__in=_patient_queryset(request.user, getattr(request, "smart_patient", None), allow_emergency=True))
                 instance = queryset.first()
                 if instance is None:
                     return _outcome("not-found", "FHIR resource was not found.", status.HTTP_404_NOT_FOUND)
-                patient = instance if resource_name == "Patient" else (instance.order.patient if resource_name == "MedicationRequest" else instance.patient)
+                patient = instance if resource_name == "Patient" else (instance.response.patient if resource_name == "QuestionnaireResponse" else (instance.order.patient if resource_name == "MedicationRequest" else (instance.history.patient if resource_name == "FamilyMemberHistory" else (None if resource_name == "Questionnaire" else instance.patient))))
                 _audit(request.user, resource_name, resource_id, patient, request)
                 return _response(_resource(resource_name, instance))
 
@@ -215,6 +253,22 @@ class FHIRFacadeView(APIView):
                     if request.query_params["status"] not in {"draft", "active", "cancelled"}:
                         return _outcome("value", "MedicationRequest status is invalid.", status.HTTP_400_BAD_REQUEST)
                     queryset = queryset.filter(status=request.query_params["status"])
+            elif resource_name == "FamilyMemberHistory":
+                queryset = FamilyHistoryVersion.objects.filter(status="active", history__patient__in=_patient_queryset(request.user, getattr(request, "smart_patient", None))).select_related("history__patient")
+                if request.query_params.get("patient"):
+                    queryset = queryset.filter(history__patient__public_id=request.query_params["patient"].removeprefix("Patient/"))
+                if request.query_params.get("code"):
+                    queryset = queryset.filter(condition_code=request.query_params["code"])
+            elif resource_name == "Questionnaire":
+                queryset = Questionnaire.objects.filter(active_version__status="active").select_related("active_version").prefetch_related("active_version__items")
+                if request.query_params.get("code"):
+                    queryset = queryset.filter(code=request.query_params["code"])
+            elif resource_name == "QuestionnaireResponse":
+                queryset = QuestionnaireResponseVersion.objects.filter(response__patient__in=_patient_queryset(request.user, getattr(request, "smart_patient", None))).select_related("response__patient", "response__questionnaire", "questionnaire_version")
+                if request.query_params.get("patient"):
+                    queryset = queryset.filter(response__patient__public_id=request.query_params["patient"].removeprefix("Patient/"))
+                if request.query_params.get("status"):
+                    queryset = queryset.filter(status="submitted" if request.query_params["status"] == "completed" else "draft")
             else:
                 queryset = RESOURCE_MODELS[resource_name].objects.filter(patient__in=_patient_queryset(request.user, getattr(request, "smart_patient", None))).select_related("patient")
                 if request.query_params.get("patient"):
