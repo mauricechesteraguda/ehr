@@ -3,6 +3,7 @@ import base64
 import hashlib
 import json
 import secrets
+import time
 from datetime import timedelta
 
 import webauthn
@@ -30,8 +31,10 @@ def _session(request):
     return request.session.session_key
 
 def _challenge(request, ceremony, user=None):
+    started = time.monotonic()
     raw = secrets.token_bytes(32)
     WebAuthnChallenge.objects.create(user=user, session_key=_session(request), challenge_hash=hashlib.sha256(raw).hexdigest(), ceremony=ceremony, expires_at=timezone.now() + timedelta(seconds=settings.WEBAUTHN_CHALLENGE_TTL_SECONDS))
+    log_event("auth.passkey.challenge.created", component="authentication", operation="challenge", outcome="success", status="created", duration_ms=int((time.monotonic()-started)*1000), boundary="database")
     return raw
 
 def _options(options):
@@ -49,10 +52,13 @@ def authentication_options(request, user):
     return _options(webauthn.generate_authentication_options(rp_id=settings.WEBAUTHN_RP_ID, challenge=challenge, allow_credentials=creds, user_verification=UserVerificationRequirement.REQUIRED))
 
 def consume(request, raw, ceremony, user):
+    started = time.monotonic()
     item = WebAuthnChallenge.objects.select_for_update().filter(challenge_hash=hashlib.sha256(raw).hexdigest(), ceremony=ceremony, user=user, session_key=_session(request), used_at__isnull=True, expires_at__gt=timezone.now()).first()
     if not item:
+        log_event("auth.passkey.challenge.consume.failure", component="authentication", operation="challenge_consume", outcome="failure", status="rejected", duration_ms=int((time.monotonic()-started)*1000), boundary="database", error_code="expired_or_replayed_challenge", remediation_hint="request_new_challenge")
         raise ValueError("expired_or_replayed_challenge")
     item.used_at = timezone.now(); item.save(update_fields=["used_at"])
+    log_event("auth.passkey.challenge.consume.success", component="authentication", operation="challenge_consume", outcome="success", status="consumed", duration_ms=int((time.monotonic()-started)*1000), boundary="database")
 
 def verify_registration(request, payload, name="Passkey"):
     # The library validates client data origin/RP ID and attestation structure. Policy is none:

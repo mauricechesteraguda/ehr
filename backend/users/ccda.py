@@ -1,4 +1,5 @@
 """Ticket11 bounded C-CDA transition package and clinician reconciliation service."""
+from .logging import traced_operation
 import hashlib, json, os, re, time
 from datetime import date, timedelta
 from pathlib import Path
@@ -33,6 +34,7 @@ def _entry(section, resource, obj):
     if section == "observations": payload.update(value=getattr(obj, "value", ""), unit=getattr(obj, "unit", ""))
     e = ET.Element("entry", {"resource": resource}); e.text = json.dumps(payload, sort_keys=True, separators=(",", ":")); return e
 
+@traced_operation
 def generate_ccda(*, patient, job):
     root = ET.Element("ClinicalDocument", {"templateId": TEMPLATE_ID, "version": TEMPLATE_VERSION, "patient": patient.public_id})
     sections = {s: ET.SubElement(root, "section", {"code": s}) for s in SECTIONS}
@@ -49,6 +51,7 @@ def generate_ccda(*, patient, job):
     return CcdaDocument.objects.create(job=job, patient=patient, direction="export", template_id=TEMPLATE_ID, template_version=TEMPLATE_VERSION, provenance={"actor": str(job.owner_id), "job": str(job.id)}, sha256=hashlib.sha256(body).hexdigest(), size_bytes=len(body), artifact_path=str(artifact), expires_at=timezone.now() + timedelta(hours=1))
 
 @transaction.atomic
+@traced_operation
 def parse_ccda(data, *, patient, job):
     started = time.monotonic()
     if not isinstance(data, (bytes, bytearray)) or len(data) > MAX_BYTES: raise ValueError("oversize")
@@ -77,6 +80,7 @@ def parse_ccda(data, *, patient, job):
     return doc, time.monotonic()-started
 
 @transaction.atomic
+@traced_operation
 def decide_candidate(*, candidate_id, clinician, decision):
     c=ReconciliationCandidate.objects.select_for_update().select_related("document","patient").get(pk=candidate_id)
     if c.state != c.State.PENDING: raise ValueError("stale")

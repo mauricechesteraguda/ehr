@@ -58,6 +58,8 @@ Remove the copied certificate when finished. **DESTRUCTIVE:** for a safe reset p
 
 ### Ticket17 integrated acceptance
 
+Operational logs are JSON lines with a default-deny field allowlist. Events include canonical event/operation/status/severity fields, correlation and bounded duration metadata; worker events use opaque job references and attempts. Failure diagnostics never include payloads, credentials, identifiers, paths, or raw subprocess stderr.
+
 Run the project-owned acceptance command from the repository root. It checks ports
 before startup, creates a uniquely named Compose project, generates an external
 temporary env file, enables BuildKit, waits fail-fast for all seven health checks,

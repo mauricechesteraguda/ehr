@@ -1,4 +1,5 @@
 """type-10022026-Maurice: Central fail-closed emergency read authorization."""
+from .logging import traced_operation
 from datetime import timedelta
 
 from django.db import transaction
@@ -10,6 +11,7 @@ from .models import ClinicianPatientAssignment, EmergencyAccessOutboxEvent, Emer
 GRANT_MINUTES = 30
 
 
+@traced_operation
 def normal_patient_access(patient, user):
     """type-10022026-Maurice: Emergency access never replaces normal policy."""
     if user.role == User.Role.PATIENT:
@@ -21,6 +23,7 @@ def normal_patient_access(patient, user):
     return not patient.restricted_access or ClinicianPatientAssignment.objects.filter(clinician=user, patient=patient).exists()
 
 
+@traced_operation
 def active_grant(patient, user, *, at=None):
     at = at or timezone.now()
     grant = EmergencyAccessRequest.objects.filter(clinician=user, patient=patient, state=EmergencyAccessRequest.State.ACTIVE).order_by("-requested_at").first()
@@ -29,6 +32,7 @@ def active_grant(patient, user, *, at=None):
     return None
 
 
+@traced_operation
 def can_read(patient, user, *, request=None):
     """type-10022026-Maurice: GET-only break-glass fallback; writes must not pass request."""
     if normal_patient_access(patient, user):
@@ -37,6 +41,7 @@ def can_read(patient, user, *, request=None):
 
 
 @transaction.atomic
+@traced_operation
 def request_access(*, clinician, patient, justification, correlation_id=""):
     """type-10022026-Maurice: Persist grant, audit, and notification intent as one unit."""
     if clinician.role != User.Role.CLINICIAN or not clinician.is_active:
@@ -52,6 +57,7 @@ def request_access(*, clinician, patient, justification, correlation_id=""):
 
 
 @transaction.atomic
+@traced_operation
 def revoke_access(*, grant_id, actor, correlation_id=""):
     grant = EmergencyAccessRequest.objects.select_for_update().select_related("patient", "clinician").get(pk=grant_id)
     if actor != grant.clinician and actor.role != User.Role.ADMIN:
@@ -63,6 +69,7 @@ def revoke_access(*, grant_id, actor, correlation_id=""):
 
 
 @transaction.atomic
+@traced_operation
 def expire_access(*, at=None):
     at = at or timezone.now()
     grants = list(EmergencyAccessRequest.objects.select_for_update().filter(state=EmergencyAccessRequest.State.ACTIVE, expires_at__lte=at).select_related("patient", "clinician"))

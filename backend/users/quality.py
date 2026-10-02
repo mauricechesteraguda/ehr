@@ -1,4 +1,5 @@
 """Ticket14: safe declarative demo clinical quality measures and FHIR-shaped reports."""
+from .logging import traced_operation
 import hashlib
 import json
 from datetime import date, timedelta
@@ -25,6 +26,7 @@ class SchemaError(ValueError):
     pass
 
 
+@traced_operation
 def validate_schema(schema):
     """Validate a small data-only DSL; never interpret arbitrary expressions."""
     if not isinstance(schema, dict) or set(schema) - {"schema_version", "resource", "denominator", "numerator", "exclusions", "stratifiers", "window_days"}:
@@ -103,6 +105,7 @@ def _population(schema, period_start, period_end):
     return len(rows), len(numerator), len(excluded)
 
 
+@traced_operation
 def evaluate_version(version, period_start, period_end, snapshot_checksum):
     validate_schema(version.schema)
     denominator, numerator, exclusions = _population(version.schema, period_start, period_end)
@@ -111,6 +114,7 @@ def evaluate_version(version, period_start, period_end, snapshot_checksum):
             "period": {"start": str(period_start), "end": str(period_end)}, "snapshotChecksum": snapshot_checksum}
 
 
+@traced_operation
 def run_measure(run_id):
     with transaction.atomic():
         run = MeasureRun.objects.select_for_update().select_related("version").get(pk=run_id)
