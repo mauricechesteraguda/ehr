@@ -2,7 +2,7 @@
   "name": "ehr-foundation",
   "private": true,
   "type": "module",
-  "scripts": {"dev": "vite --host localhost", "build": "tsc -b && vite build", "lint": "tsc --noEmit", "test": "vitest"},
+  "scripts": {"dev": "vite --host localhost", "build": "tsc -b && vite build", "lint": "tsc --noEmit", "test": "vitest", "validate:evidence": "python3 scripts/validate_ticket16_evidence.py"},
   "dependencies": {"@vitejs/plugin-react": "latest", "vite": "latest", "typescript": "latest", "react": "latest", "react-dom": "latest"},
-  "devDependencies": {"vitest": "latest", "jsdom": "latest", "@types/react": "latest", "@types/react-dom": "latest", "@types/node": "latest"}
+  "devDependencies": {"vitest": "latest", "jsdom": "latest", "axe-core": "4.10.2", "@types/react": "latest", "@types/react-dom": "latest", "@types/node": "latest"}
 }

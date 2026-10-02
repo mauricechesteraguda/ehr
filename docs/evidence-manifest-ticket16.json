@@ -1,0 +1,34 @@
+{
+  "ticket": "Ticket16",
+  "date": "2026-10-03",
+  "status": "prototype evidence; manual checks not run",
+  "statement": "Synthetic, non-clinical, non-certification prototype. No formal WCAG, ISO, FDA, HIPAA, or clinical validation claim.",
+  "spec": "docs/specs/ticket16-accessibility-safety-evidence.md",
+  "cases": "docs/test-cases/ehr-p1-p2-compose.csv",
+  "artifacts": [
+    "docs/accessibility-conformance-note.md",
+    "docs/hazard-risk-register.md",
+    "docs/misuse-cases.md",
+    "docs/usability-scenarios-results.md",
+    "docs/requirements-traceability.md",
+    "docs/contribution-testing-release-checklist.md",
+    "docs/incident-demo-defect-log.md",
+    "src/ticket16.test.tsx",
+    "scripts/validate_ticket16_evidence.py"
+  ],
+  "required_sections": [
+    "Scope", "Acceptance boundaries", "Manual checklist", "Known exceptions",
+    "Hazard", "Misuse case", "Requirement", "Contribution", "Incident/demo"
+  ],
+  "automated_tests": [
+    "src/ticket16.test.tsx::test_TC_EXP_0132_accessibility_shell_has_landmarks_and_headings",
+    "src/ticket16.test.tsx::test_TC_EXP_0133_login_labels_and_live_errors",
+    "src/ticket16.test.tsx::test_TC_EXP_0134_patient_panel_is_axe_clean",
+    "src/ticket16.test.tsx::test_TC_EXP_0135_role_panel_markup_is_axe_clean",
+    "src/ticket16.test.tsx::test_TC_EXP_0136_safety_status_is_text_not_color_only",
+    "src/ticket16.test.tsx::test_TC_EXP_0137_focus_and_target_markers_exist",
+    "src/ticket16.test.tsx::test_TC_EXP_0138_responsive_and_reduced_motion_markers_exist",
+    "backend/tests/test_ticket16.py::test_TC_EXP_0139_ticket16_manifest_validator_is_deterministic",
+    "scripts/validate_ticket16_evidence.py"
+  ]
+}
