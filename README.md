@@ -19,6 +19,40 @@ Not complete in this state: interaction signing (Ticket 05), FHIR, SMART on FHIR
 
 ## Architecture
 
+The system flow below shows how each role reaches the committed application boundary and where operational logs and the append-only audit trail go.
+
+```mermaid
+flowchart LR
+    subgraph Actors[Users]
+        Clinician[Clinician]
+        Patient[Patient]
+        Admin[Admin]
+    end
+
+    subgraph Frontend[Browser boundary]
+        Browser[Browser]
+        Vite[React / Vite frontend<br/>localhost:5173<br/>HTTP or configured HTTPS]
+    end
+
+    subgraph Backend[Backend boundary]
+        API[Django / DRF REST API<br/>127.0.0.1:8000<br/>session authentication]
+        Logs[Structured operational logs<br/>console stream, redacted]
+        Audit[Append-only hash-chained audit trail]
+    end
+
+    DB[(PostgreSQL<br/>127.0.0.1:5432)]
+
+    Clinician --> Browser
+    Patient --> Browser
+    Admin --> Browser
+    Browser --> Vite
+    Vite -->|REST requests / session cookie| API
+    API -->|Django ORM| DB
+    API --> Logs
+    API --> Audit
+    Audit -->|hash-linked events| DB
+```
+
 The diagram describes the application relationships; `owner` is optional because a patient record may not be
 linked to a patient login, and the audit hash link is logical rather than a foreign key.
 
