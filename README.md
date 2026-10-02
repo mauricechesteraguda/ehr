@@ -20,10 +20,18 @@ This repository is the currently implemented foundation for a small electronic-h
 - Idempotent `seed_demo` reset/seed command for clinician, patient, admin, and developer workflows.
 - React login, role navigation, loading/empty/error/re-authentication states, keyboard-visible focus, responsive layout, and reduced-motion support.
 - Structured operational logging with sensitive values redacted.
+- Ticket16 accessibility and prototype safety evidence pack with pinned axe checks,
+  semantic shell improvements, hazard/misuse/traceability artifacts, and a deterministic
+  manifest validator. Manual keyboard, screen-reader, contrast, and reflow checks remain
+  explicitly `Not Run` when browser automation is unavailable.
 - Optional Vite HTTPS from developer-supplied certificate paths.
 - Declarative demo clinical quality measures with immutable published versions, deterministic snapshot checksums, async runs, and FHIR-style Measure/MeasureReport resources. Quality reports expose population counts only unless a separately authorized subject-level workflow is added.
 
 This remains a local synthetic prototype. The Ticket01–10 Docker Compose platform and the listed P1 workflows are for local synthetic use only; production deployment, real EHI, and other deferred P2 capabilities remain out of scope.
+
+Ticket16 does not claim formal WCAG 2.2 conformance, ISO/FDA/HIPAA certification, or
+clinical validation. See `docs/accessibility-conformance-note.md` and
+`docs/evidence-manifest-ticket16.json` for bounded evidence and known exceptions.
 
 ## One-command local HTTPS platform (Ticket01)
 

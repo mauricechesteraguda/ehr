@@ -1,12 +1,17 @@
 :root { font-family: system-ui, sans-serif; color: #17202a; background: #f7f9fb; }
-body { margin: 0; }
+body { margin: 0; line-height: 1.5; }
 main { max-width: 72rem; margin: 0 auto; padding: 1rem; }
 header, section, aside, form { margin-block: 1rem; }
-button, input, select { font: inherit; min-height: 2.5rem; margin: .25rem; }
-button { cursor: pointer; padding-inline: .75rem; }
-button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid #1d70b8; outline-offset: 2px; }
+header { border-bottom: 1px solid #687581; padding: 1rem; }
+button, input, select, textarea { font: inherit; min-height: 2.75rem; margin: .25rem; }
+button { cursor: pointer; padding: .5rem .75rem; }
+button:disabled { cursor: not-allowed; opacity: .65; }
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, summary:focus-visible, a:focus-visible { outline: 3px solid #005fcc; outline-offset: 3px; }
 label { display: block; margin-block: .5rem; }
-table { border-collapse: collapse; max-width: 100%; overflow: auto; display: block; }
-th, td { border: 1px solid #b8c2cc; padding: .5rem; text-align: left; }
-@media (max-width: 42rem) { main { padding: .75rem; } nav { display: grid; } button { width: 100%; margin-inline: 0; } }
+input, select, textarea { max-width: 100%; box-sizing: border-box; }
+table { border-collapse: collapse; width: 100%; max-width: 100%; overflow: auto; display: block; }
+th, td { border: 1px solid #687581; padding: .5rem; text-align: left; }
+.skip-link { position: absolute; left: -9999px; padding: .5rem; background: #fff; color: #17202a; }
+.skip-link:focus { left: 1rem; top: 1rem; z-index: 2; }
+@media (max-width: 42rem) { main { padding: .75rem; } nav { display: grid; gap: .25rem; } button { width: 100%; margin-inline: 0; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; } }

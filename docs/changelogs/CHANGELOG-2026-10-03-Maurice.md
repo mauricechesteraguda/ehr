@@ -17,3 +17,14 @@ Author Name: Aguda, Maurice
 - Added bounded FHIR Bulk Data-style asynchronous export on the unified Job/Outbox system, with allowlisted `_type`, optional `_since`, purpose/approval, idempotency, opaque status location, cancellation, encrypted expiring NDJSON artifacts, checksums, caps, and authorization rechecks.
 - Added canonical TC-EXP-0121..0131 acceptance rows, Ticket 15 specification, and an administrator bulk export panel. This remains a synthetic demo and does not implement SMART Backend Services assertions.
 - Verified TC-EXP-0121..0131 exactly once with 10 discoverable backend tests and 1 discoverable frontend test; all pass with no skips/placeholders. Full collection reconciles to 188 backend tests (178 prior + 10) and 14 frontend tests (13 prior + 1). Fixed status/cancel route kwargs and tampered AES-GCM download handling discovered RED-first.
+
+## Ticket 16
+
+- Added semantic landmarks/headings, explicit labels/descriptions, live loading/error states,
+  visible focus, responsive/reduced-motion styles, and prototype safety boundary text.
+- Added pinned `axe-core@4.10.2` Vitest checks and canonical TC-EXP-0132..0139 evidence rows.
+- Added accessibility note, hazard/risk register, misuse cases, usability template,
+  requirements traceability, contribution/release checklist, demo defect log, and a
+  deterministic evidence manifest validator. Manual browser checks are explicitly `Not Run`.
+- This remains synthetic, non-clinical prototype evidence with no formal WCAG, ISO/FDA/HIPAA
+  certification or clinical validation claim.
