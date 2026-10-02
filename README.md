@@ -3,7 +3,7 @@
 > **Synthetic/non-clinical prototype only. Do not use real patient data, real credentials, or this project for clinical care.**
 > The records and identities used by the demo are synthetic and are not a medical record system.
 
-This repository is the currently implemented Tickets 01–04 foundation for a small electronic-health-record (EHR) prototype. It combines a Django/DRF API, a React/Vite TypeScript client, and PostgreSQL persistence.
+This repository is the currently implemented foundation for a small electronic-health-record (EHR) prototype. It combines a Django/DRF API, a React/Vite TypeScript client, and PostgreSQL persistence.
 
 ## Current capabilities
 
