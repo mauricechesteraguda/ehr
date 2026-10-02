@@ -1,3 +1,4 @@
+- Removed repository helper scripts and folders; relocated durable SMART, evidence, and Compose acceptance behavior.
 # Changelog — 2026-10-03
 
 ## Correction
@@ -19,7 +20,7 @@ Author Name: Aguda, Maurice
 
 - Isolated live Compose acceptance from unrelated host services: Compose now keeps normal demo defaults of 80/443 but accepts configurable host bindings, and the acceptance runner selects/checks free high ports, passes them through its environment, and validates the exported Caddy CA at the selected HTTPS URL.
 - Added canonical `TC-EXP-0140..0160` integrated-Compose acceptance cases, each with a discoverable backend test reference.
-- Added `scripts/compose_acceptance.py`: isolated project naming, preflight port checks, external generated secrets, BuildKit builds, bounded health waits, local-CA HTTPS validation, idempotent migration/seed, worker restart/persistence probes, structured evidence, and scoped cleanup.
+- Added integrated Compose acceptance coverage in `backend/tests/test_ticket17_compose.py`: isolated project naming, preflight port checks, external generated secrets, BuildKit builds, bounded health waits, local-CA HTTPS validation, idempotent migration/seed, worker restart/persistence probes, structured evidence, and scoped cleanup.
 - Expanded the README architecture/demo flow with the one-command acceptance invocation and exact macOS/Linux/Windows CA trust commands.
 - Static verification is deterministic. Live Compose results must be recorded as pass or registry/Docker blocker; no live result is claimed by documentation alone.
 
