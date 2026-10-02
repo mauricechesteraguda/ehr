@@ -6,5 +6,5 @@ import fs from "node:fs";
 export default defineConfig(() => {
   const cert = process.env.HTTPS_CERT;
   const key = process.env.HTTPS_KEY;
-  return { plugins: [react()], server: { https: cert && key ? { cert: fs.readFileSync(cert), key: fs.readFileSync(key) } : undefined } };
+  return { plugins: [react()], server: { https: cert && key ? { cert: fs.readFileSync(cert), key: fs.readFileSync(key) } : undefined, proxy: { "/api": "http://127.0.0.1:8000", "/oauth": "http://127.0.0.1:8000", "/fhir": "http://127.0.0.1:8000", "/.well-known": "http://127.0.0.1:8000" } } };
 });

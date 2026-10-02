@@ -1,0 +1,12 @@
+{
+  "synthetic_demo": true,
+  "disclaimer": "Synthetic demonstration values only; not real patient information.",
+  "subsets": {
+    "race": ["2106-3", "2054-5", "UNK"],
+    "ethnicity": ["2186-5", "2135-2", "UNK"],
+    "preferred_language": ["en", "es", "UNK"],
+    "sex": ["female", "male", "unknown"],
+    "sexual_orientation": ["straight", "gay", "unknown"],
+    "gender_identity": ["woman", "man", "non-binary", "unknown"]
+  }
+}

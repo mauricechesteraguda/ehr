@@ -11,11 +11,14 @@ This repository is the currently implemented foundation for a small electronic-h
 - Role-scoped patient records for `clinician`, `patient`, and `admin` users.
 - Synthetic coded demographics and read-only allergy, condition, observation, and device displays.
 - Immutable, hash-chained audit events with an administrator-only report and chain verification endpoint.
-- Medication draft creation plus immutable change, cancel, refill, and history versions. Medication signing is intentionally unavailable.
+- Medication creation, interaction evaluation, explicit acknowledgement, safe signing, change, cancel, refill, immutable history, and audit evidence.
+- Read-only FHIR R4 resources plus SMART app registration, consent, PKCE authorization-code exchange, refresh rotation, and launch metadata.
+- Idempotent `seed_demo` reset/seed command for clinician, patient, admin, and developer workflows.
+- React login, role navigation, loading/empty/error/re-authentication states, keyboard-visible focus, responsive layout, and reduced-motion support.
 - Structured operational logging with sensitive values redacted.
 - Optional Vite HTTPS from developer-supplied certificate paths.
 
-Not complete in this state: interaction signing (Ticket 05), FHIR, SMART on FHIR, exports, and Docker Compose. There is also no repository seed command or built-in demo account, and the React client currently has no login/enrollment screen or Vite proxy for `/api`.
+This remains a local synthetic prototype. Docker, production deployment, real EHI, population export, and other P1/P2 capabilities are intentionally out of scope.
 
 ## Architecture
 
@@ -25,8 +28,9 @@ The system flow below shows how each role reaches the committed application boun
 flowchart LR
     subgraph Actors[Users]
         Clinician[Clinician]
-        Patient[Patient]
-        Admin[Admin]
+         Patient[Patient]
+         Admin[Admin]
+         Developer[Developer]
     end
 
     subgraph Frontend[Browser boundary]
@@ -44,7 +48,8 @@ flowchart LR
 
     Clinician --> Browser
     Patient --> Browser
-    Admin --> Browser
+     Admin --> Browser
+     Developer --> Browser
     Browser --> Vite
     Vite -->|REST requests / session cookie| API
     API -->|Django ORM| DB
@@ -301,34 +306,23 @@ python3 backend/manage.py migrate
 python3 backend/manage.py runserver 127.0.0.1:8000
 ```
 
-There are no custom Django management commands or seed command. The two synthetic patient records (`P001` and `P002`) and their synthetic clinical display rows are created lazily by authenticated patient requests.
-
-## Demo users and TOTP setup
-
-The codebase does not ship demo users. Create local-only users with a password you choose; the command below generates a different TOTP secret for each account and prints the secrets once so they can be added to an authenticator. Replace `<choose-local-password>`; do not use a real password.
+The deterministic `seed_demo` command creates four local-only accounts, `P001`/`P002`, synthetic clinical rows, read-only devices, a baseline medication, interaction rules, and the alert floor. It is safe to run repeatedly. Passwords are supplied at runtime; the command never prints or logs TOTP secrets.
 
 ```sh
-DEMO_PASSWORD='<choose-local-password>' python3 backend/manage.py shell <<'PY'
-import os
-import pyotp
-from backend.users.models import User
-
-for username, role in (
-    ("demo-clinician", User.Role.CLINICIAN),
-    ("demo-patient", User.Role.PATIENT),
-    ("demo-admin", User.Role.ADMIN),
-):
-    user, _ = User.objects.get_or_create(username=username)
-    user.set_password(os.environ["DEMO_PASSWORD"])
-    user.role = role
-    user.totp_secret = pyotp.random_base32()
-    user.totp_enrolled = True
-    user.save()
-    print(f"{username}: {user.totp_secret}")
-PY
+export DEMO_PASSWORD='choose-a-local-demo-password'
+python3 backend/manage.py migrate
+python3 backend/manage.py seed_demo
+# Remove and recreate only demo-owned rows:
+python3 backend/manage.py seed_demo --reset
+# Explicit local enrollment (writes secrets only to this mode-600 file):
+python3 backend/manage.py seed_demo --totp-secret-file "$HOME/.ehr-demo-totp"
 ```
 
-Add each printed secret to a local TOTP authenticator. The API login requires `username`, `password`, and the current six-digit `otp`:
+Without `--totp-secret-file`, seeded accounts remain pending enrollment. The explicit option writes one-time local enrollment material to a mode-600 file; protect and delete it after configuring an authenticator. Existing TOTP secrets are retained and never printed again. For an already authenticated account, `/api/auth/enroll/` followed by `/api/auth/enroll/verify/` is also supported; never commit the returned secret.
+
+## Demo login and ten-minute walkthrough
+
+The seed accounts are `demo-clinician`, `demo-patient`, `demo-admin`, and `demo-developer`, all using the runtime `DEMO_PASSWORD`. The API login requires `username`, `password`, and the current six-digit `otp`:
 
 ```sh
 curl -i -c /tmp/ehr-demo.cookies \
@@ -337,7 +331,30 @@ curl -i -c /tmp/ehr-demo.cookies \
   http://127.0.0.1:8000/api/auth/login/
 ```
 
-After an authenticated request to `/api/patients/`, the API creates and returns the synthetic `P001` and `P002` records. Useful API routes include `/api/auth/session/`, `/api/patients/P001/`, `/api/patients/P001/medications/`, `/api/patients/P001/medications/<order_id>/history/`, and the admin-only `/api/audit/` and `/api/audit/verify/`.
+1. Start PostgreSQL, export `.env`, migrate, and run `seed_demo`.
+2. Start Django and Vite, then sign in with a seeded account and current TOTP.
+3. As clinician, open `P001`, create an `AMOX` draft, evaluate the synthetic allergy/drug alert, acknowledge a non-critical finding or observe the critical block, and sign only after the UI permits it. Inspect immutable history and audit events.
+4. As patient, sign in to view only `P001`; request JSON and PDF downloads and compare displayed SHA-256 values with `sha256sum`.
+5. As admin, review the paginated audit report, verify the chain, manage users, and set the LOW/MODERATE/HIGH floor.
+6. As developer, open the SMART workspace and follow the authorization/consent steps below; use `scripts/smart_demo.py` for token refresh and bounded FHIR Patient read.
+
+Useful routes include `/api/auth/session/`, `/api/patients/P001/`, `/api/audit/verify/`, `/.well-known/smart-configuration`, `/oauth/authorize/`, `/oauth/token/`, and `/fhir/R4/Patient/P001`.
+
+## SMART developer demo
+
+Register through an authenticated developer session (the browser is intentionally required for consent). Use a fresh PKCE verifier and its S256 challenge; keep the returned client secret and tokens out of logs and source control.
+
+```sh
+curl -b /tmp/ehr-demo.cookies -c /tmp/ehr-demo.cookies -H 'Content-Type: application/json' \
+  -d '{"name":"Local synthetic client","redirect_uris":["https://localhost/callback"],"scope":"openid fhirUser patient/Patient.r patient/MedicationRequest.r patient/AllergyIntolerance.r patient/Condition.r patient/Observation.r patient/Device.r"}' \
+  http://127.0.0.1:8000/api/smart/apps/
+curl -b /tmp/ehr-demo.cookies -H 'Content-Type: application/json' \
+  -d '{"client_id":"<client-id>","redirect_uri":"https://localhost/callback","scope":"openid fhirUser patient/Patient.r","code_challenge":"<S256-challenge>","code_challenge_method":"S256","patient":"P001","decision":"approve","state":"demo"}' \
+  http://127.0.0.1:8000/oauth/authorize/
+python3 scripts/smart_demo.py --base-url http://127.0.0.1:8000 --client-id '<client-id>' --client-secret '<one-time-secret>' --code '<returned-code>' --verifier '<original-verifier>'
+```
+
+The sample client performs authorization-code exchange, refresh rotation, and a Patient read while keeping token values in memory. It does not bypass the explicit consent screen.
 
 ## Frontend install and run
 
@@ -385,13 +402,15 @@ npm run lint
 npm run build
 ```
 
+The acceptance matrix is `docs/test-cases/ehr-mvp-p0.csv` (exactly 18 columns); Ticket10 final integration scenarios are TC-EHR-0092 through TC-EHR-0096. Frontend checks cover TypeScript and the no-browser-storage boundary. When a local browser test runner is available, run the core keyboard/focus and reduced-motion checks against the HTTPS shell; this repository does not install browser tooling or network dependencies during verification.
+
 ## Troubleshooting
 
 - **Database connection refused or authentication failed:** confirm PostgreSQL is running and that `.env` values match the local role/database; rerun `python3 backend/manage.py migrate` after fixing them.
 - **`No module named ...`:** activate `.venv` and rerun `python3 -m pip install -r requirements.txt`.
 - **Login returns MFA/enrollment errors:** accounts must have `totp_enrolled=True` and the current authenticator code. Re-run the local setup command if a secret was lost.
-- **No patients appear:** authenticate first; synthetic records are lazy-created only by authenticated patient endpoints.
-- **Frontend `/api` requests fail:** the current Vite configuration has no API proxy and the React shell has no login flow. Use the API directly with an authenticated client, or provide same-origin routing externally; this is an unresolved demo integration gap, not a missing database seed.
+- **No patients appear:** authenticate first and run `python3 backend/manage.py seed_demo`.
+- **Frontend `/api` requests fail:** confirm Django is listening on `127.0.0.1:8000`; Vite proxies `/api`, `/oauth`, `/fhir`, and discovery routes to it.
 - **HTTPS fails to start:** verify both `HTTPS_CERT` and `HTTPS_KEY` point to readable matching files. Keep keys outside version control.
 - **Tests fail against PostgreSQL:** export `.env`, ensure the configured database exists, and run migrations before pytest.
 

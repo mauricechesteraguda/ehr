@@ -1,0 +1,12 @@
+:root { font-family: system-ui, sans-serif; color: #17202a; background: #f7f9fb; }
+body { margin: 0; }
+main { max-width: 72rem; margin: 0 auto; padding: 1rem; }
+header, section, aside, form { margin-block: 1rem; }
+button, input, select { font: inherit; min-height: 2.5rem; margin: .25rem; }
+button { cursor: pointer; padding-inline: .75rem; }
+button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid #1d70b8; outline-offset: 2px; }
+label { display: block; margin-block: .5rem; }
+table { border-collapse: collapse; max-width: 100%; overflow: auto; display: block; }
+th, td { border: 1px solid #b8c2cc; padding: .5rem; text-align: left; }
+@media (max-width: 42rem) { main { padding: .75rem; } nav { display: grid; } button { width: 100%; margin-inline: 0; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; } }

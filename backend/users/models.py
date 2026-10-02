@@ -1,6 +1,7 @@
 """type-10022026-Maurice: PostgreSQL-persisted role and TOTP enrollment state."""
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+import uuid
 
 
 class User(AbstractUser):
@@ -9,10 +10,16 @@ class User(AbstractUser):
         CLINICIAN = "clinician", "Clinician"
         PATIENT = "patient", "Patient"
         ADMIN = "admin", "Administrator"
+        DEVELOPER = "developer", "Developer"
 
     role = models.CharField(max_length=20, choices=Role.choices, default=Role.PATIENT)
     totp_secret = models.CharField(max_length=64, blank=True, default="")
     totp_enrolled = models.BooleanField(default=False)
+
+    class Meta:
+        verbose_name = "user"
+        verbose_name_plural = "users"
+        indexes = [models.Index(fields=["role", "is_active"], name="user_role_active_idx")]
 
 
 class Patient(models.Model):
@@ -134,3 +141,111 @@ class MedicationOrderVersion(models.Model):
     def delete(self, *args, **kwargs):
         """type-10022026-Maurice: Medication history cannot be deleted."""
         raise ValueError("Medication history is immutable")
+
+
+class InteractionRule(models.Model):
+    """type-10022026-Maurice: Synthetic, administrator-managed safety rule metadata."""
+    class Kind(models.TextChoices):
+        DRUG_DRUG = "DRUG_DRUG", "Drug-drug"
+        DRUG_ALLERGY = "DRUG_ALLERGY", "Drug-allergy"
+
+    class Severity(models.TextChoices):
+        LOW = "LOW", "Low"
+        MODERATE = "MODERATE", "Moderate"
+        HIGH = "HIGH", "High"
+        CRITICAL = "CRITICAL", "Critical"
+
+    kind = models.CharField(max_length=20, choices=Kind.choices)
+    medication_code = models.CharField(max_length=80)
+    related_medication_code = models.CharField(max_length=80, blank=True, default="")
+    allergy_code = models.CharField(max_length=80, blank=True, default="")
+    severity = models.CharField(max_length=10, choices=Severity.choices)
+    description = models.CharField(max_length=240, default="Synthetic demo rule")
+    active = models.BooleanField(default=True)
+    effective_from = models.DateTimeField(null=True, blank=True)
+    effective_to = models.DateTimeField(null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [models.Index(fields=["active", "severity"], name="rule_active_severity_idx"), models.Index(fields=["medication_code", "active"], name="rule_med_active_idx")]
+
+    def save(self, *args, **kwargs):
+        """type-10022026-Maurice: Validate rule shape before persistence."""
+        from django.core.exceptions import ValidationError
+        if self.kind == self.Kind.DRUG_DRUG and not self.related_medication_code:
+            raise ValidationError("Drug-drug rules require a related medication code.")
+        if self.kind == self.Kind.DRUG_ALLERGY and not self.allergy_code:
+            raise ValidationError("Drug-allergy rules require an allergy code.")
+        return super().save(*args, **kwargs)
+
+
+class AlertConfiguration(models.Model):
+    """type-10022026-Maurice: Singleton synthetic alert floor; critical is never suppressed."""
+    class SeverityFloor(models.TextChoices):
+        LOW = "LOW", "Low"
+        MODERATE = "MODERATE", "Moderate"
+        HIGH = "HIGH", "High"
+
+    singleton = models.BooleanField(default=True, unique=True)
+    severity_floor = models.CharField(max_length=10, choices=SeverityFloor.choices, default=SeverityFloor.LOW)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [models.Index(fields=["severity_floor"], name="alert_floor_idx")]
+
+
+class InteractionEvaluation(models.Model):
+    """type-10022026-Maurice: Immutable point-in-time interaction evaluation evidence."""
+    medication_version = models.ForeignKey(MedicationOrderVersion, on_delete=models.PROTECT, related_name="evaluations")
+    evaluated_at = models.DateTimeField()
+    fingerprint = models.CharField(max_length=64)
+    floor = models.CharField(max_length=10)
+    findings = models.JSONField(default=list)
+    stale = models.BooleanField(default=False)
+    created_by = models.ForeignKey(User, on_delete=models.PROTECT, related_name="interaction_evaluations")
+
+    def save(self, *args, **kwargs):
+        """type-10022026-Maurice: Evaluation evidence is append-only."""
+        if self.pk:
+            raise ValueError("Interaction evaluation is immutable")
+        return super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        """type-10022026-Maurice: Evaluation evidence cannot be deleted."""
+        raise ValueError("Interaction evaluation is immutable")
+
+
+class InteractionAcknowledgement(models.Model):
+    """type-10022026-Maurice: Immutable clinician acknowledgement evidence."""
+    evaluation = models.ForeignKey(InteractionEvaluation, on_delete=models.PROTECT, related_name="acknowledgements")
+    clinician = models.ForeignKey(User, on_delete=models.PROTECT, related_name="interaction_acknowledgements")
+    acknowledged_at = models.DateTimeField()
+
+    def save(self, *args, **kwargs):
+        """type-10022026-Maurice: Acknowledgements are append-only."""
+        if self.pk:
+            raise ValueError("Interaction acknowledgement is immutable")
+        return super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        """type-10022026-Maurice: Acknowledgements cannot be deleted."""
+        raise ValueError("Interaction acknowledgement is immutable")
+
+
+class PatientExport(models.Model):
+    """type-10022026-Maurice: Short-lived, server-owned patient download artifact."""
+    class Format(models.TextChoices):
+        JSON = "json", "JSON"
+        PDF = "pdf", "PDF"
+
+    artifact_id = models.UUIDField(unique=True, editable=False, default=uuid.uuid4)
+    patient = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name="exports")
+    requested_by = models.ForeignKey(User, on_delete=models.PROTECT, related_name="patient_exports")
+    format = models.CharField(max_length=4, choices=Format.choices)
+    path = models.CharField(max_length=500)
+    sha256 = models.CharField(max_length=64)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["patient", "requested_by", "format"], name="one_active_export_slot")]

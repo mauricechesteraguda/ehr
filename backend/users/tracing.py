@@ -10,6 +10,7 @@ from pathlib import Path
 
 SESSION_ID = os.environ.get("TRACE_SESSION_ID", f"pid-{os.getpid()}")
 REPO_HASH = hashlib.sha256(str(Path(__file__).resolve().parents[2]).encode()).hexdigest()[:12]
+REPO_ROOT = Path(__file__).resolve().parents[2]
 TRACE_FILE = Path.home() / ".cache" / "agent-trace" / REPO_HASH / f"{SESSION_ID}.jsonl"
 
 
@@ -55,9 +56,20 @@ def _cause_chain(error):
     return chain
 
 
+def safe_location(filename, lineno, function):
+    """type-10022026-Maurice: Keep bounded diagnostic locations path-safe."""
+    path = Path(filename)
+    try:
+        location = path.resolve().relative_to(REPO_ROOT)
+        rendered = location.as_posix()
+    except ValueError:
+        rendered = f"<external>/{path.name}"
+    return f"{rendered}:{lineno}:{function}"
+
+
 def _write_exception(function, error):
     """type-10022026-Maurice: Trace safe exception metadata without messages or arguments."""
-    stack = [f"{frame.filename}:{frame.lineno}:{frame.name}" for frame in traceback.extract_tb(error.__traceback__)[-8:]]
+    stack = [safe_location(frame.filename, frame.lineno, frame.name) for frame in traceback.extract_tb(error.__traceback__)[-8:]]
     record = {
         "ts": time.time(),
         "event": "exception",
