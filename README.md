@@ -19,17 +19,187 @@ Not complete in this state: interaction signing (Ticket 05), FHIR, SMART on FHIR
 
 ## Architecture
 
-```text
-React + Vite + TypeScript (src/, Vite dev server)
-                 │ /api requests (same-origin expected)
-                 ▼
-        Django + Django REST Framework (backend/)
-                 │ Django ORM
-                 ▼
-             PostgreSQL
+The committed Tickets01–04 data model is shown below. The diagram describes the
+application relationships; `owner` is optional because a patient record may not be
+linked to a patient login, and the audit hash link is logical rather than a foreign key.
+
+```mermaid
+erDiagram
+    USER {
+        bigint id PK
+        string username UK
+        string role "clinician | patient | admin"
+        boolean totp_enrolled
+    }
+    PATIENT {
+        bigint id PK
+        string public_id UK
+        bigint owner_id FK "nullable, one-to-one"
+        string display_name
+        string race
+        string ethnicity
+        string preferred_language
+        string sex
+        string gender_identity
+        date birth_date
+        date death_date "nullable"
+    }
+    ALLERGY_INTOLERANCE {
+        bigint id PK
+        bigint patient_id FK
+        string code
+        string label
+        string reaction
+        date recorded_date "nullable"
+    }
+    CONDITION {
+        bigint id PK
+        bigint patient_id FK
+        string code
+        string label
+        string status
+        date recorded_date "nullable"
+    }
+    OBSERVATION {
+        bigint id PK
+        bigint patient_id FK
+        string code
+        string label
+        string value
+        string unit
+        date recorded_date "nullable"
+    }
+    DEVICE {
+        bigint id PK
+        bigint patient_id FK
+        string code
+        string label
+        string status
+        date recorded_date "nullable"
+    }
+    MEDICATION_ORDER {
+        bigint id PK
+        bigint patient_id FK
+        bigint prescriber_id FK
+        bigint active_version_id FK "nullable"
+        datetime created_at
+    }
+    MEDICATION_ORDER_VERSION {
+        bigint id PK
+        bigint order_id FK
+        bigint created_by_id FK
+        bigint supersedes_id FK "nullable"
+        int version
+        string status "draft | active | cancelled"
+        string medication_code
+        decimal dose
+        int refills
+        date start_date
+    }
+    AUDIT_EVENT {
+        bigint sequence PK
+        bigint actor_id FK
+        bigint patient_id FK "nullable"
+        datetime occurred_at
+        string action
+        string resource_type
+        string resource_id
+        string previous_hash
+        string current_hash
+    }
+
+    USER ||--o| PATIENT : "optionally owns"
+    PATIENT ||--o{ ALLERGY_INTOLERANCE : has
+    PATIENT ||--o{ CONDITION : has
+    PATIENT ||--o{ OBSERVATION : has
+    PATIENT ||--o{ DEVICE : has
+    PATIENT ||--o{ MEDICATION_ORDER : receives
+    USER ||--o{ MEDICATION_ORDER : prescribes
+    MEDICATION_ORDER ||--o{ MEDICATION_ORDER_VERSION : "has immutable history"
+    MEDICATION_ORDER_VERSION o|--o| MEDICATION_ORDER_VERSION : supersedes
+    USER ||--o{ MEDICATION_ORDER_VERSION : creates
+    USER ||--o{ AUDIT_EVENT : acts
+    PATIENT o|--o{ AUDIT_EVENT : concerns
+    AUDIT_EVENT ||--o| AUDIT_EVENT : "hash links to next"
 ```
 
-The `backend.users` app owns the custom user roles, synthetic patient/clinical records, medication versions, sessions, TOTP state, and audit chain. `src/records.ts` calls the API and `src/main.tsx` renders the role-scoped demo shell. The Vite server reads `HTTPS_CERT` and `HTTPS_KEY`; certificate and key files must remain local.
+React/Vite/TypeScript (`src/`) sends same-origin `/api` requests to Django REST
+Framework (`backend/`), which uses the Django ORM to persist data in PostgreSQL.
+The `backend.users` app owns user roles, sessions, TOTP state, synthetic patient and
+clinical records, medication versions, and audit events. `MedicationOrder` is the
+stable medication identity; each `MedicationOrderVersion` is append-only, and
+`active_version` points to the current version. `AuditEvent` stores the previous and
+current hashes so the chain can be verified. Structured operational logs are a
+separate console-only observability stream with redaction; they are not clinical
+records or audit evidence. The Vite server reads `HTTPS_CERT` and `HTTPS_KEY`;
+certificate and key files must remain local.
+
+## Happy flow
+
+This sequence describes the available local demo path. It intentionally stops short
+of medication signing and does not include exports or interaction signing; the
+patient view is self-only.
+
+```mermaid
+sequenceDiagram
+    participant Browser as React/Vite browser
+    participant HTTPS as Local HTTPS
+    participant API as Django/DRF API
+    participant DB as PostgreSQL
+    participant Audit as Audit chain
+    participant Logs as Structured logs
+
+    Browser->>HTTPS: Open local HTTPS app
+    HTTPS->>Browser: Serve React shell
+    Browser->>API: POST /api/auth/login/ with password
+    API->>Logs: Record redacted auth attempt
+    API-->>Browser: Request current TOTP code
+    Browser->>API: POST login with password + TOTP
+    API->>DB: Validate user, role, and TOTP state
+    API->>Logs: Record successful login without secrets
+    API-->>Browser: Authenticated session and role
+
+    Browser->>API: Clinician searches patients
+    API->>DB: Apply clinician role scope and search
+    API->>Audit: Append patient-search read event
+    Audit->>DB: Store hash-linked event
+    API-->>Browser: Matching synthetic patients
+    Browser->>API: Clinician reads patient record
+    API->>DB: Load demographics and clinical displays
+    API->>Audit: Append patient-read event
+    Audit->>DB: Store next hash-linked event
+    API-->>Browser: Role-scoped patient data
+
+    Browser->>API: Submit medication draft
+    API->>API: Validate medication fields and clinician scope
+    API->>DB: Create order and immutable draft version
+    API->>Audit: Append medication-create event
+    Audit->>DB: Store hash-linked event
+    API-->>Browser: Draft order and version
+    Browser->>API: Change medication
+    API->>API: Validate changed fields
+    API->>DB: Append immutable version that supersedes prior version
+    API->>Audit: Append medication-change event
+    Browser->>API: Cancel medication
+    API->>DB: Append immutable cancelled version
+    API->>Audit: Append medication-cancel event
+    Browser->>API: Refill eligible medication
+    API->>DB: Append new immutable refill draft version
+    API->>Audit: Append medication-refill event
+    Browser->>API: Request medication history
+    API->>DB: Read all immutable versions
+    API-->>Browser: Version history with supersession links
+
+    Browser->>API: Patient requests self-view
+    API->>DB: Apply owner link and patient role scope
+    API->>Audit: Append role-scoped patient-read event
+    API-->>Browser: Patient's self-only demographics and displays
+```
+
+The browser is the React client, local HTTPS is provided by the Vite development
+server when configured, and every protected read or medication mutation appends an
+audit event after authorization. Operational logs remain separate from this audit
+path and contain only the redacted structured fields described below.
 
 ## Prerequisites
 
