@@ -1,4 +1,5 @@
 """Ticket05: deterministic questionnaire validation and transactional response workflow."""
+from .logging import traced_operation
 from datetime import date
 from decimal import Decimal, InvalidOperation
 
@@ -9,6 +10,7 @@ from . import audit
 from .models import QuestionnaireResponse, QuestionnaireResponseVersion, QuestionnaireOutboxEvent, QuestionnaireReview, User
 
 
+@traced_operation
 def validate_answers(questionnaire_version, answers, *, require_required=True):
     if not isinstance(answers, dict):
         raise ValueError("Answers must be an object.")
@@ -62,6 +64,7 @@ def _validate_item(item, value):
 
 
 @transaction.atomic
+@traced_operation
 def create_response(*, patient, questionnaire, actor, questionnaire_version_number, answers, status, correlation_id="", correction=None):
     if actor.role != User.Role.PATIENT or patient.owner_id != actor.id:
         raise PermissionError("Only the patient may submit a response.")
@@ -89,6 +92,7 @@ def create_response(*, patient, questionnaire, actor, questionnaire_version_numb
 
 
 @transaction.atomic
+@traced_operation
 def review_response(*, response_version_id, reviewer, decision, reason="", correlation_id=""):
     if reviewer.role != User.Role.CLINICIAN:
         raise PermissionError("Clinician access required.")

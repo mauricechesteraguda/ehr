@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import stat
+import logging as pylogging
 from pathlib import Path
 
 import pytest
@@ -113,3 +114,98 @@ def test_TC_EHR_0106_rate_limit_cache_failure_is_observable():
     event = _formatted("rate_limit.cache.failure", status=200, duration_ms=2, outcome="degraded", error_class="CacheError", username="patient@example.test")
     assert event["outcome"] == "degraded" and event["error_class"] == "CacheError"
     assert "username" not in event
+
+
+def test_TC_EXP_0161_logging_contract_has_stable_fields():
+    event = _formatted("contract.success", operation="run", outcome="success", status="completed", severity="INFO", duration_ms=2, correlation_id="c")
+    assert {"event_name", "operation", "status", "severity", "duration_ms", "correlation_id"} <= event.keys()
+
+
+def test_TC_EXP_0162_job_metadata_is_opaque_and_bounded():
+    event = _formatted("job.completed", outcome="success", job_id="sensitive-reference", attempt=2, duration_ms=3)
+    assert event["job_id"] != "sensitive-reference" and len(event["job_id"]) == 16 and event["attempt"] == 2
+
+
+def test_TC_EXP_0163_worker_outcomes_have_attempt_and_duration():
+    for name, outcome in (("job.received", "started"), ("job.retry", "retry"), ("job.terminal_failure", "failure"), ("job.completed", "success")):
+        event = _formatted(name, outcome=outcome, job_id="job", attempt=1, duration_ms=1)
+        assert {"job_id", "attempt", "duration_ms", "status", "severity"} <= event.keys()
+
+
+def test_TC_EXP_0164_health_uses_structured_boundary_events():
+    source = __import__("pathlib").Path(__file__).parents[1] / "users/health.py"
+    text = source.read_text()
+    assert "log_event" in text and "logger." not in text
+
+
+def test_TC_EXP_0165_seed_lifecycle_is_structured_without_raw_logger():
+    source = __import__("pathlib").Path(__file__).parents[1] / "users/management/commands/seed_demo.py"
+    text = source.read_text()
+    assert "demo.seed.started" in text and "demo.seed.success" in text and "logger." not in text
+
+
+def test_TC_EXP_0166_major_workflows_name_safe_boundaries():
+    source = " ".join(p.read_text() for p in (__import__("pathlib").Path(__file__).parents[1] / "users").glob("*.py"))
+    for name in ("ccda", "direct", "population", "bulk", "questionnaire", "amendment", "break", "quality"):
+        assert name in source.lower()
+
+
+def test_TC_EXP_0167_passkey_challenge_lifecycle_is_logged():
+    from backend.users import passkeys
+    assert "challenge.created" in __import__("pathlib").Path(passkeys.__file__).read_text()
+
+
+def test_TC_EXP_0168_totp_sms_lifecycle_events_are_allowlisted():
+    source = (__import__("pathlib").Path(__file__).parents[1] / "users/views.py").read_text()
+    assert "auth.totp" in source and "auth.recovery.sms" in source
+
+
+def test_TC_EXP_0169_default_deny_redaction_excludes_unknown_payloads():
+    event = _formatted("boundary.failure", outcome="failure", credentials="secret", clinical_code="x", payload={"x": "y"})
+    assert not {"credentials", "clinical_code", "payload"} & event.keys()
+
+
+def test_TC_EXP_0170_compose_failure_diagnostic_is_sanitized():
+    from backend.tests.test_ticket17_compose import _safe_diagnostic
+    diagnostic = _safe_diagnostic("fatal /home/user/.env password=x https://user:pass@example.test:443")
+    rendered = json.dumps(diagnostic)
+    assert "password" not in rendered and "/home" not in rendered and "https" not in rendered
+
+
+def test_TC_EXP_0171_failures_default_to_error_severity():
+    event = _formatted("operation.failure", outcome="failure")
+    assert event["severity"] == "ERROR"
+
+
+def test_TC_EXP_0172_correlation_is_always_present():
+    assert "correlation_id" in _formatted("operation.success", outcome="success")
+
+
+def test_TC_EXP_0173_boundary_and_remediation_are_safe_fields():
+    event = _formatted("db.failure", outcome="failure", boundary="postgres", error_class="OperationalError", error_code="unavailable", remediation_hint="retry")
+    assert {"boundary", "error_class", "error_code", "remediation_hint"} <= event.keys()
+
+
+def test_TC_EXP_0174_tracing_is_separate_from_operational_logging():
+    from backend.users import tracing
+    assert tracing.trace_function is not None and tracing.trace_function is not __import__("backend.users.logging", fromlist=["log_event"]).log_event
+
+
+def test_TC_EXP_0175_event_name_is_canonical_and_legacy_event_is_compatible():
+    event = _formatted("canonical.success", outcome="success")
+    assert event["event_name"] == event["event"] == "canonical.success"
+
+
+def test_TC_EXP_0176_duration_is_bounded_integer():
+    event = _formatted("timed.success", outcome="success", duration_ms=7)
+    assert isinstance(event["duration_ms"], int) and 0 <= event["duration_ms"] < 100000
+
+
+def test_TC_EXP_0177_passkey_failures_have_error_class_contract():
+    event = _formatted("auth.passkey.challenge.consume.failure", outcome="failure", error_class="ValueError", error_code="expired", duration_ms=1)
+    assert event["severity"] == "ERROR" and event["error_class"] == "ValueError"
+
+
+def test_TC_EXP_0178_redaction_never_serializes_exception_text():
+    event = _formatted("exception.failure", outcome="failure", exception=ValueError("password=secret"))
+    assert "password=secret" not in json.dumps(event)

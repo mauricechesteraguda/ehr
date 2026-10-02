@@ -443,6 +443,7 @@ class PopulationExportDownloadView(APIView):
 @trace_function
 def login_view(request):
     """type-10022026-Maurice: Authenticate password and require current TOTP."""
+    started = time.monotonic()
     if (throttled := limited(request, "login", limit=8, window=60)) is not None:
         return throttled
     data = LoginSerializer(data=request.data)
@@ -458,11 +459,12 @@ def login_view(request):
         log_event("auth.login.passkey.offered", user_role=user.role)
         return Response({"mfa": "webauthn", "options": passkeys.authentication_options(request, user)}, status=200)
     if not pyotp.TOTP(user.totp_secret).verify(otp, valid_window=0):
-        log_event("auth.mfa.failure", user_role=user.role)
+        log_event("auth.mfa.failure", outcome="failure", status="rejected", duration_ms=int((time.monotonic()-started)*1000), component="authentication", operation="totp_verify", boundary="authentication", error_code="invalid_code", remediation_hint="retry_with_current_code", user_role=user.role)
         return Response({"detail": "Invalid credentials or verification code."}, status=401)
     login(request, user)
     request.session["totp_authenticated"] = True
     request.session["mfa_generation"] = user.mfa_generation
+    log_event("auth.totp.success", outcome="success", status="verified", duration_ms=int((time.monotonic()-started)*1000), component="authentication", operation="totp_verify", boundary="authentication", user_role=user.role)
     log_event("auth.login.success", user_role=user.role)
     return Response({"role": user.role})
 
@@ -548,16 +550,17 @@ def passkey_manage_view(request, credential_id):
 @permission_classes([AllowAny])
 @trace_function
 def recovery_request_view(request):
+    started = time.monotonic()
     if (throttled := limited(request, "sms_recovery", limit=3, window=300)) is not None:
         return throttled
     username, password, phone = str(request.data.get("username", "")), str(request.data.get("password", "")), str(request.data.get("phone", ""))
     user = external_authenticate(lambda: authenticate(request, username=username, password=password))
     if not user or not phone or (user.recovery_phone_hash and not secrets.compare_digest(user.recovery_phone_hash, hashlib.sha256(phone.encode()).hexdigest())):
-        log_event("auth.recovery.failure", outcome="failure", reason="identity_proof")
+        log_event("auth.recovery.sms.failure", outcome="failure", status="rejected", duration_ms=int((time.monotonic()-started)*1000), boundary="authentication", error_code="identity_proof_failed", remediation_hint="retry_recovery")
         return Response({"detail": "Recovery unavailable."}, status=400)
     code = hashlib.sha256(f"{user.pk}:{user.username}".encode()).hexdigest()[:6]
     challenge = SmsRecoveryChallenge.objects.create(user=user, code_hash=hashlib.sha256(code.encode()).hexdigest(), expires_at=timezone.now() + timedelta(seconds=settings.SMS_RECOVERY_TTL_SECONDS), delivery_reference=f"sms-{secrets.token_hex(8)}")
-    log_event("auth.recovery.sms.sent", outcome="success")
+    log_event("auth.recovery.sms.success", outcome="success", status="sent", duration_ms=int((time.monotonic()-started)*1000), boundary="sms_adapter")
     return Response({"recovery_id": challenge.pk, "expires_in": settings.SMS_RECOVERY_TTL_SECONDS})
 
 
@@ -565,6 +568,7 @@ def recovery_request_view(request):
 @permission_classes([AllowAny])
 @trace_function
 def recovery_verify_view(request):
+    started = time.monotonic()
     code = str(request.data.get("code", ""))
     try:
         with transaction.atomic():
@@ -573,16 +577,16 @@ def recovery_verify_view(request):
                 return Response({"detail": "Recovery code invalid or expired."}, status=400)
             challenge.attempts += 1
             if not secrets.compare_digest(challenge.code_hash, hashlib.sha256(code.encode()).hexdigest()):
-                challenge.save(update_fields=["attempts"]); log_event("auth.recovery.failure", outcome="failure", reason="code"); return Response({"detail": "Recovery code invalid or expired."}, status=400)
+                challenge.save(update_fields=["attempts"]); log_event("auth.recovery.sms.failure", outcome="failure", status="rejected", duration_ms=int((time.monotonic()-started)*1000), boundary="authentication", error_code="invalid_code", remediation_hint="request_new_code"); return Response({"detail": "Recovery code invalid or expired."}, status=400)
             challenge.used_at = timezone.now(); challenge.save(update_fields=["attempts", "used_at"])
             user = challenge.user
             user.mfa_generation += 1; user.totp_enrolled = False; user.save(update_fields=["mfa_generation", "totp_enrolled"])
             audit.append_audit_event(actor=user, action="update", resource_type="MFARecovery", resource_id=challenge.pk, correlation_id=getattr(request, "correlation_id", ""))
     except Exception as error:
-        log_event("auth.recovery.failure", outcome="failure", reason=type(error).__name__)
+        log_event("auth.recovery.sms.failure", outcome="failure", status="error", duration_ms=int((time.monotonic()-started)*1000), boundary="database", exception=error, remediation_hint="retry_recovery")
         return Response({"detail": "Recovery could not be completed."}, status=503)
     logout(request)
-    log_event("auth.recovery.success", outcome="success", user_role=user.role)
+    log_event("auth.recovery.sms.success", outcome="success", status="verified", duration_ms=int((time.monotonic()-started)*1000), boundary="authentication", user_role=user.role)
     return Response({"re_enrollment_required": True})
 
 
@@ -593,12 +597,13 @@ def enroll_view(request):
     """type-10022026-Maurice: Generate an enrollment secret without returning credentials."""
     if (throttled := limited(request, "mfa", limit=10, window=60)) is not None:
         return throttled
-    log_event("auth.totp.enrollment.entry", component="authentication", operation="enrollment")
+    started = time.monotonic()
+    log_event("auth.totp.enrollment.entry", component="authentication", operation="enrollment", status="started", boundary="database")
     user = request.user
     if not user.totp_secret:
         user.totp_secret = pyotp.random_base32()
         user.save(update_fields=["totp_secret"])
-    log_event("auth.totp.enrollment.success", outcome="success", component="authentication", operation="enrollment")
+    log_event("auth.totp.enrollment.success", outcome="success", status="created", duration_ms=int((time.monotonic()-started)*1000), component="authentication", operation="enrollment", boundary="database")
     return Response({"secret": user.totp_secret, "enrolled": user.totp_enrolled})
 
 
@@ -609,14 +614,15 @@ def verify_enrollment_view(request):
     """type-10022026-Maurice: Verify enrollment code before enabling MFA."""
     if (throttled := limited(request, "mfa", limit=10, window=60)) is not None:
         return throttled
-    log_event("auth.totp.enrollment.verification.entry", component="authentication", operation="enrollment_verification")
+    started = time.monotonic()
+    log_event("auth.totp.enrollment.verification.entry", component="authentication", operation="enrollment_verification", status="started", boundary="authentication")
     data = OtpSerializer(data=request.data)
     if not data.is_valid() or not pyotp.TOTP(request.user.totp_secret).verify(data.validated_data.get("otp", ""), valid_window=0):
-        log_event("auth.totp.enrollment.verification.failure", outcome="failure", component="authentication", operation="enrollment_verification")
+        log_event("auth.totp.enrollment.verification.failure", outcome="failure", status="rejected", duration_ms=int((time.monotonic()-started)*1000), component="authentication", operation="enrollment_verification", boundary="authentication", error_code="invalid_code", remediation_hint="retry_with_current_code")
         return Response({"detail": "Invalid verification code."}, status=400)
     request.user.totp_enrolled = True
     request.user.save(update_fields=["totp_enrolled"])
-    log_event("auth.totp.enrollment.verification.success", outcome="success", component="authentication", operation="enrollment_verification")
+    log_event("auth.totp.enrollment.verification.success", outcome="success", status="verified", duration_ms=int((time.monotonic()-started)*1000), component="authentication", operation="enrollment_verification", boundary="authentication")
     return Response({"enrolled": True})
 
 

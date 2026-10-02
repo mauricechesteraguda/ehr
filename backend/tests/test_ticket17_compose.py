@@ -16,6 +16,7 @@ import subprocess
 import sys
 import tempfile
 import time
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -24,12 +25,25 @@ SERVICES = ("caddy", "web", "api", "postgres", "redis", "worker", "beat")
 ROUTES = ("/", "/patient", "/clinician", "/admin", "/developer", "/api/health/ready/")
 
 
+def _safe_diagnostic(stderr: str) -> dict[str, str]:
+    """Return bounded categories only; never echo stderr, paths, env, URLs, or payloads."""
+    line = next((part.strip() for part in stderr.splitlines() if part.strip()), "")
+    lowered = line.lower()
+    categories = (("timeout", "timeout"), ("connection refused", "dependency_unavailable"), ("health", "health_check"), ("pull", "image_pull"), ("permission", "permission"), ("certificate", "tls"), ("no such", "missing_resource"))
+    error_class = next((value for needle, value in categories if needle in lowered), "command_failed")
+    code = "nonzero_exit"
+    match = re.search(r"exit code (\d+)", lowered)
+    if match:
+        code = f"exit_{match.group(1)}"
+    return {"error_class": error_class, "error_code": code}
+
+
 def run(cmd: list[str], *, env: dict[str, str], timeout: int = 60, check: bool = True) -> subprocess.CompletedProcess[str]:
     print(json.dumps({"event": "acceptance.command", "command": cmd[0], "args": cmd[1:]}))
     try:
         return subprocess.run(cmd, cwd=ROOT, env=env, text=True, capture_output=True, timeout=timeout, check=check)
     except subprocess.CalledProcessError as exc:
-        print(json.dumps({"event": "acceptance.command_failed", "returncode": exc.returncode, "stderr": exc.stderr[-2000:]}), file=sys.stderr)
+        print(json.dumps({"event": "acceptance.command_failed", "returncode": exc.returncode, **_safe_diagnostic(exc.stderr)}), file=sys.stderr)
         raise
 
 

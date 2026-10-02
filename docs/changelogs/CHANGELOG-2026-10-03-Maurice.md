@@ -18,6 +18,8 @@ Author Name: Aguda, Maurice
 
 ## Ticket 17
 
+- Hardened operational logging: the central JSON envelope now supplies canonical event, operation, status, severity, duration, correlation, bounded error/remediation metadata, and opaque job attempt references. Health/seed lifecycle, worker outcomes, passkey challenges, and named workflow boundaries are structured; Compose failure diagnostics are category-only and stderr-safe. Added canonical TC-EXP-0161..0178 coverage with 18-column CSV rows.
+
 - Isolated live Compose acceptance from unrelated host services: Compose now keeps normal demo defaults of 80/443 but accepts configurable host bindings, and the acceptance runner selects/checks free high ports, passes them through its environment, and validates the exported Caddy CA at the selected HTTPS URL.
 - Added canonical `TC-EXP-0140..0160` integrated-Compose acceptance cases, each with a discoverable backend test reference.
 - Added integrated Compose acceptance coverage in `backend/tests/test_ticket17_compose.py`: isolated project naming, preflight port checks, external generated secrets, BuildKit builds, bounded health waits, local-CA HTTPS validation, idempotent migration/seed, worker restart/persistence probes, structured evidence, and scoped cleanup.

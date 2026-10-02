@@ -1,4 +1,5 @@
 """Ticket06 patient amendment workflow and immutable source boundary."""
+from .logging import traced_operation
 import hashlib
 import json
 from datetime import timedelta
@@ -42,6 +43,7 @@ def _resolve(patient, resource_type, resource_id, version):
 
 
 @transaction.atomic
+@traced_operation
 def create_amendment(*, patient, actor, resource_type, resource_id, source_version, reason, proposed_data=None, correlation_id=""):
     if actor.role != User.Role.PATIENT or patient.owner_id != actor.id: raise PermissionError("Only the patient may request an amendment.")
     reason = str(reason or "").strip()
@@ -58,6 +60,7 @@ def create_amendment(*, patient, actor, resource_type, resource_id, source_versi
 
 
 @transaction.atomic
+@traced_operation
 def decide_amendment(*, amendment_id, reviewer, decision, decision_reason="", correlation_id=""):
     if reviewer.role != User.Role.CLINICIAN: raise PermissionError("Clinician access required.")
     if decision not in {"accepted", "denied", "appended"}: raise ValueError("Unsupported amendment decision.")
@@ -92,6 +95,7 @@ def decide_amendment(*, amendment_id, reviewer, decision, decision_reason="", co
 
 
 @transaction.atomic
+@traced_operation
 def begin_review(*, amendment_id, reviewer):
     if reviewer.role != User.Role.CLINICIAN: raise PermissionError("Clinician access required.")
     item = PatientAmendment.objects.select_for_update().get(pk=amendment_id)
@@ -101,6 +105,7 @@ def begin_review(*, amendment_id, reviewer):
 
 
 @transaction.atomic
+@traced_operation
 def dispatch_amendment_outbox(*, event_id, delivered):
     """Deterministic notification retry state machine; only lifecycle metadata is retained."""
     event = PatientAmendmentOutbox.objects.select_for_update().get(pk=event_id)

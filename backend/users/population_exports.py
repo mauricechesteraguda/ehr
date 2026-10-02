@@ -1,4 +1,5 @@
 """Ticket10 authorized population exports; bounded, encrypted, and fail-closed."""
+from .logging import traced_operation
 import base64
 import csv
 import hashlib
@@ -62,6 +63,7 @@ def _decrypt(path):
     return AESGCM(_key()).decrypt(payload[:12], payload[12:], None)
 
 
+@traced_operation
 def run_population_export(job):
     """Worker entrypoint. Only bounded DB pages and opaque filesystem references are used."""
     data = job.redacted_input
@@ -88,6 +90,7 @@ def run_population_export(job):
         raise
 
 
+@traced_operation
 def expire_population_exports():
     now = timezone.now()
     for artifact in PopulationExportArtifact.objects.filter(expires_at__lte=now):
@@ -100,6 +103,7 @@ def expire_population_exports():
             continue
 
 
+@traced_operation
 def download_bytes(artifact):
     if artifact.expires_at <= timezone.now() or not Path(artifact.path).is_file():
         raise FileNotFoundError

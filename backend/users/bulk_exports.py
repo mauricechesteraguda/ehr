@@ -1,4 +1,5 @@
 """Ticket15 bounded FHIR Bulk Data-style export; no patient selection or break-glass."""
+from .logging import traced_operation
 import base64, hashlib, json, os, secrets
 from datetime import datetime, timedelta, timezone as dt_timezone
 from pathlib import Path
@@ -21,6 +22,7 @@ def _key():
     if len(key) not in (16, 24, 32): raise RuntimeError("bulk export encryption is not configured")
     return key
 
+@traced_operation
 def parse_since(value):
     if not value: return None
     try:
@@ -39,6 +41,7 @@ def _query(resource_type, since):
     if since and hasattr(qs.model, "created_at"): qs = qs.filter(created_at__gte=since)
     return qs.iterator(chunk_size=100)
 
+@traced_operation
 def run_bulk_export(job):
     data = job.redacted_input; types = data["resource_types"]; since = parse_since(data.get("since"))
     root = Path(settings.BULK_EXPORT_ROOT).resolve(); root.mkdir(mode=0o700, parents=True, exist_ok=True)
@@ -67,14 +70,17 @@ def run_bulk_export(job):
         directory.rmdir() if directory.exists() and not any(directory.iterdir()) else None
         raise
 
+@traced_operation
 def decrypt_entry(entry):
     raw = Path(entry["path"]).read_bytes(); return AESGCM(_key()).decrypt(raw[:12], raw[12:], None)
 
+@traced_operation
 def expire_bulk_exports():
     for manifest in FHIRBulkExport.objects.select_related("job").filter(job__expires_at__lte=timezone.now()):
         for entry in manifest.entries: Path(entry.get("path", "")).unlink(missing_ok=True)
         manifest.job.state = Job.State.EXPIRED; manifest.job.save(update_fields=["state"])
 
+@traced_operation
 def public_manifest(request, manifest):
     job = manifest.job
     if job.state in (Job.State.QUEUED, Job.State.RUNNING):
@@ -84,6 +90,7 @@ def public_manifest(request, manifest):
     return {"transactionTime": manifest.transaction_time.isoformat().replace("+00:00", "Z"), "request": manifest.request_url,
             "requiresAccessToken": True, "output": [{"type": e["type"], "url": request.build_absolute_uri(f"/fhir/R4/$export/{manifest.id}/{e['type']}"), "count": e["count"], "checksum": e["checksum"]} for e in manifest.entries], "error": manifest.errors}
 
+@traced_operation
 def download_bulk_entry(manifest, resource_type):
     if manifest.job.state != Job.State.SUCCEEDED or manifest.job.expires_at <= timezone.now(): raise FileNotFoundError
     entry = next((e for e in manifest.entries if e["type"] == resource_type), None)

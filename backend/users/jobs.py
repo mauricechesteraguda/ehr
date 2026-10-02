@@ -3,6 +3,7 @@ import hashlib
 import json
 import logging
 import re
+import time
 from datetime import timedelta
 
 from celery.exceptions import Retry
@@ -58,7 +59,7 @@ def enqueue_job(*, owner, kind, idempotency_key, patient=None, input_data=None, 
     if created:
         OutboxEvent.objects.create(job=job, kind=kind)
         append_audit_event(actor=owner, patient=patient, action="create", resource_type="job", resource_id=job.id)
-        log_event("job.queued", component="jobs", operation="enqueue", outcome="success")
+        log_event("job.queued", component="jobs", operation="enqueue", outcome="success", job_id=job.id, attempt=0, boundary="database")
     return job, created
 
 
@@ -83,7 +84,7 @@ def dispatch_pending(*, limit=50):
             deliver_job.delay(job_id, event_id)
         except Exception as error:
             OutboxEvent.objects.filter(pk=event_id, state=OutboxEvent.State.PENDING).update(claimed_at=None)
-            log_event("job.dispatch.failure", component="jobs", operation="dispatch", outcome="failure", exception=error)
+            log_event("job.dispatch.failure", component="jobs", operation="dispatch", outcome="failure", job_id=event_id, attempt=event.attempts, boundary="redis", exception=error, remediation_hint="retry_dispatch")
             # Stop this drain cycle so a broker outage cannot hot-loop one event
             # until the bounded database attempt counter overflows.
             break
@@ -91,7 +92,7 @@ def dispatch_pending(*, limit=50):
             updated = OutboxEvent.objects.filter(pk=event_id, state=OutboxEvent.State.PENDING).update(state=OutboxEvent.State.DISPATCHED, dispatched_at=timezone.now(), claimed_at=None)
         if updated:
             dispatched += 1
-            log_event("job.dispatched", component="jobs", operation="dispatch", outcome="success")
+            log_event("job.dispatched", component="jobs", operation="dispatch", outcome="success", job_id=job_id, attempt=event.attempts, boundary="redis")
     return dispatched
 
 
@@ -155,6 +156,7 @@ def deliver_job(self, job_id, event_id):
         if job.expires_at and job.expires_at <= now:
             job.state, job.finished_at = Job.State.EXPIRED, now
             job.save(update_fields=["state", "finished_at"])
+            log_event("job.terminal_failure", component="jobs", operation="worker", outcome="failure", job_id=job.id, attempt=job.attempts, boundary="worker", error_code="retry_limit", remediation_hint="inspect_dependency")
             return
         if job.state in {Job.State.SUCCEEDED, Job.State.CANCELLED, Job.State.EXPIRED}:
             return
@@ -170,7 +172,8 @@ def deliver_job(self, job_id, event_id):
         job.state, job.started_at, job.heartbeat_at = Job.State.RUNNING, now, now
         job.save(update_fields=["attempts", "state", "started_at", "heartbeat_at"])
         attempt = JobAttempt.objects.create(job=job, number=job.attempts, heartbeat_at=now)
-    log_event("job.received", component="jobs", operation="worker", outcome="started")
+    started = time.monotonic()
+    log_event("job.received", component="jobs", operation="worker", outcome="started", job_id=job.id, attempt=job.attempts, boundary="worker")
     try:
         _run_demo(job)
     except TransientJobError as error:
@@ -181,7 +184,7 @@ def deliver_job(self, job_id, event_id):
             attempt.save(update_fields=["state", "finished_at", "error_class", "error_code"])
             Job.objects.filter(pk=job.pk).update(state=Job.State.QUEUED, heartbeat_at=None, error_class=error_class, error_code=error_code)
             append_audit_event(actor=job.owner, patient=job.patient, action="update", resource_type="job", resource_id=job.id)
-        log_event("job.retry", component="jobs", operation="worker", outcome="retry", exception=error)
+        log_event("job.retry", component="jobs", operation="worker", outcome="retry", job_id=job.id, attempt=job.attempts, duration_ms=int((time.monotonic()-started)*1000), boundary="worker", exception=error, remediation_hint="retry_backoff")
         raise self.retry(exc=Retry("transient"), countdown=min(300, 2 ** max(0, job.attempts - 1)))
     except Exception as error:
         error_class, error_code = _safe_error(error)
@@ -189,13 +192,13 @@ def deliver_job(self, job_id, event_id):
             JobAttempt.objects.filter(pk=attempt.pk).update(state=Job.State.FAILED, finished_at=timezone.now(), error_class=error_class, error_code=error_code)
             Job.objects.filter(pk=job.pk).update(state=Job.State.FAILED, finished_at=timezone.now(), error_class=error_class, error_code=error_code)
             append_audit_event(actor=job.owner, patient=job.patient, action="update", resource_type="job", resource_id=job.id)
-        log_event("job.failed", component="jobs", operation="worker", outcome="failure", exception=error)
+        log_event("job.terminal_failure", component="jobs", operation="worker", outcome="failure", job_id=job.id, attempt=job.attempts, duration_ms=int((time.monotonic()-started)*1000), boundary="worker", exception=error, remediation_hint="inspect_job_error")
         return
     with transaction.atomic():
         JobAttempt.objects.filter(pk=attempt.pk).update(state=Job.State.SUCCEEDED, finished_at=timezone.now(), heartbeat_at=timezone.now())
         Job.objects.filter(pk=job.pk, state=Job.State.RUNNING).update(state=Job.State.SUCCEEDED, finished_at=timezone.now(), heartbeat_at=timezone.now())
         append_audit_event(actor=job.owner, patient=job.patient, action="update", resource_type="job", resource_id=job.id)
-    log_event("job.completed", component="jobs", operation="worker", outcome="success")
+    log_event("job.completed", component="jobs", operation="worker", outcome="success", job_id=job.id, attempt=job.attempts, duration_ms=int((time.monotonic()-started)*1000), boundary="worker")
 
 
 @trace_function

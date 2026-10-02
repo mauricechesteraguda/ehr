@@ -4,6 +4,8 @@ import logging
 import re
 import traceback
 import json
+import hashlib
+import time
 from functools import wraps
 
 from .tracing import safe_location, trace_function
@@ -11,7 +13,8 @@ from .tracing import safe_location, trace_function
 logger = logging.getLogger("ehr.auth")
 _correlation_id = contextvars.ContextVar("ehr_correlation_id", default="")
 _SENSITIVE = re.compile(r"password|passphrase|secret|otp|totp|token|cookie|authorization|username|email|name|ssn|address|patient|clinical|payload|body|connection|string", re.I)
-_ALLOWED = {"outcome", "status", "http_status", "http_class", "duration_ms", "correlation_id", "component", "operation", "user_role", "exception_type", "exception_class", "error_class", "exception_code", "cause_chain", "stack_trace", "request", "db_outcome", "parser_status", "adapter"}
+_ALLOWED = {"event_name", "outcome", "status", "severity", "http_status", "http_class", "duration_ms", "correlation_id", "component", "operation", "user_role", "exception_type", "exception_class", "error_class", "error_code", "exception_code", "cause_chain", "stack_trace", "request", "db_outcome", "parser_status", "adapter", "boundary", "remediation_hint", "job_id", "attempt"}
+_SAFE_TEXT = re.compile(r"^[A-Za-z0-9_.:-]{1,80}$")
 
 
 class JsonConsoleFormatter(logging.Formatter):
@@ -19,8 +22,17 @@ class JsonConsoleFormatter(logging.Formatter):
     def format(self, record):
         context = getattr(record, "context", {})
         safe = {key: _redact(value, key) for key, value in context.items() if key in _ALLOWED}
+        if "job_id" in safe:
+            safe["job_id"] = hashlib.sha256(str(safe["job_id"]).encode()).hexdigest()[:16]
         safe.setdefault("correlation_id", "")
-        return json.dumps({"event": getattr(record, "event", record.getMessage()), **safe}, separators=(",", ":"), sort_keys=True)
+        event_name = getattr(record, "event_name", getattr(record, "event", record.getMessage()))
+        safe.setdefault("event_name", event_name)
+        outcome = safe.get("outcome", "started")
+        safe.setdefault("operation", str(event_name).rsplit(".", 1)[0])
+        safe.setdefault("status", outcome)
+        safe.setdefault("severity", "ERROR" if outcome in {"failure", "error", "degraded"} or str(event_name).endswith((".failure", ".error")) else "INFO")
+        # Keep event for existing consumers while making event_name canonical.
+        return json.dumps({"event": event_name, **safe}, separators=(",", ":"), sort_keys=True)
 
 
 def set_correlation_id(value):
@@ -46,6 +58,21 @@ def _redact(value, key=""):
 
 def log_event(event, level=logging.INFO, **context):
     """type-10022026-Maurice: Emit only the central operational schema with safe context."""
+    outcome = context.get("outcome", "started")
+    failure = outcome in {"failure", "error", "degraded"} or str(event).endswith((".failure", ".error"))
+    if failure and level == logging.INFO:
+        level = logging.ERROR
+    context.setdefault("event_name", event)
+    context.setdefault("operation", str(event).rsplit(".", 1)[0])
+    context.setdefault("status", outcome)
+    context.setdefault("severity", logging.getLevelName(level))
+    if "job_id" in context and context["job_id"] is not None:
+        context["job_id"] = hashlib.sha256(str(context["job_id"]).encode()).hexdigest()[:16]
+    if "attempt" in context:
+        try:
+            context["attempt"] = max(0, int(context["attempt"]))
+        except (TypeError, ValueError):
+            context.pop("attempt", None)
     if isinstance(context.get("exception"), BaseException):
         # type-10022026-Maurice: Emit exception shape only, never exception text or args.
         error = context["exception"]
@@ -53,6 +80,7 @@ def log_event(event, level=logging.INFO, **context):
         context["exception_class"] = type(error).__name__
         code = getattr(error, "code", None)
         context["exception_code"] = code if isinstance(code, str) and re.fullmatch(r"[A-Za-z0-9_.:-]{1,40}", code) else type(error).__name__
+        context.setdefault("error_code", context["exception_code"])
         causes = []
         cause = error.__cause__ or error.__context__
         while cause is not None and len(causes) < 8:
@@ -63,7 +91,7 @@ def log_event(event, level=logging.INFO, **context):
         context["error_class"] = type(error).__name__
     safe = {key: _redact(value, key) for key, value in context.items() if key in _ALLOWED}
     safe.setdefault("correlation_id", _correlation_id.get())
-    logger.log(level, event, extra={"event": event, "context": safe})
+    logger.log(level, event, extra={"event": event, "event_name": event, "context": safe})
 
 
 @trace_function
@@ -84,12 +112,13 @@ def traced_operation(function):
     """type-10022026-Maurice: Trace entry, success, and failure while preserving exception context."""
     @wraps(function)
     def wrapped(*args, **kwargs):
-        log_event(f"function.{function.__name__}.entry", component="backend", operation=function.__name__)
+        started = time.monotonic()
+        log_event(f"function.{function.__name__}.entry", component="backend", operation=function.__name__, outcome="started", boundary="application")
         try:
             result = function(*args, **kwargs)
-            log_event(f"function.{function.__name__}.success", outcome="success", component="backend", operation=function.__name__)
+            log_event(f"function.{function.__name__}.success", outcome="success", component="backend", operation=function.__name__, duration_ms=int((time.monotonic()-started)*1000), boundary="application")
             return result
         except Exception as error:
-            log_event(f"function.{function.__name__}.failure", outcome="failure", component="backend", operation=function.__name__, exception_type=type(error).__name__)
+            log_event(f"function.{function.__name__}.failure", outcome="failure", component="backend", operation=function.__name__, duration_ms=int((time.monotonic()-started)*1000), boundary="application", exception=error)
             raise
     return wrapped

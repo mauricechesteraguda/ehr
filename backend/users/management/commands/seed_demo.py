@@ -1,7 +1,7 @@
 """type-10022026-Maurice: Idempotent synthetic P0 demo data management command."""
-import logging
 import os
 import secrets
+import time
 from datetime import date
 
 from django.core.management.base import BaseCommand, CommandError
@@ -28,8 +28,8 @@ from backend.users.models import (
     QuestionnaireResponse, QuestionnaireResponseVersion, QuestionnaireReview, QuestionnaireOutboxEvent,
     MeasureDefinition, MeasureVersion,
 )
+from backend.users.logging import log_event
 
-logger = logging.getLogger("ehr")
 DEMO_USERS = {
     "demo-clinician": User.Role.CLINICIAN,
     "demo-patient": User.Role.PATIENT,
@@ -48,6 +48,8 @@ class Command(BaseCommand):
 
     @transaction.atomic
     def handle(self, *args, **options):
+        started = time.monotonic()
+        log_event("demo.seed.started", component="seed", operation="seed_demo", outcome="started", boundary="database")
         password = options.get("password")
         if not password:
             raise CommandError("Supply --password or DEMO_PASSWORD; no password is stored in the repository.")
@@ -61,7 +63,7 @@ class Command(BaseCommand):
         self._interactions()
         self._questionnaire(users["demo-clinician"])
         self._measures()
-        logger.info("demo.seed.success users=%d patients=%d reset=%s", len(users), len(patients), options["reset"])
+        log_event("demo.seed.success", component="seed", operation="seed_demo", outcome="success", boundary="database", duration_ms=int((time.monotonic() - started) * 1000))
         self.stdout.write(self.style.SUCCESS("Synthetic demo ready: P001/P002 and four role accounts."))
         if options.get("totp_secret_file") and secrets_by_user:
             path = os.path.abspath(options["totp_secret_file"])
@@ -187,4 +189,4 @@ class Command(BaseCommand):
         Application.objects.filter(user__in=demo_users).delete()
         demo_users.delete()
         InteractionRule.objects.filter(medication_code__in=("AMOX", "WARFARIN")).delete()
-        logger.info("demo.reset.success")
+        log_event("demo.reset.success", component="seed", operation="reset", outcome="success", boundary="database")

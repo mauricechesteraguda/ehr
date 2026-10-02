@@ -1,4 +1,5 @@
 """Ticket12: deterministic, visibly simulated Direct-shaped delivery boundary."""
+from .logging import traced_operation
 import hashlib
 import re
 from pathlib import Path
@@ -97,6 +98,7 @@ def _artifact_bytes(document):
 
 @transaction.atomic
 @trace_function
+@traced_operation
 def enqueue_delivery(*, owner, artifact, recipient, purpose, idempotency_key):
     """Atomically create delivery, audit evidence, and payload-free outbox intent."""
     if not adapter.validate_recipient(recipient):
@@ -122,6 +124,7 @@ def enqueue_delivery(*, owner, artifact, recipient, purpose, idempotency_key):
     return delivery, created
 
 
+@traced_operation
 def load_delivery_artifact(delivery):
     return _artifact_bytes(delivery.artifact)
 
@@ -135,6 +138,7 @@ def _recipient(delivery):
 
 @app.task(bind=True, name="ehr.direct.deliver", ignore_result=True, acks_late=True)
 @trace_function
+@traced_operation
 def deliver_direct(self, delivery_id):
     """Deliver only through the local fixture and retain safe attempt/receipt metadata."""
     with transaction.atomic():

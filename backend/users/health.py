@@ -1,6 +1,5 @@
 """type-10022026-Maurice: Redacted liveness/readiness boundaries for local operations."""
 
-import logging
 import os
 import time
 from pathlib import Path
@@ -8,14 +7,13 @@ from django.db import connection
 from django.db.migrations.executor import MigrationExecutor
 from django.http import JsonResponse
 from .tracing import trace_function
-
-logger = logging.getLogger("ehr")
+from .logging import log_event
 
 
 @trace_function
 def live(request):
     """type-10022026-Maurice: Return process liveness without dependency details."""
-    logger.info("health.live.success")
+    log_event("health.live.success", component="health", operation="live", outcome="success", boundary="http")
     return JsonResponse({"status": "ok"})
 
 
@@ -28,12 +26,12 @@ def ready(request):
         executor = MigrationExecutor(connection)
         pending = executor.migration_plan(executor.loader.graph.leaf_nodes())
         if pending:
-            logger.warning("health.ready.failure", extra={"reason": "migrations_pending"})
+            log_event("health.ready.failure", component="health", operation="ready", outcome="failure", boundary="database", error_code="migrations_pending", remediation_hint="apply_migrations")
             return JsonResponse({"status": "unready", "reason": "migrations_pending"}, status=503)
     except Exception as error:
-        logger.warning("health.ready.failure", extra={"reason": type(error).__name__})
+        log_event("health.ready.failure", component="health", operation="ready", outcome="failure", boundary="database", exception=error, remediation_hint="check_database")
         return JsonResponse({"status": "unready", "reason": "database_unavailable"}, status=503)
-    logger.info("health.ready.success")
+    log_event("health.ready.success", component="health", operation="ready", outcome="success", boundary="database")
     return JsonResponse({"status": "ready"})
 
 
@@ -42,7 +40,7 @@ def beat(request):
     """type-10022026-Maurice: Report scheduler heartbeat without exposing filesystem data."""
     heartbeat = Path(os.environ.get("BEAT_HEARTBEAT_FILE", "/run/ehr/beat-heartbeat"))
     if not heartbeat.exists() or time.time() - heartbeat.stat().st_mtime > 60:
-        logger.warning("health.beat.failure", extra={"reason": "heartbeat_missing"})
+        log_event("health.beat.failure", component="health", operation="beat", outcome="failure", boundary="scheduler", error_code="heartbeat_missing", remediation_hint="check_scheduler")
         return JsonResponse({"status": "unready", "reason": "scheduler_unavailable"}, status=503)
-    logger.info("health.beat.success")
+    log_event("health.beat.success", component="health", operation="beat", outcome="success", boundary="scheduler")
     return JsonResponse({"status": "ready"})
