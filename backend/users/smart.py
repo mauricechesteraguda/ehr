@@ -4,11 +4,15 @@ import hashlib
 import base64
 import hmac
 import time
+import unicodedata
+import re
+from datetime import date
 from datetime import timedelta
 from urllib.parse import urlencode, urlsplit
 
 from django.contrib.auth.hashers import check_password, make_password
 from django.http import JsonResponse
+from django.core.cache import cache
 from django.utils import timezone
 from django.conf import settings
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -18,12 +22,12 @@ from oauth2_provider.models import AccessToken, Application, Grant, RefreshToken
 
 from . import audit
 from .logging import log_event
-from .models import Patient, User
+from .models import Patient, SmartTokenContext, User
 from .tracing import trace_function
 from .rate_limit import limited
 
-SCOPES = frozenset(("openid", "fhirUser", "patient/Patient.r", "patient/MedicationRequest.r", "patient/AllergyIntolerance.r", "patient/Condition.r", "patient/Observation.r", "patient/Device.r"))
-RESOURCE_SCOPES = {"Patient": "patient/Patient.r", "MedicationRequest": "patient/MedicationRequest.r", "AllergyIntolerance": "patient/AllergyIntolerance.r", "Condition": "patient/Condition.r", "Observation": "patient/Observation.r", "Device": "patient/Device.r"}
+SCOPES = frozenset(("openid", "fhirUser", "patient/Patient.r", "patient/Patient.s", "patient/MedicationRequest.r", "patient/AllergyIntolerance.r", "patient/Condition.r", "patient/Observation.r", "patient/Device.r", "patient/Questionnaire.r", "patient/QuestionnaireResponse.r"))
+RESOURCE_SCOPES = {"Patient": "patient/Patient.r", "MedicationRequest": "patient/MedicationRequest.r", "AllergyIntolerance": "patient/AllergyIntolerance.r", "Condition": "patient/Condition.r", "Observation": "patient/Observation.r", "Device": "patient/Device.r", "FamilyMemberHistory": "patient/FamilyMemberHistory.r", "Questionnaire": "patient/Questionnaire.r", "QuestionnaireResponse": "patient/QuestionnaireResponse.r"}
 
 
 def _event(name, started, outcome, error=None, status=500):
@@ -37,6 +41,127 @@ def _event(name, started, outcome, error=None, status=500):
 def _audit(actor, action, resource, request, patient=None):
     """type-10022026-Maurice: Fail closed when SMART security evidence cannot be persisted."""
     return audit.append_audit_event(actor=actor, action=action, resource_type=resource, resource_id="smart", patient=patient, correlation_id=getattr(request, "correlation_id", ""))
+
+
+SELECTION_SCOPE = "patient/Patient.s"
+_SELECTION_FIELDS = {"identifier", "given_name", "family_name", "birth_date"}
+_SELECTION_NO_RESULT = "No matching patient."
+
+
+def _selection_request_id(request):
+    return getattr(request, "correlation_id", "") or secrets.token_hex(16)
+
+
+def _normalize_name(value):
+    """Ticket09: NFKC + casefold + collapsed Unicode whitespace, exact only."""
+    return " ".join(unicodedata.normalize("NFKC", str(value)).casefold().split())
+
+
+def _selection_parts(patient):
+    if patient.given_name and patient.family_name:
+        return patient.given_name, patient.family_name
+    pieces = patient.display_name.split()
+    return (" ".join(pieces[:-1]), pieces[-1]) if len(pieces) >= 2 else ("", "")
+
+
+def _selection_limited(request, app):
+    address = request.META.get("REMOTE_ADDR", "unknown").split(",", 1)[0][:64]
+    actor = str(request.user.pk) if getattr(request.user, "is_authenticated", False) else "anonymous"
+    key = f"ehr:rate:patient-selection:{app.client_id}:{actor}:{address}"
+    try:
+        if cache.add(key, 1, 60):
+            return None
+        count = cache.incr(key)
+        if count > 10:
+            log_event("security.rate_limit", outcome="blocked", component="security", operation="patient_selection")
+            return Response({"detail": "Too many requests; retry later."}, status=429)
+    except Exception:
+        return Response({"detail": "Patient selection is temporarily unavailable."}, status=503)
+    return None
+
+
+class PatientSelectionView(APIView):
+    """Ticket09: exact, non-enumerating selection for registered SMART apps."""
+    # Allow the view to record unauthenticated/expired-token attempts; selection
+    # authorization itself remains fail-closed in _forbidden().
+    permission_classes = [AllowAny]
+
+    def _forbidden(self, request, request_id, status=403):
+        try:
+            _audit(request.user if request.user.is_authenticated else None, "deny", "PatientSelection", request)
+        except Exception:
+            return Response({"detail": "Patient selection is temporarily unavailable.", "request_id": request_id}, status=503)
+        return Response({"detail": "Patient selection is not permitted.", "request_id": request_id}, status=status)
+
+    def post(self, request):
+        request_id = _selection_request_id(request)
+        token = getattr(request, "auth", None)
+        app = getattr(token, "application", None)
+        # Authorization is deliberately complete before parsing/querying demographics.
+        if not isinstance(token, AccessToken) or not app or app.registration_source != "manual" or not app.user.is_active or not request.user.is_active:
+            return self._forbidden(request, request_id)
+        if token.expires <= timezone.now() or SELECTION_SCOPE not in getattr(request, "smart_scopes", frozenset()):
+            return self._forbidden(request, request_id)
+        try:
+            context = token.mfa_context
+            if context.user_id != request.user.pk or context.application_id != app.pk or context.mfa_generation != request.user.mfa_generation:
+                return self._forbidden(request, request_id)
+        except SmartTokenContext.DoesNotExist:
+            return self._forbidden(request, request_id)
+        if (limited_response := _selection_limited(request, app)) is not None:
+            try:
+                _audit(request.user, "deny", "PatientSelection", request)
+            except Exception:
+                return Response({"detail": "Patient selection is temporarily unavailable.", "request_id": request_id}, status=503)
+            return limited_response
+
+        payload = request.data if isinstance(request.data, dict) else {}
+        if set(payload) - _SELECTION_FIELDS:
+            return self._forbidden(request, request_id, 400)
+        identifier = payload.get("identifier")
+        given = payload.get("given_name")
+        family = payload.get("family_name")
+        birth = payload.get("birth_date")
+        has_identifier = "identifier" in payload
+        has_name = "given_name" in payload or "family_name" in payload
+        valid_identifier = isinstance(identifier, str) and bool(re.fullmatch(r"[A-Za-z0-9._:-]{1,64}", identifier))
+        valid_names = all(isinstance(value, str) and 1 <= len(value) <= 80 and _normalize_name(value) for value in (given, family))
+        if has_identifier == has_name or not birth or not isinstance(birth, str) or not re.fullmatch(r"\d{4}-\d{2}-\d{2}", birth):
+            valid = False
+        else:
+            valid = valid_identifier if identifier else valid_names
+        try:
+            parsed_birth = date.fromisoformat(birth) if valid else None
+        except ValueError:
+            parsed_birth = None
+            valid = False
+        matches = []
+        if valid:
+            queryset = Patient.objects.filter(birth_date=parsed_birth)
+            if identifier:
+                matches = list(queryset.filter(public_id=identifier)[:2])
+            else:
+                given_normalized, family_normalized = _normalize_name(given), _normalize_name(family)
+                for patient in queryset.iterator():
+                    patient_given, patient_family = _selection_parts(patient)
+                    if _normalize_name(patient_given) == given_normalized and _normalize_name(patient_family) == family_normalized:
+                        matches.append(patient)
+                        if len(matches) == 2:
+                            break
+        if len(matches) != 1:
+            try:
+                _audit(request.user, "deny", "PatientSelection", request)
+            except Exception:
+                return Response({"detail": "Patient selection is temporarily unavailable.", "request_id": request_id}, status=503)
+            return Response({"detail": _SELECTION_NO_RESULT, "request_id": request_id}, status=404)
+        try:
+            _audit(request.user, "read", "PatientSelection", request)
+        except Exception:
+            return Response({"detail": "Patient selection is temporarily unavailable.", "request_id": request_id}, status=503)
+        # Match FHIR's opaque Patient identifier format; never return public_id or demographics.
+        opaque_id = base64.urlsafe_b64encode(f"Patient:{matches[0].pk}".encode()).decode().rstrip("=")
+        signature = hmac.new(settings.SECRET_KEY.encode(), f"Patient:{matches[0].pk}".encode(), hashlib.sha256).hexdigest()[:16]
+        return Response({"patient_id": f"{opaque_id}-{signature}", "request_id": request_id}, status=200)
 
 
 def _redirects(value):
@@ -69,7 +194,7 @@ class DeveloperAppsView(APIView):
         started = time.monotonic()
         name, redirects = str(request.data.get("name", "")).strip(), _redirects(request.data.get("redirect_uris"))
         requested = set(str(request.data.get("scope", " ".join(SCOPES))).split())
-        if not name or not redirects or not requested.issubset(SCOPES) or not SCOPES.issubset(requested):
+        if not name or not redirects or not requested.issubset(SCOPES) or not {"openid", "fhirUser"}.issubset(requested):
             _event("app", started, "failure")
             return Response({"detail": "Valid name, exact HTTPS redirects and approved SMART scopes are required."}, status=400)
         if any(urlsplit(uri).scheme != "https" for uri in redirects):
@@ -185,6 +310,7 @@ class TokenView(APIView):
             _event("token", started, "failure", status=401)
             return Response({"error": "invalid_client"}, status=401)
         grant = None
+        mfa_generation = None
         if request.data.get("grant_type") == "authorization_code":
             verifier = str(request.data.get("code_verifier", ""))
             if not verifier or len(verifier) > 128:
@@ -202,6 +328,7 @@ class TokenView(APIView):
                     return Response({"error": "invalid_grant"}, status=400)
                 grant.delete()
                 user, scope, resource = grant.user, grant.scope, grant.resource
+                mfa_generation = user.mfa_generation
         elif request.data.get("grant_type") == "refresh_token":
             from django.conf import settings
             from django.db import transaction
@@ -212,6 +339,11 @@ class TokenView(APIView):
                     return Response({"error": "invalid_grant"}, status=400)
                 refresh.revoked = timezone.now(); refresh.save(update_fields=["revoked"])
                 user, scope, resource = refresh.user, refresh.access_token.scope, refresh.access_token.resource
+                try:
+                    mfa_generation = refresh.access_token.mfa_context.mfa_generation
+                except SmartTokenContext.DoesNotExist:
+                    _event("refresh", started, "failure", status=400)
+                    return Response({"error": "invalid_grant"}, status=400)
         else:
             _event("token", started, "failure", status=400)
             return Response({"error": "unsupported_grant_type"}, status=400)
@@ -221,6 +353,7 @@ class TokenView(APIView):
             with transaction.atomic():
                 access = AccessToken(user=user, application=app, expires=timezone.now() + timedelta(seconds=300), scope=scope, resource=resource)
                 set_token_value(access, access_value); access.save()
+                SmartTokenContext.objects.create(access_token=access, user=user, application=app, mfa_generation=mfa_generation, completed_at=timezone.now())
                 refresh = RefreshToken(user=user, application=app, access_token=access, revoked=None, resource=resource)
                 set_token_value(refresh, refresh_value); refresh.save()
                 _audit(user, "token", "SMARTToken", request)

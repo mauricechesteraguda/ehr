@@ -1,0 +1,118 @@
+# type-10022026-Maurice: Ticket01 local HTTPS platform; only Caddy binds host ports.
+services:
+  caddy:
+    image: caddy:2.9.1-alpine
+    ports: ["80:80", "443:443"]
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      web: {condition: service_healthy}
+      api: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-check-certificate -qO- https://localhost/ >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    restart: unless-stopped
+  web:
+    build: {context: ., dockerfile: web/Dockerfile}
+    expose: ["8080"]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/healthz >/dev/null"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+    restart: unless-stopped
+  api:
+    build: {context: ., dockerfile: backend/Dockerfile}
+    command: ["/app/backend/api-entrypoint.sh"]
+    expose: ["8000"]
+    env_file: .env
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1,api,caddy
+      DJANGO_CSRF_TRUSTED_ORIGINS: https://localhost,https://127.0.0.1
+      EHR_POPULATION_EXPORT_ROOT: /var/lib/ehr/population-exports
+    volumes: [runtime:/run/ehr, population_exports:/var/lib/ehr/population-exports]
+    depends_on:
+      postgres: {condition: service_healthy}
+      redis: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health/ready/', timeout=2)"]
+      interval: 10s
+      timeout: 4s
+      retries: 15
+      start_period: 30s
+    restart: unless-stopped
+  postgres:
+    image: postgres:17.2-alpine
+    env_file: .env
+    volumes: [postgres_data:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+  redis:
+    image: redis:7.4.2-alpine
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    restart: unless-stopped
+  worker:
+    build: {context: ., dockerfile: backend/Dockerfile}
+    env_file: .env
+    environment:
+      POSTGRES_HOST: postgres
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+      EHR_POPULATION_EXPORT_ROOT: /var/lib/ehr/population-exports
+    command: ["/app/backend/worker-entrypoint.sh"]
+    volumes: [runtime:/run/ehr, population_exports:/var/lib/ehr/population-exports]
+    depends_on:
+      api: {condition: service_healthy}
+      redis: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD-SHELL", "test -f /run/ehr/worker-heartbeat && celery -A backend.celery_app inspect ping --timeout=2 | grep -q pong"]
+      interval: 15s
+      timeout: 6s
+      retries: 8
+      start_period: 15s
+    restart: unless-stopped
+  beat:
+    build: {context: ., dockerfile: backend/Dockerfile}
+    env_file: .env
+    environment:
+      POSTGRES_HOST: postgres
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+      EHR_POPULATION_EXPORT_ROOT: /var/lib/ehr/population-exports
+    command: ["/app/backend/beat-entrypoint.sh"]
+    volumes: [runtime:/run/ehr, population_exports:/var/lib/ehr/population-exports]
+    depends_on: {worker: {condition: service_healthy}}
+    healthcheck:
+      test: ["CMD-SHELL", "test -f /run/ehr/beat-heartbeat && test $$(find /run/ehr/beat-heartbeat -mmin -1 | wc -l) -eq 1"]
+      interval: 15s
+      timeout: 4s
+      retries: 8
+      start_period: 20s
+    restart: unless-stopped
+volumes:
+  postgres_data:
+  caddy_data:
+  caddy_config:
+  runtime:
+  population_exports:

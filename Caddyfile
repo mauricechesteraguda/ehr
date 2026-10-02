@@ -1,0 +1,10 @@
+# type-10022026-Maurice: Caddy is the sole host gateway and owns the local CA.
+https://localhost, https://127.0.0.1 {
+    tls internal {
+        protocols tls1.2 tls1.3
+    }
+    encode gzip
+    @api path /api /api/* /fhir /fhir/* /oauth /oauth/* /.well-known /.well-known/*
+    handle @api { reverse_proxy api:8000 }
+    handle { reverse_proxy web:8080 }
+}

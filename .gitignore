@@ -1,5 +1,9 @@
 .env
 .env.*
+# type-10022026-Maurice: Never commit exported local CA material.
+population-exports/
+ehr-population-exports/
+local-caddy-root.crt
 !.env.example
 *.crt
 *.key

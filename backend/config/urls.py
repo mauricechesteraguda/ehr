@@ -2,8 +2,9 @@
 from django.urls import include, path
 from backend.users.fhir import FHIRFacadeView
 from backend.users.smart import smart_configuration, capability_statement, AuthorizationView, TokenView, RevokeTokenView
+from backend.users.health import live, ready, beat
 
-urlpatterns = [path("api/", include("backend.users.urls"))]
+urlpatterns = [path("api/", include("backend.users.urls")), path("api/health/live/", live), path("api/health/ready/", ready), path("api/health/beat/", beat)]
 urlpatterns.append(path("fhir/R4/<str:resource_name>/", include("backend.users.fhir_urls")))
 urlpatterns.extend([
     path(".well-known/smart-configuration", smart_configuration),

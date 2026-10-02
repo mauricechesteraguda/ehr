@@ -11,7 +11,7 @@ from .tracing import safe_location, trace_function
 logger = logging.getLogger("ehr.auth")
 _correlation_id = contextvars.ContextVar("ehr_correlation_id", default="")
 _SENSITIVE = re.compile(r"password|passphrase|secret|otp|totp|token|cookie|authorization|username|email|name|ssn|address|patient|clinical|payload|body|connection|string", re.I)
-_ALLOWED = {"outcome", "status", "http_status", "http_class", "duration_ms", "correlation_id", "component", "operation", "user_role", "exception_type", "exception_class", "error_class", "exception_code", "cause_chain", "stack_trace", "request", "db_outcome"}
+_ALLOWED = {"outcome", "status", "http_status", "http_class", "duration_ms", "correlation_id", "component", "operation", "user_role", "exception_type", "exception_class", "error_class", "exception_code", "cause_chain", "stack_trace", "request", "db_outcome", "parser_status", "adapter"}
 
 
 class JsonConsoleFormatter(logging.Formatter):

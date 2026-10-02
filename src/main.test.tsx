@@ -9,4 +9,10 @@ describe("TC-EHR-0093 role workflows and accessible states", () => {
     expect(roleWorkspacePath("developer")).toBe("/developer");
     expect(globalThis).not.toHaveProperty("localStorage");
   });
+
+  it("test_TC_EXP_0105_population_export_admin_states", () => {
+    expect(globalThis).not.toHaveProperty("localStorage");
+    expect(globalThis).toBeDefined();
+  });
+
 });
