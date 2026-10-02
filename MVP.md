@@ -234,7 +234,7 @@ Each item lists acceptance criteria. IDs match the full requirements document.
 | Layer | Suggestion |
 |---|---|
 | **Frontend** | React single-page app |
-| **Backend** | Python (FastAPI), with REST for the app and FHIR R4 for external access |
+| **Backend** | Python (Django), with REST for the app and FHIR R4 for external access |
 | **Database** | PostgreSQL |
 | **Auth** | OAuth 2.0 / OpenID Connect with TOTP |
 | **FHIR** | A FHIR facade over the app's own data model, or an off-the-shelf FHIR server if time is short |
