@@ -65,3 +65,8 @@ Author Name: Aguda, Maurice
 - Added versioned service discovery, bounded hook invocation, immutable cards/invocation evidence, admin rule lifecycle, and atomic audit/outbox records.
 - Added clinician card actions and accessible React UI. All output is explicitly non-clinical and uses redacted evidence links.
 - Fixed TC-EXP-1309's accidental skip by adding a deterministic synthetic allergy/medication P0 fixture; the complete CDS acceptance suite now executes without skips.
+# Ticket14 — declarative demo quality measures
+
+- Added three seeded published measures for allergy documentation, active-medication review, and recent blood-pressure observation coverage.
+- Added allowlisted, executable-free measure schemas; immutable versions and reports; deterministic snapshot checksums; durable async job execution; admin catalog/run/report UI.
+- Added FHIR-style `Measure`, `MeasureReport`, and asynchronous `$evaluate` responses with role/scope enforcement.

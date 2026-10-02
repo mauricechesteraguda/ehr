@@ -125,6 +125,13 @@ def _run_demo(job):
         raw = Fernet(base64.urlsafe_b64encode(_key())).decrypt(Path(job.result_ref).read_bytes())
         parse_ccda(raw, patient=job.patient, job=job)
         return
+    if job.kind == "quality.measure":
+        from .quality import run_measure
+        run = job.measure_run
+        run.status = "running"; run.save(update_fields=["status"])
+        run_measure(run.id)
+        run.status = "succeeded"; run.save(update_fields=["status"])
+        return
     if job.kind not in {"demo.noop", "job.demo"}:
         raise PermanentJobError("unsupported kind")
 

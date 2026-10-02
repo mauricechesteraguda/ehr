@@ -26,6 +26,7 @@ from backend.users.models import (
     FamilyHistory, FamilyHistoryVersion, FamilyHistoryOutboxEvent,
     Questionnaire, QuestionnaireVersion, QuestionnaireItem,
     QuestionnaireResponse, QuestionnaireResponseVersion, QuestionnaireReview, QuestionnaireOutboxEvent,
+    MeasureDefinition, MeasureVersion,
 )
 
 logger = logging.getLogger("ehr")
@@ -59,6 +60,7 @@ class Command(BaseCommand):
         self._medication(patients[0], users["demo-clinician"])
         self._interactions()
         self._questionnaire(users["demo-clinician"])
+        self._measures()
         logger.info("demo.seed.success users=%d patients=%d reset=%s", len(users), len(patients), options["reset"])
         self.stdout.write(self.style.SUCCESS("Synthetic demo ready: P001/P002 and four role accounts."))
         if options.get("totp_secret_file") and secrets_by_user:
@@ -69,6 +71,17 @@ class Command(BaseCommand):
                 for username, secret in secrets_by_user.items():
                     handle.write(f"{username}: {secret}\n")
             self.stdout.write(f"Enrollment file written with mode 600: {path}")
+
+    def _measures(self):
+        definitions = [
+            ("http://example.org/Measure/allergy-documentation", "Allergy documentation coverage", {"resource": "Patient", "denominator": [], "numerator": [{"field": "allergy_exists", "op": "equals", "value": True}], "exclusions": [], "stratifiers": [], "schema_version": "1"}),
+            ("http://example.org/Measure/active-medication-review", "Active-medication review", {"resource": "Patient", "denominator": [], "numerator": [{"field": "active_medication_exists", "op": "equals", "value": True}], "exclusions": [], "stratifiers": [], "schema_version": "1"}),
+            ("http://example.org/Measure/recent-blood-pressure", "Recent blood-pressure observation coverage", {"resource": "Patient", "window_days": 90, "denominator": [], "numerator": [{"field": "recent_bp_exists", "op": "equals", "value": True}], "exclusions": [], "stratifiers": [], "schema_version": "1"}),
+        ]
+        for url, title, schema in definitions:
+            measure, _ = MeasureDefinition.objects.get_or_create(url=url, defaults={"title": title, "description": "Synthetic deterministic demo measure", "provenance": {"source": "seed_demo", "method": "allowlisted-dsl"}})
+            if not measure.versions.filter(version=1).exists():
+                MeasureVersion.objects.create(measure=measure, version=1, status="published", effective_start=date(2020, 1, 1), schema=schema, provenance=measure.provenance)
 
     def _users(self, password, enroll=False):
         users, generated = {}, {}
