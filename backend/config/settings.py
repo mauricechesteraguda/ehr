@@ -47,7 +47,7 @@ LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
 REST_FRAMEWORK = {"DEFAULT_AUTHENTICATION_CLASSES": ["backend.users.authentication.OAuthBearerOrSessionAuthentication"]}
 OAUTH2_PROVIDER = {
-    "SCOPES": {"openid": "OpenID", "fhirUser": "FHIR user identity", "patient/Patient.r": "Read Patient", "patient/Patient.s": "Select one Patient", "patient/MedicationRequest.r": "Read MedicationRequest", "patient/AllergyIntolerance.r": "Read AllergyIntolerance", "patient/Condition.r": "Read Condition", "patient/Observation.r": "Read Observation", "patient/Device.r": "Read Device", "patient/FamilyMemberHistory.r": "Read FamilyMemberHistory", "patient/Questionnaire.r": "Read Questionnaire", "patient/QuestionnaireResponse.r": "Read QuestionnaireResponse"},
+    "SCOPES": {"openid": "OpenID", "fhirUser": "FHIR user identity", "patient/Patient.r": "Read Patient", "patient/Patient.s": "Select one Patient", "patient/MedicationRequest.r": "Read MedicationRequest", "patient/AllergyIntolerance.r": "Read AllergyIntolerance", "patient/Condition.r": "Read Condition", "patient/Observation.r": "Read Observation", "patient/Device.r": "Read Device", "patient/FamilyMemberHistory.r": "Read FamilyMemberHistory", "patient/Questionnaire.r": "Read Questionnaire", "patient/QuestionnaireResponse.r": "Read QuestionnaireResponse", "cds/DecisionSupport.r": "Invoke local CDS", "cds/DecisionSupport.w": "Administer local CDS"},
     "DEFAULT_SCOPES": "openid fhirUser",
     "ACCESS_TOKEN_EXPIRE_SECONDS": 300,
     "REFRESH_TOKEN_EXPIRE_SECONDS": 86400,

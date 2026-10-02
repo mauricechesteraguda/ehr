@@ -631,6 +631,104 @@ class OutboxEvent(models.Model):
         indexes = [models.Index(fields=["state", "created_at"], name="outbox_pending_idx")]
 
 
+class CDSService(models.Model):
+    """Ticket13: versioned, local-only CDS Hooks service metadata."""
+    id = models.CharField(max_length=80, primary_key=True)
+    hook = models.CharField(max_length=40)
+    title = models.CharField(max_length=160)
+    description = models.CharField(max_length=240, default="Deterministic non-clinical demo")
+    version = models.CharField(max_length=20, default="1.0.0")
+    active = models.BooleanField(default=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["id", "version"], name="cds_service_version_unique")]
+
+
+class CDSRuleVersion(models.Model):
+    """Published rule snapshots are immutable; activation is an admin-only pointer."""
+    class Status(models.TextChoices):
+        DRAFT = "draft", "Draft"
+        ACTIVE = "active", "Active"
+        RETIRED = "retired", "Retired"
+
+    service = models.ForeignKey(CDSService, on_delete=models.PROTECT, related_name="rules")
+    rule_key = models.CharField(max_length=80)
+    version = models.PositiveIntegerField()
+    status = models.CharField(max_length=10, choices=Status.choices, default=Status.DRAFT)
+    config = models.JSONField(default=dict)
+    safety_critical = models.BooleanField(default=False)
+    published_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["service", "rule_key", "version"], name="cds_rule_version_unique")]
+
+    def save(self, *args, **kwargs):
+        if self.pk and CDSRuleVersion.objects.filter(pk=self.pk).exclude(status=self.status).exists():
+            # Status transitions are the only permitted mutation after publication.
+            previous = CDSRuleVersion.objects.get(pk=self.pk)
+            if previous.published_at and self.config != previous.config:
+                raise ValueError("Published CDS rule is immutable")
+        if self.pk and CDSRuleVersion.objects.filter(pk=self.pk, published_at__isnull=False).exists() and self.config != CDSRuleVersion.objects.get(pk=self.pk).config:
+            raise ValueError("Published CDS rule is immutable")
+        return super().save(*args, **kwargs)
+
+
+class CDSInvocation(models.Model):
+    """Immutable, PHI-free invocation evidence and idempotency boundary."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    request_key = models.CharField(max_length=120)
+    hook = models.CharField(max_length=40)
+    service = models.ForeignKey(CDSService, on_delete=models.PROTECT)
+    patient = models.ForeignKey(Patient, on_delete=models.PROTECT)
+    context_fingerprint = models.CharField(max_length=64)
+    outcome = models.CharField(max_length=20, default="success")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["service", "request_key"], name="cds_invocation_idempotency_unique")]
+
+
+class CDSCard(models.Model):
+    """Immutable card snapshot returned by an invocation."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    invocation = models.ForeignKey(CDSInvocation, on_delete=models.PROTECT, related_name="cards")
+    rule = models.ForeignKey(CDSRuleVersion, on_delete=models.PROTECT)
+    summary = models.CharField(max_length=240)
+    detail = models.CharField(max_length=500)
+    indicator = models.CharField(max_length=10)
+    source = models.JSONField(default=dict)
+    suggestions = models.JSONField(default=list)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
+class CDSCardAction(models.Model):
+    """Append-only clinician response; accepts never mutate domain data directly."""
+    class Action(models.TextChoices):
+        ACCEPT = "accept", "Accept"
+        DISMISS = "dismiss", "Dismiss"
+        OVERRIDE = "override", "Override"
+
+    card = models.ForeignKey(CDSCard, on_delete=models.PROTECT, related_name="actions")
+    actor = models.ForeignKey(User, on_delete=models.PROTECT)
+    action = models.CharField(max_length=10, choices=Action.choices)
+    suggestion_id = models.CharField(max_length=80, blank=True, default="")
+    reason = models.CharField(max_length=500, blank=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["card", "actor", "action", "suggestion_id"], name="cds_card_action_idempotent")]
+
+
+class CDSOutboxEvent(models.Model):
+    """Atomic, payload-free integration intent for CDS audit consumers."""
+    invocation = models.ForeignKey(CDSInvocation, on_delete=models.PROTECT, related_name="outbox_events")
+    card = models.ForeignKey(CDSCard, null=True, blank=True, on_delete=models.PROTECT)
+    kind = models.CharField(max_length=40)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
 class PopulationExportSchedule(models.Model):
     """Ticket10: administrator-owned, all-demo-patient export schedule metadata."""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

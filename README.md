@@ -441,3 +441,6 @@ The acceptance matrix is `docs/test-cases/ehr-mvp-p0.csv` (exactly 18 columns); 
 - **Tests fail against PostgreSQL:** export `.env`, ensure the configured database exists, and run migrations before pytest.
 
 Operational logs are emitted to the console as structured events. They intentionally redact passwords, OTP/TOTP values, tokens, cookies, patient/clinical payloads, and other sensitive fields; do not work around that redaction by logging secrets.
+# CDS Hooks demo (Ticket 13)
+
+The local `/api/cds-services/` discovery and invocation endpoints expose deterministic, CDS Hooks-shaped medication-prescribe/order-sign and patient-view cards. This is **non-clinical demo decision support**: cards are reminders only, never silently mutate records, and their evidence links contain no patient content. Clinicians can accept, dismiss, or override cards; configured safety-critical dismissals and overrides require a reason. Administrators activate or retire immutable rule versions.

@@ -33,6 +33,16 @@ export async function requestBreakGlass(patient: string, justification: string):
   return body;
 }
 
+export type CDSCard = { uuid: string; summary: string; detail: string; indicator: "LOW" | "MODERATE" | "HIGH" | "CRITICAL"; source: { label: string; url: string }; suggestions: Array<{ id: string; label: string }> };
+export async function invokeCDS(service: string, patientId: string): Promise<CDSCard[]> {
+  const response = await fetch(`/api/cds-services/${encodeURIComponent(service)}`, { method: "POST", credentials: "include", headers: { "Content-Type": "application/json", "Idempotency-Key": crypto.randomUUID() }, body: JSON.stringify({ hookInstance: crypto.randomUUID(), context: { patientId }, prefetch: {} }) });
+  const body = await response.json().catch(() => ({})); if (!response.ok) throw new Error(body.detail ?? "CDS service unavailable."); return body.cards as CDSCard[];
+}
+export async function actOnCDSCard(uuid: string, action: "accept" | "dismiss" | "override", suggestionId = "", reason = ""): Promise<void> {
+  const response = await fetch(`/api/cds-cards/${encodeURIComponent(uuid)}/actions/`, { method: "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action, suggestionId, reason }) });
+  if (!response.ok) { const body = await response.json().catch(() => ({})); throw new Error(body.detail ?? "Unable to record card action."); }
+}
+
 export async function revokeBreakGlass(patient: string): Promise<void> {
   const response = await fetch(`/api/patients/${encodeURIComponent(patient)}/break-glass/`, { method: "DELETE", credentials: "include" });
   if (!response.ok) throw new Error("Unable to revoke emergency access.");
