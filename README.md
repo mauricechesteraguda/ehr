@@ -35,6 +35,11 @@ clinical validation. See `docs/accessibility-conformance-note.md` and
 
 ## One-command local HTTPS platform (Ticket01)
 
+The supported demo deployment is Docker Compose. Install Docker Desktop (macOS/Windows) or
+Docker Engine with the Compose v2 plugin (Linux), and ensure `docker compose version` works.
+No host PostgreSQL, Redis, Python, or Node installation is required for this path. A browser,
+`curl`, and a TOTP authenticator are useful for the walkthrough.
+
 Copy `.env.example` to `.env`, replace every `replace-with-...` value with a local value, then run:
 
 ```sh
@@ -43,6 +48,16 @@ docker compose up --build
 ```
 
 Caddy is the only service exposed on the host (`http://localhost` redirects to `https://localhost`); web, API, PostgreSQL, Redis, Celery worker, and Beat remain on the internal Compose network. Normal demo Compose defaults are host ports 80/443, while acceptance selects free high host ports via `COMPOSE_HTTP_PORT` and `COMPOSE_HTTPS_PORT` so it never probes or touches an unrelated port-80 process. The API entrypoint applies migrations and idempotently seeds synthetic demo data before Gunicorn starts. Do not place `.env`, certificates, keys, or Caddy's CA files in git.
+
+If ports 80 or 443 are already occupied, choose free host ports explicitly:
+
+```sh
+COMPOSE_HTTP_PORT=18080 COMPOSE_HTTPS_PORT=18443 docker compose up --build
+```
+
+Use `https://localhost:18443` (and `http://localhost:18080` for the redirect) for that
+instance. The same variables can be placed in the shell environment before `docker compose`
+commands; they are host-published ports, not service ports.
 
 Caddy creates a local CA in the named `caddy_data` volume. Trust it locally, after the stack is running, by exporting the CA without committing it:
 
@@ -101,6 +116,21 @@ docker compose cp caddy:/data/caddy/pki/authorities/local/root.crt ./local-caddy
 - Windows PowerShell: `certutil -addstore -user Root .\local-caddy-root.crt`
 
 Remove `local-caddy-root.crt` after the demo; it is never a repository artifact.
+
+Check service and worker/Beat health without exposing internal ports:
+
+```sh
+docker compose ps
+docker compose logs --tail=100 api worker beat
+curl --cacert ./local-caddy-root.crt https://localhost/api/health/ready/
+curl --cacert ./local-caddy-root.crt https://localhost/api/health/beat/
+docker compose restart worker beat
+docker compose ps
+```
+
+For overridden HTTPS ports, append `:<COMPOSE_HTTPS_PORT>` to both `curl` URLs. Ordinary
+`docker compose restart` operations retain PostgreSQL, Caddy, and population-export data in
+named volumes. Redis has no persistence by design.
 
 ## Architecture
 
@@ -328,13 +358,12 @@ server when configured, and every protected read or medication mutation appends 
 audit event after authorization. Operational logs remain separate from this audit
 path and contain only the redacted structured fields described below.
 
-## Prerequisites
+## Host-development prerequisites
 
-- Python 3 and the interpreter supported by the pinned project dependencies (Django 5+).
-- Node.js and npm (the frontend uses the npm scripts in `package.json`).
-- PostgreSQL with `psql` available locally.
-- OpenSSL only if generating a local development certificate.
-- A TOTP authenticator for the account secret printed during setup.
+This section is for running Django and Vite outside Compose; use the Compose prerequisites above
+for the normal deployment. You need Python 3.12 or a compatible Python for the pinned packages,
+Node.js/npm, PostgreSQL with `psql`, and a TOTP authenticator. OpenSSL is needed only when
+creating a developer certificate.
 
 ## Local environment
 
@@ -358,9 +387,17 @@ POSTGRES_PORT=5432
 SESSION_INACTIVITY_SECONDS=900
 HTTPS_CERT=/absolute/path/to/localhost.crt
 HTTPS_KEY=/absolute/path/to/localhost.key
+DEMO_PASSWORD=replace-with-a-local-demo-password
+EHR_POPULATION_EXPORT_KEY=replace-with-a-local-base64-key
+EHR_POPULATION_EXPORT_CAP=10000
 ```
 
-The Django settings do not load `.env` automatically. Export it before running commands (or use an environment loader already installed on your machine):
+`DEMO_PASSWORD`, `EHR_POPULATION_EXPORT_KEY`, and `EHR_POPULATION_EXPORT_CAP` are used by the
+Compose API/worker path. `HTTPS_CERT` and `HTTPS_KEY` are used only by the host Vite path below;
+Compose uses Caddy's internal CA instead. Compose overrides `POSTGRES_HOST` to `postgres` and
+the Redis/Celery URLs to the internal service names. The Django settings do not load `.env`
+automatically for host commands. Export it before running them (or use an environment loader
+already installed on your machine):
 
 ```sh
 set -a
@@ -370,7 +407,7 @@ set +a
 
 Do not commit `.env`, passwords, TOTP secrets, certificates, or private keys.
 
-## PostgreSQL database
+## Host PostgreSQL database
 
 Use a local administrative PostgreSQL connection and substitute only local values for the angle-bracket placeholders. Do not paste production credentials into this file or a shell history.
 
@@ -381,7 +418,7 @@ CREATE DATABASE <local_ehr_database> OWNER <local_ehr_role>;
 
 Set `POSTGRES_USER`, `POSTGRES_PASSWORD`, and `POSTGRES_DB` in `.env` to those same local values. If the role or database already exists, do not run the `CREATE` statements again; connect with `psql` and verify the existing local configuration instead.
 
-## Backend install, migrate, and run
+## Host backend install, migrate, and run
 
 ```sh
 python3 -m venv .venv
@@ -409,25 +446,61 @@ python3 backend/manage.py seed_demo --totp-secret-file "$HOME/.ehr-demo-totp"
 
 Without `--totp-secret-file`, seeded accounts remain pending enrollment. The explicit option writes one-time local enrollment material to a mode-600 file; protect and delete it after configuring an authenticator. Existing TOTP secrets are retained and never printed again. For an already authenticated account, `/api/auth/enroll/` followed by `/api/auth/enroll/verify/` is also supported; never commit the returned secret.
 
+For Compose, migration and ordinary seeding happen automatically in the API entrypoint. To
+repeat them without rebuilding, run:
+
+```sh
+docker compose exec api sh -c 'python /app/backend/manage.py migrate --noinput && python /app/backend/manage.py seed_demo --password "$DEMO_PASSWORD"'
+docker compose exec api python /app/backend/manage.py migrate --check
+```
+
+`seed_demo --reset` is explicitly destructive to demo-owned database rows; use it only when
+you intend to recreate the synthetic fixtures. For Compose enrollment, write the one-time file
+inside the API container, copy it to a protected local path, configure the authenticator, and
+remove both copies:
+
+```sh
+docker compose exec api sh -c 'python /app/backend/manage.py seed_demo --password "$DEMO_PASSWORD" --totp-secret-file /tmp/ehr-demo-totp'
+docker compose cp api:/tmp/ehr-demo-totp "$HOME/.ehr-demo-totp"
+docker compose exec api rm -f /tmp/ehr-demo-totp
+chmod 600 "$HOME/.ehr-demo-totp"
+```
+
 ## Demo login and ten-minute walkthrough
 
 The seed accounts are `demo-clinician`, `demo-patient`, `demo-admin`, and `demo-developer`, all using the runtime `DEMO_PASSWORD`. The API login requires `username`, `password`, and the current six-digit `otp`:
 
 ```sh
 curl -i -c /tmp/ehr-demo.cookies \
+  --cacert ./local-caddy-root.crt \
   -H 'Content-Type: application/json' \
   -d '{"username":"demo-clinician","password":"<choose-local-password>","otp":"<current-six-digit-otp>"}' \
-  http://127.0.0.1:8000/api/auth/login/
+  https://localhost/api/auth/login/
 ```
 
-1. Start PostgreSQL, export `.env`, migrate, and run `seed_demo`.
-2. Start Django and Vite, then sign in with a seeded account and current TOTP.
+For host development use `http://127.0.0.1:8000`; for a Compose port override use
+`https://localhost:<COMPOSE_HTTPS_PORT>` and the exported Caddy CA.
+
+1. Start Compose (or start PostgreSQL, export `.env`, migrate, and run `seed_demo` for host development).
+2. Complete TOTP enrollment for each account, then sign in with the current six-digit code. After a TOTP-authenticated browser session, optionally register a WebAuthn/passkey credential and use passkey login; TOTP remains the fallback.
 3. As clinician, open `P001`, create an `AMOX` draft, evaluate the synthetic allergy/drug alert, acknowledge a non-critical finding or observe the critical block, and sign only after the UI permits it. Inspect immutable history and audit events.
 4. As patient, sign in to view only `P001`; request JSON and PDF downloads and compare displayed SHA-256 values with `sha256sum`.
 5. As admin, review the paginated audit report, verify the chain, manage users, and set the LOW/MODERATE/HIGH floor.
-6. As developer, open the SMART workspace and follow the authorization/consent steps below; use `python3 backend/manage.py smart_demo` for token refresh and bounded FHIR Patient read.
+6. As developer, open the SMART workspace and follow the authorization/consent steps below; use `python3 backend/manage.py smart_demo` for host development or `docker compose exec api python /app/backend/manage.py smart_demo ...` in Compose.
 
 Useful routes include `/api/auth/session/`, `/api/patients/P001/`, `/api/audit/verify/`, `/.well-known/smart-configuration`, `/oauth/authorize/`, `/oauth/token/`, and `/fhir/R4/Patient/P001`.
+
+### Representative P0/P1/P2 checks
+
+- **P0:** clinician medication lifecycle and interaction alert on `P001`; patient self-view and
+  JSON/PDF export; admin audit-chain verification and severity floor; developer SMART consent and
+  bounded FHIR Patient read. These are synthetic flows only.
+- **P1:** family-history correction, UDI device parsing, questionnaire submission/review,
+  amendment, and bounded population export. Use the matching rows in
+  `docs/test-cases/ehr-p1-p2-compose.csv` for exact preconditions and expected boundaries.
+- **P2:** local CDS Hooks discovery/invocation, C-CDA generation, simulated Direct delivery, and
+  FHIR Bulk export. No message is sent to a real network and no production CDS infrastructure is
+  used.
 
 ## SMART developer demo
 
@@ -435,17 +508,22 @@ Register through an authenticated developer session (the browser is intentionall
 
 ```sh
 curl -b /tmp/ehr-demo.cookies -c /tmp/ehr-demo.cookies -H 'Content-Type: application/json' \
+  --cacert ./local-caddy-root.crt \
   -d '{"name":"Local synthetic client","redirect_uris":["https://localhost/callback"],"scope":"openid fhirUser patient/Patient.r patient/MedicationRequest.r patient/AllergyIntolerance.r patient/Condition.r patient/Observation.r patient/Device.r"}' \
-  http://127.0.0.1:8000/api/smart/apps/
+  https://localhost/api/smart/apps/
 curl -b /tmp/ehr-demo.cookies -H 'Content-Type: application/json' \
+  --cacert ./local-caddy-root.crt \
   -d '{"client_id":"<client-id>","redirect_uri":"https://localhost/callback","scope":"openid fhirUser patient/Patient.r","code_challenge":"<S256-challenge>","code_challenge_method":"S256","patient":"P001","decision":"approve","state":"demo"}' \
-  http://127.0.0.1:8000/oauth/authorize/
-python3 backend/manage.py smart_demo --base-url http://127.0.0.1:8000 --client-id '<client-id>' --client-secret '<one-time-secret>' --code '<returned-code>' --verifier '<original-verifier>'
+  https://localhost/oauth/authorize/
+python3 backend/manage.py smart_demo --base-url https://localhost --client-id '<client-id>' --client-secret '<one-time-secret>' --code '<returned-code>' --verifier '<original-verifier>'
 ```
 
-The sample client performs authorization-code exchange, refresh rotation, and a Patient read while keeping token values in memory. It does not bypass the explicit consent screen.
+The sample client performs authorization-code exchange, refresh rotation, and a Patient read while keeping token values in memory. It does not bypass the explicit consent screen. For host development, use the original `http://127.0.0.1:8000` base URL and endpoints instead.
 
-## Frontend install and run
+## Optional host frontend install and run
+
+The Compose web container is a built nginx image and does not run the Vite development server.
+Use this section only for host development, with Django running on `127.0.0.1:8000`.
 
 In a second terminal, from the repository root:
 
@@ -493,6 +571,18 @@ npm run build
 
 The acceptance matrix is `docs/test-cases/ehr-mvp-p0.csv` (exactly 18 columns); Ticket10 final integration scenarios are TC-EHR-0092 through TC-EHR-0096. Frontend checks cover TypeScript and the no-browser-storage boundary. When a local browser test runner is available, run the core keyboard/focus and reduced-motion checks against the HTTPS shell; this repository does not install browser tooling or network dependencies during verification.
 
+The deterministic Compose contract is also safe without starting containers:
+
+```sh
+docker compose config -q
+python3 -m pytest -q backend/tests/test_ticket17_compose.py
+```
+
+Set `EHR_LIVE_COMPOSE=1` only for live acceptance. It needs Docker, free high host ports, and
+registry/package-index access; it creates an isolated temporary environment, validates the
+exported Caddy CA, repeats migration/seed, checks all seven health checks, restarts the worker,
+and cleans up only its own project. A registry or package-index outage is **blocked**, not a pass.
+
 ## Troubleshooting
 
 - **Database connection refused or authentication failed:** confirm PostgreSQL is running and that `.env` values match the local role/database; rerun `python3 backend/manage.py migrate` after fixing them.
@@ -502,6 +592,8 @@ The acceptance matrix is `docs/test-cases/ehr-mvp-p0.csv` (exactly 18 columns); 
 - **Frontend `/api` requests fail:** confirm Django is listening on `127.0.0.1:8000`; Vite proxies `/api`, `/oauth`, `/fhir`, and discovery routes to it.
 - **HTTPS fails to start:** verify both `HTTPS_CERT` and `HTTPS_KEY` point to readable matching files. Keep keys outside version control.
 - **Tests fail against PostgreSQL:** export `.env`, ensure the configured database exists, and run migrations before pytest.
+- **Docker registry, npm, or PyPI pull/build failure:** retry after confirming connectivity and any required proxy or corporate CA configuration. Use `docker compose build --progress=plain --pull`, or bounded PyPI retries such as `docker compose build --build-arg PIP_INSTALL_TIMEOUT=120 --build-arg PIP_INSTALL_RETRIES=8`. Do not disable TLS verification, substitute an untrusted index, or claim a clean rebuild while registry access is blocked.
+- **Need status or diagnostics:** use `docker compose ps` and `docker compose logs --tail=100 caddy web api postgres redis worker beat`; inspect only redacted JSON operational events. Do not use `docker system prune` or volume-wide cleanup.
 
 Operational logs are emitted to the console as structured events. They intentionally redact passwords, OTP/TOTP values, tokens, cookies, patient/clinical payloads, and other sensitive fields; do not work around that redaction by logging secrets.
 # CDS Hooks demo (Ticket 13)
