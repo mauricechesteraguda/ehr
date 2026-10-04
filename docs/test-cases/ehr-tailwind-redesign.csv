@@ -1,0 +1,496 @@
+Test Case ID,Title,Module / Feature,Test Case Description,Pre-Conditions,Test Steps,Test Data,Expected Result,Actual Result,Status (Pass/Fail),Severity,Priority,Tester Name,Test Date,Remarks / Defects ID,Requirement ID,Test Type,Automated Test Ref.
+TC-UI-0001,"Tailwind, Outfit font, and pinned icon integration","Ticket 01 — Tailwind, font, icon integration and production build","Verify the redesign requirement for tailwind, outfit font, and pinned icon integration without changing the existing synthetic application flow.","1. A clean checkout and disposable test environment are available.
+2. Only synthetic fixtures and approved demo aliases are loaded.
+3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
+2. Perform the interaction or inject the listed deterministic fixture.
+3. Repeat at the stated boundary or failure condition.
+4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
+2. The result is explicit, stable, and usable in the named state.
+3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
+4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-UI-0001,Happy,src/ticket01.test.ts::1
+TC-UI-0002,"Authoritative color, typography, spacing, radius, elevation, and motion tokens","Ticket 01 — Tailwind, font, icon integration and production build","Verify the redesign requirement for authoritative color, typography, spacing, radius, elevation, and motion tokens without changing the existing synthetic application flow.","1. A clean checkout and disposable test environment are available.
+2. Only synthetic fixtures and approved demo aliases are loaded.
+3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
+2. Perform the interaction or inject the listed deterministic fixture.
+3. Repeat at the stated boundary or failure condition.
+4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
+2. The result is explicit, stable, and usable in the named state.
+3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
+4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-UI-0002,Alternate,src/ticket01.test.ts::2
+TC-UI-0003,No CDN runtime assets,"Ticket 01 — Tailwind, font, icon integration and production build",Verify the redesign requirement for no cdn runtime assets without changing the existing synthetic application flow.,"1. A clean checkout and disposable test environment are available.
+2. Only synthetic fixtures and approved demo aliases are loaded.
+3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
+2. Perform the interaction or inject the listed deterministic fixture.
+3. Repeat at the stated boundary or failure condition.
+4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
+2. The result is explicit, stable, and usable in the named state.
+3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
+4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-UI-0003,Invalid,src/ticket01.test.ts::3
+TC-UI-0004,Production tree shaking and deterministic build,"Ticket 01 — Tailwind, font, icon integration and production build",Verify the redesign requirement for production tree shaking and deterministic build without changing the existing synthetic application flow.,"1. A clean checkout and disposable test environment are available.
+2. Only synthetic fixtures and approved demo aliases are loaded.
+3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
+2. Perform the interaction or inject the listed deterministic fixture.
+3. Repeat at the stated boundary or failure condition.
+4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
+2. The result is explicit, stable, and usable in the named state.
+3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
+4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-UI-0004,Boundaries,src/ticket01.test.ts::4
+TC-UI-0005,Primitive variants,"Ticket 01 — Tailwind, font, icon integration and production build",Verify the redesign requirement for primitive variants without changing the existing synthetic application flow.,"1. A clean checkout and disposable test environment are available.
+2. Only synthetic fixtures and approved demo aliases are loaded.
+3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
+2. Perform the interaction or inject the listed deterministic fixture.
+3. Repeat at the stated boundary or failure condition.
+4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
+2. The result is explicit, stable, and usable in the named state.
+3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
+4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-UI-0005,Validation,src/ticket01.test.ts::5
+TC-UI-0006,"Primitive loading, empty, error, and no-results states","Ticket 01 — Tailwind, font, icon integration and production build","Verify the redesign requirement for primitive loading, empty, error, and no-results states without changing the existing synthetic application flow.","1. A clean checkout and disposable test environment are available.
+2. Only synthetic fixtures and approved demo aliases are loaded.
+3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
+2. Perform the interaction or inject the listed deterministic fixture.
+3. Repeat at the stated boundary or failure condition.
+4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
+2. The result is explicit, stable, and usable in the named state.
+3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
+4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-UI-0006,Permissions,src/ticket01.test.ts::6
+TC-UI-0007,Primitive interaction states,"Ticket 01 — Tailwind, font, icon integration and production build",Verify the redesign requirement for primitive interaction states without changing the existing synthetic application flow.,"1. A clean checkout and disposable test environment are available.
+2. Only synthetic fixtures and approved demo aliases are loaded.
+3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
+2. Perform the interaction or inject the listed deterministic fixture.
+3. Repeat at the stated boundary or failure condition.
+4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
+2. The result is explicit, stable, and usable in the named state.
+3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
+4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-UI-0007,State,src/ticket01.test.ts::7
+TC-UI-0008,Unapproved token static check,"Ticket 01 — Tailwind, font, icon integration and production build",Verify the redesign requirement for unapproved token static check without changing the existing synthetic application flow.,"1. A clean checkout and disposable test environment are available.
+2. Only synthetic fixtures and approved demo aliases are loaded.
+3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
+2. Perform the interaction or inject the listed deterministic fixture.
+3. Repeat at the stated boundary or failure condition.
+4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
+2. The result is explicit, stable, and usable in the named state.
+3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
+4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-UI-0008,Edit/Correction,src/ticket01.test.ts::8
+TC-UI-0009,Build failure safe message,"Ticket 01 — Tailwind, font, icon integration and production build",Verify the redesign requirement for build failure safe message without changing the existing synthetic application flow.,"1. A clean checkout and disposable test environment are available.
+2. Only synthetic fixtures and approved demo aliases are loaded.
+3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
+2. Perform the interaction or inject the listed deterministic fixture.
+3. Repeat at the stated boundary or failure condition.
+4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
+2. The result is explicit, stable, and usable in the named state.
+3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
+4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-UI-0009,Integrity/Concurrency/Rollback,src/ticket01.test.ts::9
+TC-UI-0010,API success data mapping,"Ticket 02 — Primitives, data states and semantic presentation",Verify the redesign requirement for api success data mapping without changing the existing synthetic application flow.,"1. A clean checkout and disposable test environment are available.
+2. Only synthetic fixtures and approved demo aliases are loaded.
+3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
+2. Perform the interaction or inject the listed deterministic fixture.
+3. Repeat at the stated boundary or failure condition.
+4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
+2. The result is explicit, stable, and usable in the named state.
+3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
+4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-UI-0010,Errors/Messages,
+TC-UI-0011,API failure timeout and bad payload,"Ticket 02 — Primitives, data states and semantic presentation",Verify the redesign requirement for api failure timeout and bad payload without changing the existing synthetic application flow.,"1. A clean checkout and disposable test environment are available.
+2. Only synthetic fixtures and approved demo aliases are loaded.
+3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
+2. Perform the interaction or inject the listed deterministic fixture.
+3. Repeat at the stated boundary or failure condition.
+4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
+2. The result is explicit, stable, and usable in the named state.
+3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
+4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-UI-0011,Empty/Loading/No Results,
+TC-UI-0012,Chart text and table fallback,"Ticket 02 — Primitives, data states and semantic presentation",Verify the redesign requirement for chart text and table fallback without changing the existing synthetic application flow.,"1. A clean checkout and disposable test environment are available.
+2. Only synthetic fixtures and approved demo aliases are loaded.
+3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
+2. Perform the interaction or inject the listed deterministic fixture.
+3. Repeat at the stated boundary or failure condition.
+4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
+2. The result is explicit, stable, and usable in the named state.
+3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
+4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-UI-0012,API Success/Failure/Timeout/Bad Payload,
+TC-UI-0013,Severity text and icon beyond color,"Ticket 02 — Primitives, data states and semantic presentation",Verify the redesign requirement for severity text and icon beyond color without changing the existing synthetic application flow.,"1. A clean checkout and disposable test environment are available.
+2. Only synthetic fixtures and approved demo aliases are loaded.
+3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
+2. Perform the interaction or inject the listed deterministic fixture.
+3. Repeat at the stated boundary or failure condition.
+4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
+2. The result is explicit, stable, and usable in the named state.
+3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
+4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-UI-0013,Security,
+TC-UI-0014,Edit correction validation,"Ticket 02 — Primitives, data states and semantic presentation",Verify the redesign requirement for edit correction validation without changing the existing synthetic application flow.,"1. A clean checkout and disposable test environment are available.
+2. Only synthetic fixtures and approved demo aliases are loaded.
+3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
+2. Perform the interaction or inject the listed deterministic fixture.
+3. Repeat at the stated boundary or failure condition.
+4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
+2. The result is explicit, stable, and usable in the named state.
+3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
+4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-UI-0014,Regression,
+TC-UI-0015,Optimistic save rollback,"Ticket 02 — Primitives, data states and semantic presentation",Verify the redesign requirement for optimistic save rollback without changing the existing synthetic application flow.,"1. A clean checkout and disposable test environment are available.
+2. Only synthetic fixtures and approved demo aliases are loaded.
+3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
+2. Perform the interaction or inject the listed deterministic fixture.
+3. Repeat at the stated boundary or failure condition.
+4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
+2. The result is explicit, stable, and usable in the named state.
+3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
+4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-UI-0015,Happy,
+TC-UI-0016,Concurrent edit conflict,"Ticket 02 — Primitives, data states and semantic presentation",Verify the redesign requirement for concurrent edit conflict without changing the existing synthetic application flow.,"1. A clean checkout and disposable test environment are available.
+2. Only synthetic fixtures and approved demo aliases are loaded.
+3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
+2. Perform the interaction or inject the listed deterministic fixture.
+3. Repeat at the stated boundary or failure condition.
+4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
+2. The result is explicit, stable, and usable in the named state.
+3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
+4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-UI-0016,Alternate,
+TC-UI-0017,Desktop two-part shell,"Ticket 02 — Primitives, data states and semantic presentation",Verify the redesign requirement for desktop two-part shell without changing the existing synthetic application flow.,"1. A clean checkout and disposable test environment are available.
+2. Only synthetic fixtures and approved demo aliases are loaded.
+3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
+2. Perform the interaction or inject the listed deterministic fixture.
+3. Repeat at the stated boundary or failure condition.
+4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
+2. The result is explicit, stable, and usable in the named state.
+3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
+4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-UI-0017,Invalid,
+TC-UI-0018,Tablet shell no overlap,"Ticket 02 — Primitives, data states and semantic presentation",Verify the redesign requirement for tablet shell no overlap without changing the existing synthetic application flow.,"1. A clean checkout and disposable test environment are available.
+2. Only synthetic fixtures and approved demo aliases are loaded.
+3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
+2. Perform the interaction or inject the listed deterministic fixture.
+3. Repeat at the stated boundary or failure condition.
+4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
+2. The result is explicit, stable, and usable in the named state.
+3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
+4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-UI-0018,Boundaries,
+TC-UI-0019,Mobile shell and touch targets,"Ticket 03 — Desktop, tablet and mobile shell",Verify the redesign requirement for mobile shell and touch targets without changing the existing synthetic application flow.,"1. A clean checkout and disposable test environment are available.
+2. Only synthetic fixtures and approved demo aliases are loaded.
+3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
+2. Perform the interaction or inject the listed deterministic fixture.
+3. Repeat at the stated boundary or failure condition.
+4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
+2. The result is explicit, stable, and usable in the named state.
+3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
+4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-A11Y-0001,Validation,
+TC-UI-0020,Responsive tables,"Ticket 03 — Desktop, tablet and mobile shell",Verify the redesign requirement for responsive tables without changing the existing synthetic application flow.,"1. A clean checkout and disposable test environment are available.
+2. Only synthetic fixtures and approved demo aliases are loaded.
+3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
+2. Perform the interaction or inject the listed deterministic fixture.
+3. Repeat at the stated boundary or failure condition.
+4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
+2. The result is explicit, stable, and usable in the named state.
+3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
+4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-A11Y-0002,Permissions,
+TC-UI-0021,Responsive forms,"Ticket 03 — Desktop, tablet and mobile shell",Verify the redesign requirement for responsive forms without changing the existing synthetic application flow.,"1. A clean checkout and disposable test environment are available.
+2. Only synthetic fixtures and approved demo aliases are loaded.
+3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
+2. Perform the interaction or inject the listed deterministic fixture.
+3. Repeat at the stated boundary or failure condition.
+4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
+2. The result is explicit, stable, and usable in the named state.
+3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
+4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-A11Y-0003,State,
+TC-UI-0022,Responsive chart fallback,"Ticket 03 — Desktop, tablet and mobile shell",Verify the redesign requirement for responsive chart fallback without changing the existing synthetic application flow.,"1. A clean checkout and disposable test environment are available.
+2. Only synthetic fixtures and approved demo aliases are loaded.
+3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
+2. Perform the interaction or inject the listed deterministic fixture.
+3. Repeat at the stated boundary or failure condition.
+4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
+2. The result is explicit, stable, and usable in the named state.
+3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
+4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-A11Y-0004,Edit/Correction,
+TC-UI-0023,Responsive state preservation,"Ticket 03 — Desktop, tablet and mobile shell",Verify the redesign requirement for responsive state preservation without changing the existing synthetic application flow.,"1. A clean checkout and disposable test environment are available.
+2. Only synthetic fixtures and approved demo aliases are loaded.
+3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
+2. Perform the interaction or inject the listed deterministic fixture.
+3. Repeat at the stated boundary or failure condition.
+4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
+2. The result is explicit, stable, and usable in the named state.
+3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
+4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-A11Y-0005,Integrity/Concurrency/Rollback,
+TC-UI-0024,Desktop/tablet/mobile screenshots,"Ticket 03 — Desktop, tablet and mobile shell",Verify the redesign requirement for desktop/tablet/mobile screenshots without changing the existing synthetic application flow.,"1. A clean checkout and disposable test environment are available.
+2. Only synthetic fixtures and approved demo aliases are loaded.
+3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
+2. Perform the interaction or inject the listed deterministic fixture.
+3. Repeat at the stated boundary or failure condition.
+4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
+2. The result is explicit, stable, and usable in the named state.
+3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
+4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-A11Y-0006,Errors/Messages,
+TC-UI-0025,Theme toggle memory-only,"Ticket 03 — Desktop, tablet and mobile shell",Verify the redesign requirement for theme toggle memory-only without changing the existing synthetic application flow.,"1. A clean checkout and disposable test environment are available.
+2. Only synthetic fixtures and approved demo aliases are loaded.
+3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
+2. Perform the interaction or inject the listed deterministic fixture.
+3. Repeat at the stated boundary or failure condition.
+4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
+2. The result is explicit, stable, and usable in the named state.
+3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
+4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-A11Y-0007,Empty/Loading/No Results,
+TC-UI-0026,Dark/light semantic contrast,"Ticket 03 — Desktop, tablet and mobile shell",Verify the redesign requirement for dark/light semantic contrast without changing the existing synthetic application flow.,"1. A clean checkout and disposable test environment are available.
+2. Only synthetic fixtures and approved demo aliases are loaded.
+3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
+2. Perform the interaction or inject the listed deterministic fixture.
+3. Repeat at the stated boundary or failure condition.
+4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
+2. The result is explicit, stable, and usable in the named state.
+3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
+4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-A11Y-0008,API Success/Failure/Timeout/Bad Payload,
+TC-UI-0027,Skip link and live regions,"Ticket 03 — Desktop, tablet and mobile shell",Verify the redesign requirement for skip link and live regions without changing the existing synthetic application flow.,"1. A clean checkout and disposable test environment are available.
+2. Only synthetic fixtures and approved demo aliases are loaded.
+3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
+2. Perform the interaction or inject the listed deterministic fixture.
+3. Repeat at the stated boundary or failure condition.
+4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
+2. The result is explicit, stable, and usable in the named state.
+3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
+4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-A11Y-0009,Security,
+TC-UI-0028,Focus order and focus return,Ticket 04 — Memory-only themes and accessibility,Verify the redesign requirement for focus order and focus return without changing the existing synthetic application flow.,"1. A clean checkout and disposable test environment are available.
+2. Only synthetic fixtures and approved demo aliases are loaded.
+3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
+2. Perform the interaction or inject the listed deterministic fixture.
+3. Repeat at the stated boundary or failure condition.
+4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
+2. The result is explicit, stable, and usable in the named state.
+3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
+4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-A11Y-0010,Regression,
+TC-UI-0029,Reduced motion,Ticket 04 — Memory-only themes and accessibility,Verify the redesign requirement for reduced motion without changing the existing synthetic application flow.,"1. A clean checkout and disposable test environment are available.
+2. Only synthetic fixtures and approved demo aliases are loaded.
+3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
+2. Perform the interaction or inject the listed deterministic fixture.
+3. Repeat at the stated boundary or failure condition.
+4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
+2. The result is explicit, stable, and usable in the named state.
+3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
+4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-RESP-0001,Happy,
+TC-UI-0030,Axe scan,Ticket 04 — Memory-only themes and accessibility,Verify the redesign requirement for axe scan without changing the existing synthetic application flow.,"1. A clean checkout and disposable test environment are available.
+2. Only synthetic fixtures and approved demo aliases are loaded.
+3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
+2. Perform the interaction or inject the listed deterministic fixture.
+3. Repeat at the stated boundary or failure condition.
+4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
+2. The result is explicit, stable, and usable in the named state.
+3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
+4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-RESP-0002,Alternate,
+TC-UI-0031,Target-size boundary,Ticket 04 — Memory-only themes and accessibility,Verify the redesign requirement for target-size boundary without changing the existing synthetic application flow.,"1. A clean checkout and disposable test environment are available.
+2. Only synthetic fixtures and approved demo aliases are loaded.
+3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
+2. Perform the interaction or inject the listed deterministic fixture.
+3. Repeat at the stated boundary or failure condition.
+4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
+2. The result is explicit, stable, and usable in the named state.
+3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
+4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-RESP-0003,Invalid,
+TC-UI-0032,Browser storage security,Ticket 04 — Memory-only themes and accessibility,Verify the redesign requirement for browser storage security without changing the existing synthetic application flow.,"1. A clean checkout and disposable test environment are available.
+2. Only synthetic fixtures and approved demo aliases are loaded.
+3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
+2. Perform the interaction or inject the listed deterministic fixture.
+3. Repeat at the stated boundary or failure condition.
+4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
+2. The result is explicit, stable, and usable in the named state.
+3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
+4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-RESP-0004,Boundaries,
+TC-UI-0033,Navigation breadcrumbs back and forward,Ticket 04 — Memory-only themes and accessibility,Verify the redesign requirement for navigation breadcrumbs back and forward without changing the existing synthetic application flow.,"1. A clean checkout and disposable test environment are available.
+2. Only synthetic fixtures and approved demo aliases are loaded.
+3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
+2. Perform the interaction or inject the listed deterministic fixture.
+3. Repeat at the stated boundary or failure condition.
+4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
+2. The result is explicit, stable, and usable in the named state.
+3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
+4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-RESP-0005,Validation,
+TC-UI-0034,Filter and scroll state,Ticket 04 — Memory-only themes and accessibility,Verify the redesign requirement for filter and scroll state without changing the existing synthetic application flow.,"1. A clean checkout and disposable test environment are available.
+2. Only synthetic fixtures and approved demo aliases are loaded.
+3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
+2. Perform the interaction or inject the listed deterministic fixture.
+3. Repeat at the stated boundary or failure condition.
+4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
+2. The result is explicit, stable, and usable in the named state.
+3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
+4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-RESP-0006,Permissions,
+TC-UI-0035,Valid login,Ticket 04 — Memory-only themes and accessibility,Verify the redesign requirement for valid login without changing the existing synthetic application flow.,"1. A clean checkout and disposable test environment are available.
+2. Only synthetic fixtures and approved demo aliases are loaded.
+3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
+2. Perform the interaction or inject the listed deterministic fixture.
+3. Repeat at the stated boundary or failure condition.
+4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
+2. The result is explicit, stable, and usable in the named state.
+3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
+4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-RESP-0007,State,
+TC-UI-0036,Invalid login boundary,Ticket 04 — Memory-only themes and accessibility,Verify the redesign requirement for invalid login boundary without changing the existing synthetic application flow.,"1. A clean checkout and disposable test environment are available.
+2. Only synthetic fixtures and approved demo aliases are loaded.
+3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
+2. Perform the interaction or inject the listed deterministic fixture.
+3. Repeat at the stated boundary or failure condition.
+4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
+2. The result is explicit, stable, and usable in the named state.
+3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
+4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-RESP-0008,Edit/Correction,
+TC-UI-0037,MFA success and challenge errors,"Ticket 05 — Navigation, authentication and role permissions",Verify the redesign requirement for mfa success and challenge errors without changing the existing synthetic application flow.,"1. A clean checkout and disposable test environment are available.
+2. Only synthetic fixtures and approved demo aliases are loaded.
+3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
+2. Perform the interaction or inject the listed deterministic fixture.
+3. Repeat at the stated boundary or failure condition.
+4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
+2. The result is explicit, stable, and usable in the named state.
+3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
+4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-DEP-0001,Integrity/Concurrency/Rollback,
+TC-UI-0038,Passkey success and cancellation,"Ticket 05 — Navigation, authentication and role permissions",Verify the redesign requirement for passkey success and cancellation without changing the existing synthetic application flow.,"1. A clean checkout and disposable test environment are available.
+2. Only synthetic fixtures and approved demo aliases are loaded.
+3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
+2. Perform the interaction or inject the listed deterministic fixture.
+3. Repeat at the stated boundary or failure condition.
+4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
+2. The result is explicit, stable, and usable in the named state.
+3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
+4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-DEP-0002,Errors/Messages,
+TC-UI-0039,Patient clinician admin developer permissions,"Ticket 05 — Navigation, authentication and role permissions",Verify the redesign requirement for patient clinician admin developer permissions without changing the existing synthetic application flow.,"1. A clean checkout and disposable test environment are available.
+2. Only synthetic fixtures and approved demo aliases are loaded.
+3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
+2. Perform the interaction or inject the listed deterministic fixture.
+3. Repeat at the stated boundary or failure condition.
+4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
+2. The result is explicit, stable, and usable in the named state.
+3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
+4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-DEP-0003,Empty/Loading/No Results,
+TC-UI-0040,Unauthorized route and action denial,"Ticket 05 — Navigation, authentication and role permissions",Verify the redesign requirement for unauthorized route and action denial without changing the existing synthetic application flow.,"1. A clean checkout and disposable test environment are available.
+2. Only synthetic fixtures and approved demo aliases are loaded.
+3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
+2. Perform the interaction or inject the listed deterministic fixture.
+3. Repeat at the stated boundary or failure condition.
+4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
+2. The result is explicit, stable, and usable in the named state.
+3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
+4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-DEP-0004,API Success/Failure/Timeout/Bad Payload,
+TC-UI-0041,Session timeout recovery,"Ticket 05 — Navigation, authentication and role permissions",Verify the redesign requirement for session timeout recovery without changing the existing synthetic application flow.,"1. A clean checkout and disposable test environment are available.
+2. Only synthetic fixtures and approved demo aliases are loaded.
+3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
+2. Perform the interaction or inject the listed deterministic fixture.
+3. Repeat at the stated boundary or failure condition.
+4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
+2. The result is explicit, stable, and usable in the named state.
+3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
+4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-DEP-0005,Security,
+TC-UI-0042,Existing role workflow happy paths,"Ticket 05 — Navigation, authentication and role permissions",Verify the redesign requirement for existing role workflow happy paths without changing the existing synthetic application flow.,"1. A clean checkout and disposable test environment are available.
+2. Only synthetic fixtures and approved demo aliases are loaded.
+3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
+2. Perform the interaction or inject the listed deterministic fixture.
+3. Repeat at the stated boundary or failure condition.
+4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
+2. The result is explicit, stable, and usable in the named state.
+3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
+4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-DEP-0006,Regression,
+TC-UI-0043,Existing empty and no-results flows,"Ticket 05 — Navigation, authentication and role permissions",Verify the redesign requirement for existing empty and no-results flows without changing the existing synthetic application flow.,"1. A clean checkout and disposable test environment are available.
+2. Only synthetic fixtures and approved demo aliases are loaded.
+3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
+2. Perform the interaction or inject the listed deterministic fixture.
+3. Repeat at the stated boundary or failure condition.
+4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
+2. The result is explicit, stable, and usable in the named state.
+3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
+4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-DEP-0007,Happy,
+TC-UI-0044,Existing API contract outcomes,"Ticket 05 — Navigation, authentication and role permissions",Verify the redesign requirement for existing api contract outcomes without changing the existing synthetic application flow.,"1. A clean checkout and disposable test environment are available.
+2. Only synthetic fixtures and approved demo aliases are loaded.
+3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
+2. Perform the interaction or inject the listed deterministic fixture.
+3. Repeat at the stated boundary or failure condition.
+4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
+2. The result is explicit, stable, and usable in the named state.
+3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
+4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-DEP-0008,Alternate,
+TC-UI-0045,Immutable history correction,"Ticket 05 — Navigation, authentication and role permissions",Verify the redesign requirement for immutable history correction without changing the existing synthetic application flow.,"1. A clean checkout and disposable test environment are available.
+2. Only synthetic fixtures and approved demo aliases are loaded.
+3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
+2. Perform the interaction or inject the listed deterministic fixture.
+3. Repeat at the stated boundary or failure condition.
+4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
+2. The result is explicit, stable, and usable in the named state.
+3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
+4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-DEP-0009,Invalid,
+TC-UI-0046,Concurrency and rollback regression,"Ticket 06 — Existing flows, evidence, Compose and static serving",Verify the redesign requirement for concurrency and rollback regression without changing the existing synthetic application flow.,"1. A clean checkout and disposable test environment are available.
+2. Only synthetic fixtures and approved demo aliases are loaded.
+3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
+2. Perform the interaction or inject the listed deterministic fixture.
+3. Repeat at the stated boundary or failure condition.
+4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
+2. The result is explicit, stable, and usable in the named state.
+3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
+4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-DEP-0010,Boundaries,
+TC-UI-0047,Role flow loading and error coverage,"Ticket 06 — Existing flows, evidence, Compose and static serving",Verify the redesign requirement for role flow loading and error coverage without changing the existing synthetic application flow.,"1. A clean checkout and disposable test environment are available.
+2. Only synthetic fixtures and approved demo aliases are loaded.
+3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
+2. Perform the interaction or inject the listed deterministic fixture.
+3. Repeat at the stated boundary or failure condition.
+4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
+2. The result is explicit, stable, and usable in the named state.
+3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
+4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-DEP-0010,Empty/Loading/No Results,
+TC-UI-0048,API retry does not duplicate rows,"Ticket 06 — Existing flows, evidence, Compose and static serving",Verify the redesign requirement for api retry does not duplicate rows without changing the existing synthetic application flow.,"1. A clean checkout and disposable test environment are available.
+2. Only synthetic fixtures and approved demo aliases are loaded.
+3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
+2. Perform the interaction or inject the listed deterministic fixture.
+3. Repeat at the stated boundary or failure condition.
+4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
+2. The result is explicit, stable, and usable in the named state.
+3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
+4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-UI-0001,API Success/Failure/Timeout/Bad Payload,
+TC-UI-0049,Theme does not persist across reload,"Ticket 06 — Existing flows, evidence, Compose and static serving",Verify the redesign requirement for theme does not persist across reload without changing the existing synthetic application flow.,"1. A clean checkout and disposable test environment are available.
+2. Only synthetic fixtures and approved demo aliases are loaded.
+3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
+2. Perform the interaction or inject the listed deterministic fixture.
+3. Repeat at the stated boundary or failure condition.
+4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
+2. The result is explicit, stable, and usable in the named state.
+3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
+4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-UI-0002,Security,
+TC-UI-0050,Responsive forms retain correction,"Ticket 06 — Existing flows, evidence, Compose and static serving",Verify the redesign requirement for responsive forms retain correction without changing the existing synthetic application flow.,"1. A clean checkout and disposable test environment are available.
+2. Only synthetic fixtures and approved demo aliases are loaded.
+3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
+2. Perform the interaction or inject the listed deterministic fixture.
+3. Repeat at the stated boundary or failure condition.
+4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
+2. The result is explicit, stable, and usable in the named state.
+3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
+4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-UI-0003,Edit/Correction,
+TC-UI-0051,Chart table survives SVG failure,"Ticket 06 — Existing flows, evidence, Compose and static serving",Verify the redesign requirement for chart table survives svg failure without changing the existing synthetic application flow.,"1. A clean checkout and disposable test environment are available.
+2. Only synthetic fixtures and approved demo aliases are loaded.
+3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
+2. Perform the interaction or inject the listed deterministic fixture.
+3. Repeat at the stated boundary or failure condition.
+4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
+2. The result is explicit, stable, and usable in the named state.
+3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
+4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-UI-0004,Alternate,
+TC-UI-0052,Permission denied preserves route,"Ticket 06 — Existing flows, evidence, Compose and static serving",Verify the redesign requirement for permission denied preserves route without changing the existing synthetic application flow.,"1. A clean checkout and disposable test environment are available.
+2. Only synthetic fixtures and approved demo aliases are loaded.
+3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
+2. Perform the interaction or inject the listed deterministic fixture.
+3. Repeat at the stated boundary or failure condition.
+4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
+2. The result is explicit, stable, and usable in the named state.
+3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
+4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-UI-0005,Permissions,
+TC-UI-0053,Screenshot gallery has viewport metadata,"Ticket 06 — Existing flows, evidence, Compose and static serving",Verify the redesign requirement for screenshot gallery has viewport metadata without changing the existing synthetic application flow.,"1. A clean checkout and disposable test environment are available.
+2. Only synthetic fixtures and approved demo aliases are loaded.
+3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
+2. Perform the interaction or inject the listed deterministic fixture.
+3. Repeat at the stated boundary or failure condition.
+4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
+2. The result is explicit, stable, and usable in the named state.
+3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
+4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-UI-0006,Regression,
+TC-UI-0054,Compose readiness safe failure,"Ticket 06 — Existing flows, evidence, Compose and static serving",Verify the redesign requirement for compose readiness safe failure without changing the existing synthetic application flow.,"1. A clean checkout and disposable test environment are available.
+2. Only synthetic fixtures and approved demo aliases are loaded.
+3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
+2. Perform the interaction or inject the listed deterministic fixture.
+3. Repeat at the stated boundary or failure condition.
+4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
+2. The result is explicit, stable, and usable in the named state.
+3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
+4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-UI-0007,Errors/Messages,
+TC-UI-0055,Rollback leaves API data unchanged,"Ticket 06 — Existing flows, evidence, Compose and static serving",Verify the redesign requirement for rollback leaves api data unchanged without changing the existing synthetic application flow.,"1. A clean checkout and disposable test environment are available.
+2. Only synthetic fixtures and approved demo aliases are loaded.
+3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
+2. Perform the interaction or inject the listed deterministic fixture.
+3. Repeat at the stated boundary or failure condition.
+4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
+2. The result is explicit, stable, and usable in the named state.
+3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
+4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-UI-0008,Integrity/Concurrency/Rollback,
