@@ -4,6 +4,8 @@
 @import "@fontsource/outfit/600.css";
 @import "@fontsource/outfit/700.css";
 @import "tailwindcss";
+/* type-10042026-Maurice: Keep semantic utilities available before Ticket 02 applies markup classes. */
+@source inline("bg-primary text-success rounded-lg shadow-card font-sans bg-hero");
 
 @theme {
   --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
