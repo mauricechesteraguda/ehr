@@ -1,0 +1,7 @@
+# Copy outside Git and fill using an authorized operator identity. Never commit state or credentials.
+# Isolated key for aws/staging.
+bucket = "REPLACE_WITH_VERSIONED_ENCRYPTED_STATE_BUCKET"
+key = "ehr/aws/staging/terraform.tfstate"
+region = "REPLACE_WITH_STATE_REGION"
+dynamodb_table = "REPLACE_WITH_LOCK_TABLE"
+encrypt = true

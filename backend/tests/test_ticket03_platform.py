@@ -35,7 +35,9 @@ def test_TC_PLAT_0011_provider_selection_is_documented_not_implemented() -> None
 
 
 def test_TC_PLAT_0012_workload_chart_does_not_provision_infrastructure() -> None:
-    assert not (ROOT / "platform" / "terraform").exists()
+    # Ticket06 adds infrastructure outside the workload chart; the chart itself remains free of
+    # Terraform resources while the platform root is now an intentional sibling contract.
+    assert (ROOT / "platform" / "terraform").exists()
     assert "Terraform" in _read("platform/README.md")
 
 

@@ -8,4 +8,10 @@
 - **Rationale:** The boundary limits state overlap and makes workload changes GitOps-reviewable.
 - **Consequences:** Bootstrap ordering and recovery documentation are required; direct workload apply is out of bounds.
 - **Reconsider when:** lifecycle tooling gains a tested, safer ownership model.
-- **Exclusions/validation:** No runnable IaC or Argo manifests are included; scope is unvalidated.
+- **Implementation:** Ticket06 provides reusable EKS/GKE/AKS foundations, encrypted remote-state
+  backend examples, and an optional pinned Argo CD Helm bootstrap. The module boundary excludes
+  application workloads, add-ons, data payloads, and secret values; cloud plan/apply remains an
+  authorized-runner operation.
+- **Limitations:** Provider quotas, exact managed-service feature availability, restore duration,
+  and provider-specific RPO/RTO behavior require a separately approved cloud validation. Static
+  Terraform validation does not prove network reachability or recovery performance.

@@ -29,12 +29,13 @@ flowchart TB
 | [006](adr-006-envoy-gateway.md) | Envoy Gateway at application ingress | Gateway policy is centralized | required protocol or support boundary changes |
 | [007](adr-007-observability-profiles.md) | Lightweight and production observability profiles | constrained environments get bounded telemetry | measured workload needs exceed profile limits |
 | [008](adr-008-managed-versus-demo-data.md) | Managed cloud data for production; in-cluster data for demo | durability expectations are explicit | demo needs durable recovery or provider constraints change |
+| [009](adr-009-multi-cloud-terraform.md) | Reusable one-provider Terraform foundations | isolated roots and private managed services | provider support or ownership boundary changes |
 
 ## Shared consequences and exclusions
 
 These choices require explicit ownership, private administration paths, redacted default-deny
-logs, immutable evidence classification, and separate demo/managed data warnings. They do not
-choose a cloud provider, publish an endpoint, add credentials, implement Helm/Terraform/Argo,
-promise multi-region recovery, or claim measured RPO/RTO/SLO. EKS, GKE, AKS, k3s, and kind
+logs, immutable evidence classification, and separate demo/managed data warnings. Ticket06 adds
+provider modules without credentials or cloud claims; it does not promise multi-region recovery or
+measured RPO/RTO/SLO. EKS, GKE, AKS, k3s, and kind
 remain targets with validation status recorded separately; no live-cloud target has been
 validated here.

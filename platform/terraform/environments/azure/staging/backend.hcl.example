@@ -1,0 +1,7 @@
+# Copy outside Git and fill using an authorized operator identity. Never commit state or credentials.
+# Isolated key for azure/staging.
+resource_group_name = "REPLACE_WITH_STATE_RESOURCE_GROUP"
+storage_account_name = "REPLACE_WITH_STATE_ACCOUNT"
+container_name = "tfstate"
+key = "ehr/azure/staging.tfstate"
+use_azuread_auth = true

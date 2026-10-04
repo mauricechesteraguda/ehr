@@ -12,8 +12,8 @@ Expected future hostname pattern: `https://ehr.<env>.<your-domain>`; it is not a
 
 This document is the operator-facing architecture reference. Ticket03 adds a reusable Helm library
 and EHR application chart under `platform/helm/`; Ticket04 adds the single-repository Argo
-app-of-apps and platform add-on desired state under `platform/gitops/`. Terraform/OpenTofu and
-cloud modules remain deferred. The current implementation
+app-of-apps and platform add-on desired state under `platform/gitops/`. Ticket06 adds reusable
+Terraform/OpenTofu-compatible AWS, GCP, and Azure foundations under `platform/terraform/`. The current implementation
 is still the local Docker Compose stack: Caddy is the only host-published service, while web/API,
 PostgreSQL, Redis, worker, and Beat stay on an internal network. Compose migration and demo seeding
 are local startup behavior, not a managed-cluster deployment claim.
@@ -49,6 +49,7 @@ platform/
   helm/ehr/             EHR web/API/worker/Beat workloads and migration hook
   helm/bootstrap/       small one-Argo-per-cluster bootstrap chart
   gitops/               Argo applications, targets, policies, routes, and telemetry references
+  terraform/            one-provider-per-install roots, modules, and backend examples
 ```
 
 ## Operator paths
@@ -64,9 +65,9 @@ platform/
   firewall, operator-controlled DNS, and externally provisioned TLS. Bundled Traefik,
   ServiceLB, and metrics-server are disabled so Envoy Gateway owns ingress. This is not a
   cloud/VPS deployment claim and has no live URL.
-- **EKS, GKE, AKS:** documented provider alternatives. A later installation selects exactly
-  one provider per installation; this reference does not claim that any provider path is
-  implemented or cloud-tested.
+- **EKS, GKE, AKS:** reusable provider alternatives in `platform/terraform/`. A later installation
+  selects exactly one provider per installation; these modules are not cloud-tested here and never
+  include credentials, state, plans, or secret values.
 
 All paths are expected to use Helm for workload packaging and Argo for reconciliation. A
 failed migration is a rollout gate: the new workload is **not promoted**. Readiness failure

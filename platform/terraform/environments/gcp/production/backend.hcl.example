@@ -1,0 +1,4 @@
+# Copy outside Git and fill using an authorized operator identity. Never commit state or credentials.
+# Isolated key for gcp/production.
+bucket = "REPLACE_WITH_VERSIONED_ENCRYPTED_STATE_BUCKET"
+prefix = "ehr/gcp/production"
