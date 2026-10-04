@@ -29,6 +29,16 @@ This repository is the currently implemented foundation for a small electronic-h
 
 This remains a local synthetic prototype. The Ticket01–10 Docker Compose platform and the listed P1 workflows are for local synthetic use only; production deployment, real EHI, and other deferred P2 capabilities remain out of scope.
 
+## Platform architecture reference
+
+Ticket02 establishes the operator-facing, implementation-free platform architecture and
+decision record in [`platform/README.md`](platform/README.md). It is a reference only;
+the current supported runtime remains the local Compose demo described below.
+
+**Live URL: Not deployed — reference configuration only**
+
+Expected future hostname pattern: `https://ehr.<env>.<your-domain>`.
+
 Ticket16 does not claim formal WCAG 2.2 conformance, ISO/FDA/HIPAA certification, or
 clinical validation. See `docs/accessibility-conformance-note.md` and
 `docs/evidence-manifest-ticket16.json` for bounded evidence and known exceptions.
