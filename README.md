@@ -43,15 +43,12 @@ illustrative UI captures, not clinical validation or evidence of production read
 | [![Synthetic MFA sign-in screen](docs/screenshots/login-mfa.png)](docs/screenshots/login-mfa.png) | 1440x900 | Synthetic account sign-in with the mandatory TOTP field and non-clinical safety notice. |
 | [![Synthetic MFA sign-in screen on tablet](docs/screenshots/login-mfa-tablet.png)](docs/screenshots/login-mfa-tablet.png) | 1024x768 | Current-source responsive sign-in capture at tablet width. |
 | [![Synthetic MFA sign-in screen on mobile](docs/screenshots/login-mfa-mobile.png)](docs/screenshots/login-mfa-mobile.png) | 390x844 | Current-source responsive sign-in capture at mobile width. |
+| [![Patient synthetic record workspace](docs/screenshots/patient-workspace.png)](docs/screenshots/patient-workspace.png) | 1440x900 | Patient synthetic record workspace with bounded summary, questionnaire, and amendment surfaces. |
 | [![Clinician medication order workspace](docs/screenshots/clinician-medication-safety.png)](docs/screenshots/clinician-medication-safety.png) | 1440x900 | Clinician record workspace at the medication-order workflow, with the synthetic-data boundary visible. |
 | [![Administrator audit workspace](docs/screenshots/administrator-audit-jobs.png)](docs/screenshots/administrator-audit-jobs.png) | 1440x900 | Administrator quality and append-only audit view; sensitive-looking values are masked in this documentation capture. |
 | [![Developer SMART and FHIR workspace](docs/screenshots/developer-smart-fhir.png)](docs/screenshots/developer-smart-fhir.png) | 1440x900 | Developer SMART/FHIR workspace with synthetic-data and browser-storage boundaries. |
 
-The patient questionnaire/record capture was omitted because the seeded patient workspace did
-not load reliably in the current demo run. Tablet (1024x768), mobile (390x844), and patient
-workspace captures were omitted rather than fabricated because an isolated backend/database was
-not available for this verification run. The responsive sign-in captures were taken from the
-current source Vite server; role workspaces require the unavailable backend.
+The authenticated role captures were taken from the current source Vite server and isolated synthetic backend at 1440x900.
 
 ## One-command local HTTPS platform (Ticket01)
 
