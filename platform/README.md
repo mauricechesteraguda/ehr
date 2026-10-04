@@ -10,9 +10,10 @@ Expected future hostname pattern: `https://ehr.<env>.<your-domain>`; it is not a
 
 ## Purpose and current boundary
 
-This document is the operator-facing architecture skeleton for later platform tickets. Ticket03
-adds a reusable Helm library and EHR application chart under `platform/helm/`; Terraform/OpenTofu,
-Argo, policy, cloud, and secret-provider configuration remain deferred. The current implementation
+This document is the operator-facing architecture reference. Ticket03 adds a reusable Helm library
+and EHR application chart under `platform/helm/`; Ticket04 adds the single-repository Argo
+app-of-apps and platform add-on desired state under `platform/gitops/`. Terraform/OpenTofu and
+cloud modules remain deferred. The current implementation
 is still the local Docker Compose stack: Caddy is the only host-published service, while web/API,
 PostgreSQL, Redis, worker, and Beat stay on an internal network. Compose migration and demo seeding
 are local startup behavior, not a managed-cluster deployment claim.
@@ -46,8 +47,8 @@ platform/
   validation-targets.json
   helm/ehr-library/     reusable labels, security, resource, and probe helpers
   helm/ehr/             EHR web/API/worker/Beat workloads and migration hook
-  terraform/            future cluster-and-Argo location (not implemented here)
-  gitops/               future Argo applications and environments (not implemented here)
+  helm/bootstrap/       small one-Argo-per-cluster bootstrap chart
+  gitops/               Argo applications, targets, policies, routes, and telemetry references
 ```
 
 ## Operator paths
@@ -96,11 +97,10 @@ synthetic Terraform plan, labeled as an estimate rather than a bill, with secret
 ## Validation seams
 
 The existing offline seam validates repository contracts without cloud credentials. Ticket02
-documents kind bootstrap expectations; later seams should separately validate rendered Helm,
-policy admission, Terraform scope, Argo sync, provider networking, secret retrieval,
-observability, recovery, and cost evidence. Static, kind, k3s, cloud, and unvalidated
-results must be classified separately. No endpoint, cloud account, or live recovery is
-claimed by this document.
+documents kind bootstrap expectations; Ticket04 adds static desired-state checks. Live Argo,
+provider networking, secret retrieval, admission, observability, recovery, and cost evidence
+remain unvalidated. Static, kind, k3s, cloud, and unvalidated results must be classified
+separately. No endpoint, cloud account, or live recovery is claimed by this document.
 
 ## Ticket03 chart interface
 

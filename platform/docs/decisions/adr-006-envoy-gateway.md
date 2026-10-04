@@ -8,4 +8,4 @@
 - **Rationale:** A single declarative gateway contract reduces provider-specific exposure assumptions.
 - **Consequences:** Gateway lifecycle and provider integration must be tested; it is not a promise of public access.
 - **Reconsider when:** protocol, support, or security requirements cannot be met.
-- **Exclusions/validation:** No gateway configuration or public hostname is implemented; unvalidated.
+- **Validation:** Ticket04 supplies Gateway API routes and synthetic hostname references; no public endpoint is deployed or claimed.

@@ -8,4 +8,4 @@
 - **Rationale:** Required signals remain available without pretending constrained environments have production capacity or retention.
 - **Consequences:** Profiles can diverge and must be documented and tested independently.
 - **Reconsider when:** measured workload and operator budget invalidate the split.
-- **Exclusions/validation:** No retention, SLO, or capacity claim is measured by this ADR.
+- **Validation:** Ticket04 supplies bounded demo/cloud retention and private-stack references; retention, SLO, and capacity remain unmeasured.

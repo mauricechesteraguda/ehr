@@ -1,0 +1,11 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata: {name: platform-observability, namespace: argocd, annotations: {argocd.argoproj.io/sync-wave: "30"}}
+spec:
+  project: ehr
+  sources:
+    - {repoURL: https://prometheus-community.github.io/helm-charts, chart: kube-prometheus-stack, targetRevision: 69.8.2, helm: {valuesObject: {grafana: {enabled: true, service: {type: ClusterIP}}, alertmanager: {enabled: true, service: {type: ClusterIP}}}}}
+    - {repoURL: https://grafana.github.io/helm-charts, chart: loki, targetRevision: 6.29.0, helm: {valuesObject: {deploymentMode: SingleBinary, loki: {auth_enabled: false, limits_config: {retention_period: 168h}}}}}
+    - {repoURL: https://grafana.github.io/helm-charts, chart: alloy, targetRevision: 0.12.2, helm: {valuesObject: {service: {type: ClusterIP}}}}
+  destination: {server: https://kubernetes.default.svc, namespace: ehr-platform}
+  syncPolicy: {automated: {prune: true, selfHeal: true, allowEmpty: false}, syncOptions: [CreateNamespace=true, PruneLast=true]}

@@ -8,4 +8,4 @@
 - **Rationale:** The boundary keeps values external and ties access to workload, namespace, and action.
 - **Consequences:** Provider availability is a runtime dependency and failure states need safe classification.
 - **Reconsider when:** a provider cannot offer the required identity and audit controls.
-- **Exclusions/validation:** No provider, secret name, credential, or secret value is specified; unvalidated.
+- **Validation:** Ticket04 supplies provider-neutral AWS/GCP/Azure reference templates with workload identity; values are not live-tested.

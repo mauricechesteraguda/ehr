@@ -1,0 +1,27 @@
+# type-10042026-Maurice: target-to-profile matrix; no cloud account or domain is implied.
+targets:
+  kind:
+    environment: demo
+    namespace: ehr-demo
+    profile: demo
+    cluster: kind
+  k3s:
+    environment: demo
+    namespace: ehr-k3s
+    profile: constrained
+    cluster: k3s
+  development:
+    environment: development
+    namespace: ehr-development
+    profile: cloud
+    cluster: managed
+  staging:
+    environment: staging
+    namespace: ehr-staging
+    profile: cloud
+    cluster: managed
+  production:
+    environment: production
+    namespace: ehr-production
+    profile: production
+    cluster: managed

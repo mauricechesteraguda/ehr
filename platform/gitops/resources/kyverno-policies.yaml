@@ -1,0 +1,26 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata: {name: ehr-production-image-and-pod-boundary}
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: production-images-must-be-digests
+      match: {any: [{resources: {kinds: [Pod], namespaces: [ehr-production]}}]}
+      validate: {message: "production images must use approved registry digests", pattern: {spec: {containers: [{image: "registry.example.invalid/ehr*@sha256/*"}]}}}
+    - name: no-privilege-host-access
+      match: {any: [{resources: {kinds: [Pod], namespaces: [ehr-demo, ehr-k3s, ehr-development, ehr-staging, ehr-production]}}]}
+      validate: {message: "restricted EHR pods cannot use privilege or host access", pattern: {spec: {=(hostNetwork): false, =(hostPID): false, =(hostIPC): false, containers: [{securityContext: {=(privileged): false, =(allowPrivilegeEscalation): false}}]}}}
+    - name: require-resources-and-non-root
+      match: {any: [{resources: {kinds: [Pod], namespaces: [ehr-demo, ehr-k3s, ehr-development, ehr-staging, ehr-production]}}]}
+      validate: {message: "EHR pods require non-root and bounded resources", pattern: {spec: {securityContext: {runAsNonRoot: true}, containers: [{securityContext: {runAsNonRoot: true}, resources: {requests: {cpu: "?*", memory: "?*"}, limits: {cpu: "?*", memory: "?*"}}}]}}}
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata: {name: ehr-production-signature-hook}
+spec:
+  validationFailureAction: Audit
+  rules:
+    - name: signature-verification-hook
+      match: {any: [{resources: {kinds: [Pod], namespaces: [ehr-production]}}]}
+      verifyImages: [{imageReferences: ["registry.example.invalid/ehr*"], attestors: [{entries: [{keys: {publicKeys: "data:text/plain;base64,c3ludGhldGljLXB1YmxpYy1rZXk="}}]}]}]

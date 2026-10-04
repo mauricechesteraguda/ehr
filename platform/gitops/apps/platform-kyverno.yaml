@@ -1,0 +1,8 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata: {name: platform-kyverno, namespace: argocd, annotations: {argocd.argoproj.io/sync-wave: "-4"}}
+spec:
+  project: ehr
+  source: {repoURL: https://kyverno.github.io/kyverno, chart: kyverno, targetRevision: 3.3.7, helm: {valuesObject: {admissionController: {replicas: 1}}}}
+  destination: {server: https://kubernetes.default.svc, namespace: kyverno}
+  syncPolicy: {automated: {prune: true, selfHeal: true, allowEmpty: false}, syncOptions: [CreateNamespace=true, PruneLast=true]}

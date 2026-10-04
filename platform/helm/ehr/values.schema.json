@@ -14,6 +14,8 @@
       "enum": [
         "demo",
         "k3s",
+        "development",
+        "staging",
         "production"
       ]
     },

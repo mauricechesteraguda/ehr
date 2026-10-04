@@ -1,0 +1,20 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata: {name: ehr-gateway, namespace: ehr-platform}
+spec:
+  gatewayClassName: eg
+  listeners:
+    - {name: https, protocol: HTTPS, port: 443, hostname: ehr.example.invalid, tls: {mode: Terminate, certificateRefs: [{name: ehr-tls}]}, allowedRoutes: {namespaces: {from: Selector, selector: {matchLabels: {ehr.example/route: allowed}}}}}
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata: {name: ehr-routes, namespace: ehr-production}
+spec:
+  parentRefs: [{name: ehr-gateway, namespace: ehr-platform, sectionName: https}]
+  hostnames: [ehr.example.invalid]
+  rules:
+    - {matches: [{path: {type: PathPrefix, value: /}}], backendRefs: [{name: ehr-web, port: 8080}]}
+    - {matches: [{path: {type: PathPrefix, value: /api}}], backendRefs: [{name: ehr-api, port: 8000}]}
+    - {matches: [{path: {type: PathPrefix, value: /oauth}}], backendRefs: [{name: ehr-api, port: 8000}]}
+    - {matches: [{path: {type: PathPrefix, value: /fhir}}], backendRefs: [{name: ehr-api, port: 8000}]}
+    - {matches: [{path: {type: PathPrefix, value: /.well-known}}], backendRefs: [{name: ehr-api, port: 8000}]}

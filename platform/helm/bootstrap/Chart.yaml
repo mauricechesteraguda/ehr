@@ -1,0 +1,6 @@
+apiVersion: v2
+name: ehr-bootstrap
+description: Small bootstrap chart for one Argo CD instance per cluster.
+type: application
+version: 0.1.0
+appVersion: "1.0"

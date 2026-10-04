@@ -1,0 +1,15 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ehr-production
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "20"
+    argocd.argoproj.io/sync-options: PruneLast=true,Delete=false
+    ehr.example/sync-gate: approved-release
+spec:
+  project: ehr
+  source: {repoURL: https://github.com/example/ehr.git, targetRevision: main, path: platform/helm/ehr, helm: {valueFiles: [values-production.yaml]}}
+  destination: {server: https://kubernetes.default.svc, namespace: ehr-production}
+  syncPolicy:
+    syncOptions: [CreateNamespace=true, PruneLast=true, Delete=false]

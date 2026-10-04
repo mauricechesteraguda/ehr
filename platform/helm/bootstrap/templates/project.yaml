@@ -1,0 +1,18 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: {{ .Values.projectName }}
+  namespace: {{ .Values.argocdNamespace }}
+  annotations: {type-10042026-Maurice: "bootstrap creates only bounded Argo ownership"}
+spec:
+  sourceRepos: [{{ .Values.repoURL | quote }}]
+  destinations:
+    - {server: https://kubernetes.default.svc, namespace: argocd}
+    - {server: https://kubernetes.default.svc, namespace: ehr-platform}
+    - {server: https://kubernetes.default.svc, namespace: ehr-demo}
+    - {server: https://kubernetes.default.svc, namespace: ehr-k3s}
+    - {server: https://kubernetes.default.svc, namespace: ehr-development}
+    - {server: https://kubernetes.default.svc, namespace: ehr-staging}
+    - {server: https://kubernetes.default.svc, namespace: ehr-production}
+  clusterResourceWhitelist: [{group: "", kind: Namespace}]
+  namespaceResourceWhitelist: [{group: "*", kind: "*"}]

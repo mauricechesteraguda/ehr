@@ -1,0 +1,8 @@
+environment: k3s
+profile: k3s
+provider: none
+replicaCount: {web: 1, api: 1, worker: 1, beat: 1}
+workerConcurrency: 1
+singleNode: {enabled: true, pdbEnabled: false, topologySpreadEnabled: false}
+telemetry: {profile: lightweight, serviceMonitor: false}
+seed: {enabled: false}

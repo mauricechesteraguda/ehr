@@ -1,0 +1,4 @@
+environment: staging
+profile: cloud
+provider: none
+seed: {enabled: false}

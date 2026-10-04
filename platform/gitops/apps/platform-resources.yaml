@@ -1,0 +1,8 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata: {name: platform-resources, namespace: argocd, annotations: {argocd.argoproj.io/sync-wave: "5"}}
+spec:
+  project: ehr
+  source: {repoURL: https://github.com/example/ehr.git, targetRevision: main, path: platform/gitops/resources}
+  destination: {server: https://kubernetes.default.svc, namespace: ehr-platform}
+  syncPolicy: {automated: {prune: true, selfHeal: true, allowEmpty: false}, syncOptions: [CreateNamespace=true, PruneLast=true]}

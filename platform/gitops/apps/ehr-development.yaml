@@ -1,0 +1,11 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ehr-development
+  namespace: argocd
+  annotations: {argocd.argoproj.io/sync-wave: "20", argocd.argoproj.io/sync-options: PruneLast=true}
+spec:
+  project: ehr
+  source: {repoURL: https://github.com/example/ehr.git, targetRevision: main, path: platform/helm/ehr, helm: {valueFiles: [values-development.yaml]}}
+  destination: {server: https://kubernetes.default.svc, namespace: ehr-development}
+  syncPolicy: {automated: {prune: true, selfHeal: true, allowEmpty: false}, syncOptions: [CreateNamespace=true, PruneLast=true]}

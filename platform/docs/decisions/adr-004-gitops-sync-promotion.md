@@ -8,4 +8,4 @@
 - **Rationale:** Review, provenance, and approval are clearer without weakening lower-environment feedback.
 - **Consequences:** Emergency changes need a documented process; drift can remain until reviewed.
 - **Reconsider when:** measured recovery or governance requirements demand another promotion control.
-- **Exclusions/validation:** No Argo application is implemented or live-tested here.
+- **Validation:** Ticket04 supplies static Argo desired-state checks; no cluster is claimed live.

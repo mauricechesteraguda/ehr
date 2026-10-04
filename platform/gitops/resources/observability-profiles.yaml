@@ -1,0 +1,11 @@
+# type-10042026-Maurice: bounded reference values, not measured SLOs.
+apiVersion: v1
+kind: ConfigMap
+metadata: {name: observability-profiles, namespace: ehr-platform}
+data:
+  profiles.yaml: |
+    demo: {metricsRetention: 3d, logsRetention: 7d, replicas: 1, storage: 5Gi, blackbox: true}
+    cloud: {metricsRetention: 15d, logsRetention: 30d, replicas: 2, storage: 100Gi, objectStorageReferenceOnly: true, blackbox: false}
+    production: {metricsRetention: 15d, logsRetention: 30d, replicas: 3, storage: 250Gi, objectStorageReferenceOnly: true, blackbox: true}
+    blackboxPaths: [/, /api/health/ready/, /oauth/, /fhir/metadata, /.well-known/openid-configuration]
+    notifications: {enabled: false, secretRef: observability-notifications, delivery: ExternalSecret-backed webhook-or-email}

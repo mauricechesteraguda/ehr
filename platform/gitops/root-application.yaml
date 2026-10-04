@@ -1,0 +1,24 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ehr-root
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: ehr-platform
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+    argocd.argoproj.io/sync-options: Prune=false
+    type-10042026-Maurice: "root is bootstrap-owned and never auto-prunes"
+spec:
+  project: ehr
+  source:
+    repoURL: https://github.com/example/ehr.git
+    targetRevision: main
+    path: platform/gitops/apps
+    directory:
+      recurse: false
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    syncOptions: [CreateNamespace=true, PruneLast=true]

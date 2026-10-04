@@ -1,0 +1,27 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: default-deny, namespace: ehr-production}
+spec: {podSelector: {}, policyTypes: [Ingress, Egress]}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: ehr-explicit-egress, namespace: ehr-production}
+spec:
+  podSelector: {}
+  policyTypes: [Egress]
+  egress:
+    - {to: [{namespaceSelector: {matchLabels: {kubernetes.io/metadata.name: kube-system}}}], ports: [{protocol: UDP, port: 53}, {protocol: TCP, port: 53}]}
+    - {to: [{namespaceSelector: {matchLabels: {kubernetes.io/metadata.name: ehr-production}}}], ports: [{protocol: TCP, port: 5432}, {protocol: TCP, port: 6379}, {protocol: TCP, port: 8000}, {protocol: TCP, port: 8080}]}
+    - {to: [{namespaceSelector: {matchLabels: {kubernetes.io/metadata.name: ehr-platform}}}], ports: [{protocol: TCP, port: 4317}, {protocol: TCP, port: 9090}]}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: allow-dns-gateway-web-api-db-redis-worker-beat-monitoring-secret-provider, namespace: ehr-production}
+spec:
+  podSelector: {matchLabels: {app.kubernetes.io/part-of: ehr}}
+  policyTypes: [Egress]
+  egress:
+    - {to: [{namespaceSelector: {matchLabels: {kubernetes.io/metadata.name: kube-system}}}], ports: [{protocol: UDP, port: 53}]}
+    - {to: [{namespaceSelector: {matchLabels: {kubernetes.io/metadata.name: envoy-gateway-system}}}], ports: [{protocol: TCP, port: 443}]}
+    - {to: [{namespaceSelector: {matchLabels: {kubernetes.io/metadata.name: ehr-production}}}], ports: [{protocol: TCP, port: 5432}, {protocol: TCP, port: 6379}]}
+    - {to: [{namespaceSelector: {matchLabels: {kubernetes.io/metadata.name: ehr-platform}}}], ports: [{protocol: TCP, port: 443}, {protocol: TCP, port: 9090}, {protocol: TCP, port: 4317}]}

@@ -1,0 +1,6 @@
+# ExternalDNS is intentionally disabled. It may be enabled only with reviewed provider identity,
+# a controlled domain allow-list, and an approved ownership TXT policy; no domain is configured here.
+apiVersion: v1
+kind: ConfigMap
+metadata: {name: external-dns-disabled, namespace: ehr-platform}
+data: {enabled: "false", provider: none}

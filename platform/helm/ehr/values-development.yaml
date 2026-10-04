@@ -1,0 +1,4 @@
+environment: development
+profile: cloud
+provider: none
+seed: {enabled: false}

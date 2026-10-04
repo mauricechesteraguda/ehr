@@ -1,0 +1,23 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata: {name: ehr-platform-rules, namespace: ehr-platform}
+spec:
+  groups:
+    - name: ehr.platform
+      rules:
+        - alert: EHRWorkloadUnavailable
+          expr: kube_deployment_status_replicas_available{namespace=~"ehr-.*"} < 1
+          for: 10m
+        - alert: ArgoApplicationOutOfSync
+          expr: argocd_app_info{sync_status!="Synced"} > 0
+          for: 15m
+        - alert: CertificateExpiringSoon
+          expr: certmanager_certificate_expiration_timestamp_seconds - time() < 604800
+          for: 15m
+        - alert: StoragePressure
+          expr: kubelet_volume_stats_available_bytes / kubelet_volume_stats_capacity_bytes < 0.15
+          for: 10m
+        - alert: EHRTaskSuccessUnvalidated
+          expr: vector(0)
+          labels: {severity: info, evidence: unvalidated}
+          annotations: {summary: "Native EHR task success metrics are not implemented"}

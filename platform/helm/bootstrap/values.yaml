@@ -1,0 +1,6 @@
+# type-10042026-Maurice: references only; never put sensitive values in bootstrap values.
+repoURL: https://github.com/example/ehr.git
+revision: main
+argocdNamespace: argocd
+projectName: ehr
+rootName: ehr-root
