@@ -40,6 +40,17 @@ measured RPO/RTO/SLO. EKS, GKE, AKS, k3s, and kind
 remain targets with validation status recorded separately; no live-cloud target has been
 validated here.
 
+## Alternatives, status, and reconsideration
+
+The nine entries above are **Accepted** reference decisions, not deployment approvals. Alternatives
+were rejected where they blur identity/state ownership (multi-provider installs), bypass review
+(direct Terraform workload applies), outlive workload identity (static secrets), or exceed the
+k3s budget (one heavy telemetry profile). A separate repository, gateway, or provider-native
+GitOps controller may be reconsidered only with preserved ownership, rollback, private-admin, and
+evidence contracts. Record a replacement ADR before changing manifests, and reconsider only when
+the row's condition is evidenced. Provider, recovery, cost, and application-metrics claims remain
+unvalidated until named-environment evidence exists.
+
 ## Ticket07 CI supply-chain decision
 
 <!-- type-10042026-Maurice -->

@@ -39,6 +39,11 @@ the current supported runtime remains the local Compose demo described below.
 
 Expected future hostname pattern: `https://ehr.<env>.<your-domain>`.
 
+Regression gates remain required alongside platform checks: `npm test -- --run`, `npm run lint`,
+`npm run build`, `npm run validate:evidence`, `python3 -m pytest`, and
+`pytest -q backend/tests/test_ticket17_compose.py`. Missing PostgreSQL, Docker, or browser
+prerequisites are reported as Not Run/Blocked rather than converted into passes.
+
 Ticket16 does not claim formal WCAG 2.2 conformance, ISO/FDA/HIPAA certification, or
 clinical validation. See `docs/accessibility-conformance-note.md` and
 `docs/evidence-manifest-ticket16.json` for bounded evidence and known exceptions.

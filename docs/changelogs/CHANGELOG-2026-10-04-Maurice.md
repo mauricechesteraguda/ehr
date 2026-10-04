@@ -33,4 +33,13 @@
 - Refreshed the README screenshot gallery with viewport metadata and current-source responsive sign-in captures at 1440x900, 1024x768, and 390x844; authenticated role captures remain explicitly omitted without a disposable backend.
 - Recorded automated frontend, axe, static Compose, build, lint, and evidence results without claiming formal accessibility conformance or clinical validation.
 
+## Ticket 08 — Documentation and current application regression
+
+- Completed the operator DevSecOps README with evidence classification, dated planning cost ranges,
+  Infracost authority, current application metrics limitation, and runbook links.
+- Added discoverable documentation, URL-boundary, regression, and acceptance-evidence contract tests;
+  mapped all Ticket08 platform cases without claiming kind or cloud deployment.
+- Added local kind, k3s, cloud state/bootstrap, Argo recovery, rollback, backup/restore, secret,
+  incident, certificate/DNS, monitoring, upgrade, and teardown safeguards.
+
 Author Name: Aguda, Maurice

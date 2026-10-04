@@ -102,6 +102,28 @@ backup policy, and repeatable evidence exist. No target below is a live guarante
 Cost estimates are also pending. The intended method is a reviewed Infracost delta from a
 synthetic Terraform plan, labeled as an estimate rather than a bill, with secrets excluded.
 
+## 2026-10-04 planning cost ranges (USD/month)
+
+These dated ranges are planning estimates, not quotes or deployment evidence. Assumptions: 730
+hours/month, on-demand public list pricing, one region, one cluster, one small managed PostgreSQL,
+one small managed Redis, 100 GB block storage, and 100 GB monthly egress. They exclude support,
+taxes, DNS/domain/TLS, extra backup retention, observability vendors, NAT, traffic variance, and
+discounts. k3s assumes a 4-vCPU/8-GB VPS; cloud values are small-production envelopes, not equal
+performance claims.
+
+| Target | Monthly range | Official pricing facts used | Status |
+| --- | ---: | --- | --- |
+| k3s VPS, 4 vCPU / 8 GB | $40–$120 | Vendor/region VPS and block-storage list prices; operator must replace inputs | Estimate; not deployed |
+| AWS EKS | $350–$1,100 | [EKS](https://aws.amazon.com/eks/pricing/), [EC2](https://aws.amazon.com/ec2/pricing/on-demand/), [RDS](https://aws.amazon.com/rds/pricing/), [ElastiCache](https://aws.amazon.com/elasticache/pricing/) | Estimate; no account tested |
+| GKE | $300–$1,000 | [GKE](https://cloud.google.com/kubernetes-engine/pricing), [Compute](https://cloud.google.com/compute/pricing), [Cloud SQL](https://cloud.google.com/sql/pricing), [Memorystore](https://cloud.google.com/memorystore/pricing) | Estimate; no project tested |
+| AKS | $300–$1,000 | [AKS](https://azure.microsoft.com/pricing/details/kubernetes-service/), [VM](https://azure.microsoft.com/pricing/details/virtual-machines/), [PostgreSQL](https://azure.microsoft.com/pricing/details/postgresql/flexible-server/), [Managed Redis](https://azure.microsoft.com/pricing/details/managed-redis/) | Estimate; no subscription tested |
+
+Ranges express uncertainty; they do not claim quotes. Once configured, a pinned Infracost run over
+the reviewed Terraform plan is authoritative. Cost levers are disposable k3s/demo profiles,
+right-sized replicas/storage, lightweight telemetry, committed use after measured baselines, and
+limited cross-zone/Internet egress. Never reduce private administration, backups, identity, or
+image verification for savings.
+
 ## Validation seams
 
 The existing offline seam validates repository contracts without cloud credentials. Ticket02
@@ -158,4 +180,17 @@ environment approval. Release requires explicit manual gating, configured ECR/Ar
 immutable digests, Trivy, SBOM, Cosign keyless signature/attestation, and provenance. No workflow
 performs a production deployment. Official action release references were checked on 2026-10-04;
 Renovate maintains full-SHA pins. Missing optional tools or credentials are blocked/Not Run, never
-a successful estimate or deployment claim.
+ a successful estimate or deployment claim.
+
+## Evidence classification and operator runbooks
+
+Acceptance records include input revision, profile, architecture, timestamp, expected/actual result,
+and exact status. `Static` is credentialless source/rendered evidence; `kind` is an explicitly
+selected disposable cluster; `k3s` and `cloud` require named-environment evidence; `Not Run` is not
+a pass. The application has health signals but no native Prometheus metrics endpoint, so external
+edge/black-box and workload/kube-state monitoring cover availability while application task success
+remains limited and unvalidated.
+
+See [`platform/docs/runbooks.md`](docs/runbooks.md) for local kind, k3s, cloud state/bootstrap,
+Argo recovery, rollback, RPO15m/RTO4h backup/restore targets, secret rotation, incident/log safety,
+certificate/DNS, monitoring, upgrades, and scoped teardown safeguards.
