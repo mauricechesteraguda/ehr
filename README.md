@@ -35,18 +35,20 @@ clinical validation. See `docs/accessibility-conformance-note.md` and
 
 ## Screenshots
 
-These images show the current local demo using synthetic demonstration data only. They are
-illustrative UI captures, not clinical validation or evidence of production readiness.
+These images show the current local demo using synthetic demonstration data only, captured
+in the optional light presentation mode. The application remains dark-first by default;
+these are illustrative UI captures, not clinical validation or evidence of production
+readiness.
 
 | Screen | Viewport | Workflow shown |
 | --- | --- | --- |
-| [![Synthetic MFA sign-in screen](docs/screenshots/login-mfa.png)](docs/screenshots/login-mfa.png) | 1440x900 | Synthetic account sign-in with the mandatory TOTP field and non-clinical safety notice. |
-| [![Synthetic MFA sign-in screen on tablet](docs/screenshots/login-mfa-tablet.png)](docs/screenshots/login-mfa-tablet.png) | 1024x768 | Current-source responsive sign-in capture at tablet width. |
-| [![Synthetic MFA sign-in screen on mobile](docs/screenshots/login-mfa-mobile.png)](docs/screenshots/login-mfa-mobile.png) | 390x844 | Current-source responsive sign-in capture at mobile width. |
-| [![Patient synthetic record workspace](docs/screenshots/patient-workspace.png)](docs/screenshots/patient-workspace.png) | 1440x900 | Patient synthetic record workspace with bounded summary, questionnaire, and amendment surfaces. |
-| [![Clinician medication order workspace](docs/screenshots/clinician-medication-safety.png)](docs/screenshots/clinician-medication-safety.png) | 1440x900 | Clinician record workspace at the medication-order workflow, with the synthetic-data boundary visible. |
-| [![Administrator audit workspace](docs/screenshots/administrator-audit-jobs.png)](docs/screenshots/administrator-audit-jobs.png) | 1440x900 | Administrator quality and append-only audit view; sensitive-looking values are masked in this documentation capture. |
-| [![Developer SMART and FHIR workspace](docs/screenshots/developer-smart-fhir.png)](docs/screenshots/developer-smart-fhir.png) | 1440x900 | Developer SMART/FHIR workspace with synthetic-data and browser-storage boundaries. |
+| [![Synthetic MFA sign-in screen](docs/screenshots/login-mfa.png)](docs/screenshots/login-mfa.png) | 1440x900 | Optional light-mode presentation of the synthetic account sign-in with mandatory TOTP and non-clinical safety notice. |
+| [![Synthetic MFA sign-in screen on tablet](docs/screenshots/login-mfa-tablet.png)](docs/screenshots/login-mfa-tablet.png) | 1024x768 | Optional light-mode responsive sign-in capture at tablet width. |
+| [![Synthetic MFA sign-in screen on mobile](docs/screenshots/login-mfa-mobile.png)](docs/screenshots/login-mfa-mobile.png) | 390x844 | Optional light-mode responsive sign-in capture at mobile width. |
+| [![Patient synthetic record workspace](docs/screenshots/patient-workspace.png)](docs/screenshots/patient-workspace.png) | 1440x900 | Optional light-mode patient synthetic record workspace with bounded summary, questionnaire, and amendment surfaces. |
+| [![Clinician medication order workspace](docs/screenshots/clinician-medication-safety.png)](docs/screenshots/clinician-medication-safety.png) | 1440x900 | Optional light-mode clinician record workspace at the medication-order workflow, with the synthetic-data boundary visible. |
+| [![Administrator audit workspace](docs/screenshots/administrator-audit-jobs.png)](docs/screenshots/administrator-audit-jobs.png) | 1440x900 | Optional light-mode administrator quality and append-only audit view; sensitive-looking values are masked in this documentation capture. |
+| [![Developer SMART and FHIR workspace](docs/screenshots/developer-smart-fhir.png)](docs/screenshots/developer-smart-fhir.png) | 1440x900 | Optional light-mode developer SMART/FHIR workspace with synthetic-data and browser-storage boundaries. |
 
 The authenticated role captures were taken from the current source Vite server and isolated synthetic backend at 1440x900.
 

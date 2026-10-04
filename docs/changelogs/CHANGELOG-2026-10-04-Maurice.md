@@ -6,6 +6,7 @@
 
 - Added a README screenshot gallery for the current synthetic demo workflows, covering sign-in, clinician medication ordering, administrator audit/quality review, patient record/questionnaire review, clinician medication ordering, administrator audit/quality review, and developer SMART/FHIR navigation.
 - Replaced optimized role documentation captures with current Tailwind UI at 1440x900, including a reliable populated synthetic patient workspace; synthetic labels and masked audit values remain in evidence.
+- Recaptured the seven README gallery images in the optional light presentation mode; the application remains dark-first by default and no production theme behavior was changed.
 
 ## Ticket 02 — Responsive application shell
 
