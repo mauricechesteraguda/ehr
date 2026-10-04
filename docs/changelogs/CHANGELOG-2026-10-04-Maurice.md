@@ -14,4 +14,10 @@
 - Preserved existing role workflows, panel text, selectors, API calls, and synthetic-data safety boundaries.
 - Added Ticket02 frontend contract coverage for TC-UI-0010..0018 and mapped each case to a RED-first test reference in `docs/test-cases/ehr-tailwind-redesign.csv`.
 
+## Ticket 03 — Authentication and patient workspace redesign
+
+- Added the responsive violet/dark authentication composition with synthetic-data notice, step/status guidance, TOTP and passkey states, recovery messaging, and memory-only access language while preserving existing form selectors and API behavior.
+- Reframed the patient workspace with patient context, record tabs, responsive summary cards, clinical action surfaces, safe empty/error/status text, and mobile-friendly record navigation.
+- Added RED-first coverage for TC-UI-0019..0027 in `src/ticket03.test.tsx` and mapped every Ticket03 CSV row to its test reference.
+
 Author Name: Aguda, Maurice

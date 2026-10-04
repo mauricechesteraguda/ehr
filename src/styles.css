@@ -136,3 +136,62 @@ th, td { border: 1px solid var(--app-border); padding: .5rem; text-align: left; 
 .drawer-backdrop { display: none; }
 @media (max-width: 64rem) { .app-shell { grid-template-columns: 64px minmax(0, 1fr); } .sidebar { display: none; } .mobile-menu { display: inline-grid; } .drawer-backdrop { position: fixed; inset: 0; z-index: 10; display: block; background: rgb(0 0 0 / 55%); } .mobile-drawer { width: min(18rem, 85vw); height: 100%; background: var(--app-bg); } .mobile-drawer .sidebar { display: block; height: 100%; border: 0; } }
 @media (max-width: 42rem) { .app-shell { display: block; } .icon-rail { display: none; } .top-bar { padding: .75rem; } .top-bar > div:first-of-type { min-width: 0; } .top-search { display: none; } .page-frame { padding: 1rem .75rem 2rem; } .context-ribbon { align-items: flex-start; flex-direction: column; padding: 1.25rem; } .context-ribbon .ui-button { width: auto; } }
+
+/* type-10042026-Maurice: Ticket03 auth and patient workspace composition. */
+.auth-page { min-height: 100vh; max-width: 78rem; display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(22rem, .95fr); align-items: stretch; gap: clamp(2rem, 7vw, 7rem); padding: clamp(1.5rem, 6vw, 5rem); margin: 0 auto; background: radial-gradient(circle at 15% 10%, rgb(124 58 237 / 20%), transparent 35%); }
+.auth-story { align-self: center; padding: 2rem 0; }
+.brand-lockup { display: flex; align-items: center; gap: .7rem; color: var(--app-text); font-size: 1.2rem; font-weight: 700; }
+.brand-lockup small { display: block; margin-top: .1rem; color: var(--app-muted); font-size: .66rem; font-weight: 500; letter-spacing: .12em; text-transform: uppercase; }
+.brand-mark { display: grid; place-items: center; width: 2.75rem; height: 2.75rem; border-radius: .8rem; background: var(--background-image-hero); color: white; box-shadow: var(--shadow-glow); }
+.eyebrow { margin: 0; color: var(--color-primary-300); font-size: .7rem; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; }
+.auth-story h1 { max-width: 10ch; margin: 1.6rem 0 1.2rem; font-size: clamp(2.8rem, 6vw, 5.6rem); line-height: .96; letter-spacing: -.055em; }
+.auth-lede { max-width: 32rem; color: var(--app-muted); font-size: 1.1rem; }
+.auth-promises { display: grid; gap: 1rem; max-width: 28rem; margin: 3rem 0 0; padding: 0; list-style: none; }
+.auth-promises li { display: flex; gap: .8rem; align-items: flex-start; }
+.auth-promises li > span:first-child { color: var(--color-primary-300); font-size: 1.4rem; }
+.auth-promises strong, .auth-promises small { display: block; }
+.auth-promises small { margin-top: .2rem; color: var(--app-muted); }
+.auth-panel { align-self: center; padding: clamp(1.25rem, 4vw, 2.5rem); border: 1px solid var(--app-border); border-radius: 1.5rem; background: color-mix(in srgb, var(--app-surface) 94%, transparent); box-shadow: 0 24px 70px rgb(0 0 0 / 25%); }
+.auth-panel-heading h2 { margin: .35rem 0 .4rem; font-size: 1.85rem; letter-spacing: -.03em; }
+.auth-panel-heading p:last-child { margin-top: 0; color: var(--app-muted); }
+.synthetic-notice, .workspace-notice { display: flex; gap: .65rem; align-items: flex-start; padding: .8rem .9rem; border: 1px solid rgb(245 158 11 / 40%); border-radius: var(--radius-md); background: rgb(245 158 11 / 9%); color: #FCD34D; }
+.synthetic-notice span { color: var(--app-text); font-size: .82rem; }
+.auth-steps { display: flex; gap: 1rem; margin: 1.5rem 0; padding-bottom: 1rem; border-bottom: 1px solid var(--app-border); color: var(--app-muted); font-size: .76rem; }
+.auth-steps span { display: flex; align-items: center; gap: .35rem; }
+.auth-steps b { display: grid; place-items: center; width: 1.35rem; height: 1.35rem; border-radius: 50%; border: 1px solid currentColor; font-size: .7rem; }
+.auth-steps .is-current { color: var(--color-primary-300); font-weight: 600; }
+.auth-form { margin: 0; }
+.auth-form label { margin-top: 1rem; color: var(--app-text); font-size: .82rem; font-weight: 600; }
+.auth-form input { width: 100%; margin: .3rem 0 0; }
+.auth-form small { display: block; margin-top: .35rem; color: var(--app-muted); font-size: .75rem; }
+.auth-field-heading { display: flex; justify-content: space-between; }
+.auth-field-heading span { color: var(--app-muted); font-size: .72rem; font-weight: 400; }
+.auth-submit, .auth-secondary-action { width: 100%; margin: 1.2rem 0 0; }
+.auth-submit { background: var(--background-image-hero); box-shadow: var(--shadow-glow); }
+.auth-secondary-action { border: 1px solid var(--app-border); background: transparent; color: var(--app-text); }
+.auth-recovery { display: grid; gap: .25rem; margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid var(--app-border); font-size: .8rem; }
+.auth-recovery span, .auth-footer { color: var(--app-muted); }
+.text-button { width: fit-content; min-height: 2rem; margin: .2rem 0 0; padding: 0; border: 0; background: none; color: var(--color-primary-300); font-weight: 600; }
+.auth-footer { margin: 1.5rem 0 0; font-size: .72rem; text-align: center; }
+.workspace-dashboard { display: grid; gap: 1rem; }
+.workspace-kicker { margin: 0; color: var(--app-muted); font-size: .82rem; }
+.workspace-notice { margin: 0; }
+.patient-record { display: grid; gap: 1rem; padding-top: .5rem; }
+.record-heading { display: grid; grid-template-columns: auto 1fr auto; gap: 1rem; align-items: center; padding: 1.25rem; border: 1px solid var(--app-border); border-radius: var(--radius-lg); background: var(--app-surface); }
+.record-heading h2 { margin: .25rem 0 0; font-size: 1.7rem; }
+.back-button { width: fit-content; margin: 0; border: 1px solid var(--app-border); background: transparent; color: var(--app-text); }
+.record-status { padding: .3rem .6rem; border: 1px solid rgb(16 185 129 / 40%); border-radius: var(--radius-pill); color: var(--color-success); font-size: .75rem; white-space: nowrap; }
+.record-tabs { display: flex; gap: .25rem; overflow-x: auto; margin: 0; padding: .25rem; border-bottom: 1px solid var(--app-border); }
+.record-tabs a { padding: .65rem .8rem; color: var(--app-muted); font-size: .85rem; text-decoration: none; white-space: nowrap; }
+.record-tabs a:hover, .record-tabs a:focus-visible { color: var(--app-text); background: rgb(124 58 237 / 12%); border-radius: .5rem; }
+.record-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.record-summary { min-width: 0; padding: 1rem; border: 1px solid var(--app-border); border-radius: var(--radius-lg); background: var(--app-surface); }
+.record-summary strong { display: block; margin-top: .4rem; font-size: 1.7rem; }
+.text-muted { color: var(--app-muted); font-size: .82rem; }
+.record-actions > section, .patient-record > section, .patient-record > form { padding: 1rem; border: 1px solid var(--app-border); border-radius: var(--radius-lg); background: var(--app-surface); }
+.record-actions { display: grid; gap: 1rem; }
+.record-actions h3, .patient-record > section h3 { margin-top: 0; }
+.patient-record ul { padding-left: 1.2rem; }
+.patient-record li { margin: .35rem 0; }
+@media (max-width: 52rem) { .auth-page { grid-template-columns: 1fr; gap: 1rem; max-width: 40rem; } .auth-story { padding-bottom: 0; } .auth-story h1 { max-width: 14ch; font-size: clamp(2.7rem, 10vw, 4rem); } .auth-promises { margin-top: 1.5rem; } }
+@media (max-width: 42rem) { .auth-page { padding: 1.25rem .8rem 2rem; } .auth-panel { border-radius: 1.1rem; } .auth-steps { gap: .45rem; justify-content: space-between; } .auth-steps span { font-size: .68rem; } .record-heading { grid-template-columns: 1fr; gap: .55rem; } .record-status { width: fit-content; } .record-grid { grid-template-columns: 1fr; } .record-tabs { position: sticky; top: 0; z-index: 1; background: var(--app-bg); } }
