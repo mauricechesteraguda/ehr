@@ -19,3 +19,20 @@ htmlcov/
 .serena/
 .trailmap/
 .DS_Store
+# type-10042026-Maurice: Keep platform state, generated output, and credentials out of Git.
+*.tfstate
+*.tfstate.*
+*.tfplan
+*.plan
+.terraform/
+kubeconfig
+kubeconfig.*
+*.kubeconfig
+platform/generated/
+platform/manifests/
+charts/*/charts/
+*.p12
+*.pfx
+*.pem
+*.secret
+credentials.json

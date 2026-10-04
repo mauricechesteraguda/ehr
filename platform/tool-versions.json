@@ -1,0 +1,38 @@
+{
+  "schema": "ehr.platform.tool-versions.v1",
+  "credential_mode": "none",
+  "tool_versions": {
+    "terraform": {
+      "pin_type": "exact",
+      "version": "1.9.8",
+      "source": "official-release"
+    },
+    "helm": {
+      "pin_type": "exact",
+      "version": "3.16.4",
+      "source": "official-release"
+    },
+    "kind": {
+      "pin_type": "exact",
+      "version": "0.25.0",
+      "source": "official-release"
+    },
+    "kubectl": {
+      "pin_type": "bounded",
+      "constraint": ">=1.30.0,<1.32.0",
+      "source": "official-release"
+    },
+    "opentofu": {
+      "pin_type": "bounded",
+      "constraint": ">=1.8.0,<2.0.0",
+      "source": "compatibility-boundary"
+    }
+  },
+  "contract_inventory": {
+    "delivery": "offline-static",
+    "infrastructure": "offline-static",
+    "policy": "offline-static",
+    "observability": "offline-static",
+    "operations": "offline-static"
+  }
+}

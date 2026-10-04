@@ -1,0 +1,11 @@
+{
+  "schema": "ehr.platform.validation-targets.v1",
+  "offline_only": true,
+  "targets": [
+    "csv-integrity",
+    "tool-version-manifest",
+    "ignore-safeguards",
+    "credential-boundary",
+    "validation-inventory"
+  ]
+}
