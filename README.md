@@ -624,6 +624,16 @@ The local `/api/cds-services/` discovery and invocation endpoints expose determi
 Administrators and authorized SMART system tokens can use `GET` or `POST /fhir/R4/$export` with an allowlisted `_type`, optional `_since`, `purpose`, `approval`, and `Idempotency-Key`. The endpoint returns `202` and an opaque `Content-Location`; poll it for a bounded manifest, then download per-resource `application/fhir+ndjson` entries. Files are AES-GCM encrypted at rest, SHA-256 verified, randomized, capped at 100 MB, and expire after 24 hours. This synthetic demo intentionally has no patient selection/break-glass path and is not a full SMART Backend Services assertion flow.
 
 
+## Contribution
+
+This project is open for collaboration. If you wish to contribute:
+
+    Fork the repository.
+    Create a feature branch (git checkout -b feature/your-feature-name).
+    Commit your changes (git commit -m 'Add your feature').
+    Push to the branch (git push origin feature/your-feature-name).
+    Open a pull request.
+
 ## Contact
 
 For any questions or inquiries, please reach out to www.linkedin.com/in/agudatech/.
@@ -633,5 +643,3 @@ For any questions or inquiries, please reach out to www.linkedin.com/in/agudatec
 If you find this project helpful and would like to support its ongoing development, consider buying me a coffee! Your support helps me keep working on this project and developing more features.
 
 [![Buy Me a Coffee](https://www.buymeacoffee.com/assets/img/custom_images/yellow_img.png)](https://www.buymeacoffee.com/mauriceague)
-
-    
