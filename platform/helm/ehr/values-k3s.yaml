@@ -4,5 +4,10 @@ provider: none
 replicaCount: {web: 1, api: 1, worker: 1, beat: 1}
 workerConcurrency: 1
 singleNode: {enabled: true, pdbEnabled: false, topologySpreadEnabled: false}
+storage: {storageClass: local-path, accessMode: ReadWriteOnce, size: 1Gi}
+autoscaling:
+  api: {enabled: false, minReplicas: 1, maxReplicas: 1, targetCPUUtilizationPercentage: 70}
+  web: {enabled: false, minReplicas: 1, maxReplicas: 1, targetCPUUtilizationPercentage: 70}
+  worker: {enabled: false, minReplicas: 1, maxReplicas: 1, targetCPUUtilizationPercentage: 70}
 telemetry: {profile: lightweight, serviceMonitor: false}
 seed: {enabled: false}

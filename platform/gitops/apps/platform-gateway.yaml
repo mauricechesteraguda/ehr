@@ -3,6 +3,7 @@ kind: Application
 metadata: {name: platform-gateway, namespace: argocd, annotations: {argocd.argoproj.io/sync-wave: "-10"}}
 spec:
   project: ehr
-  source: {repoURL: https://gateway.envoyproxy.io, chart: gateway-helm, targetRevision: 1.3.2, helm: {valuesObject: {deployment: {replicas: 1}}}}
+  # type-10042026-Maurice: Envoy owns ingress; k3s bundled Traefik is disabled.
+  source: {repoURL: https://gateway.envoyproxy.io, chart: gateway-helm, targetRevision: 1.3.2, helm: {valuesObject: {deployment: {replicas: 1}, service: {type: ClusterIP}}}}
   destination: {server: https://kubernetes.default.svc, namespace: envoy-gateway-system}
   syncPolicy: {automated: {prune: true, selfHeal: true, allowEmpty: false}, syncOptions: [CreateNamespace=true, PruneLast=true]}

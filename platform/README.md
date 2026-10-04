@@ -53,10 +53,17 @@ platform/
 
 ## Operator paths
 
-- **kind:** the first disposable end-to-end target for the demo profile. Bootstrap is
-  expected to be ephemeral, bounded in retry, and idempotent in teardown.
-- **k3s:** a constrained, self-managed path for a four-vCPU/eight-GB profile; capacity and
-  observability limits must remain explicit and unmeasured until tested.
+- **kind:** the first disposable, ephemeral end-to-end target for the demo profile. Use
+  `make kind-e2e` only after reviewing Docker availability; it creates a uniquely named
+  cluster, builds/loads the current architecture images, creates synthetic secrets outside
+  Git, runs migration and seed, checks web/API/worker/Beat health, and deletes only its own
+  cluster. Bootstrap uses bounded retry and idempotent cleanup; the acceptance is opt-in and
+  bounded; add-on registry failures are reported as blocked rather than passed.
+- **k3s:** a constrained, self-managed path for a four-vCPU/eight-GB profile. Apply
+  `platform/k3s/config.yaml` (or the credential-free cloud-init sketch) with a private
+  firewall, operator-controlled DNS, and externally provisioned TLS. Bundled Traefik,
+  ServiceLB, and metrics-server are disabled so Envoy Gateway owns ingress. This is not a
+  cloud/VPS deployment claim and has no live URL.
 - **EKS, GKE, AKS:** documented provider alternatives. A later installation selects exactly
   one provider per installation; this reference does not claim that any provider path is
   implemented or cloud-tested.
@@ -113,8 +120,9 @@ helm lint platform/helm/ehr
 helm template ehr platform/helm/ehr
 ```
 
-`environment: demo` is disposable and defaults to RWO storage; `environment: k3s` keeps worker
-concurrency bounded; cloud profiles can select RWX storage and managed endpoints through values;
+`environment: demo` and `environment: k3s` use local-path-compatible RWO storage, in-cluster
+non-production PostgreSQL/Redis, one replica, disabled HPA/PDB/topology spreading on a single
+node, and bounded worker concurrency; cloud profiles can select RWX storage and managed endpoints through values;
 `environment: production` requires API and web image digests and rejects synthetic seeding. Secret
 values are supplied by pre-existing Secret/ExternalSecret interfaces, never by chart values. The
 chart intentionally emits no public Service or ServiceMonitor; Gateway and observability hooks are

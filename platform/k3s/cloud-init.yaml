@@ -1,0 +1,17 @@
+# type-10042026-Maurice: operator-supplied cloud-init sketch; no credentials.
+# Prerequisites: four vCPU/eight GB RAM, private firewall, operator DNS, and
+# externally provisioned TLS. This file does not install a public endpoint.
+#cloud-config
+package_update: true
+packages: [curl, ca-certificates]
+write_files:
+  - path: /etc/rancher/k3s/config.yaml
+    permissions: "0600"
+    content: |
+      write-kubeconfig-mode: "0600"
+      disable: [traefik, servicelb, metrics-server]
+      flannel-backend: vxlan
+      secrets-encryption: true
+      protect-kernel-defaults: true
+runcmd:
+  - [sh, -c, "curl --fail --silent --show-error https://get.k3s.io | INSTALL_K3S_EXEC='server --config /etc/rancher/k3s/config.yaml' sh -"]

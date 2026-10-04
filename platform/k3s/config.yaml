@@ -1,0 +1,14 @@
+# type-10042026-Maurice: low-cost self-managed k3s profile; values are targets,
+# not measured capacity or a production availability claim.
+write-kubeconfig-mode: "0600"
+disable:
+  - traefik
+  - servicelb
+  - metrics-server
+flannel-backend: vxlan
+secrets-encryption: true
+protect-kernel-defaults: true
+kubelet-arg:
+  - "max-pods=50"
+  - "image-gc-high-threshold=80"
+  - "image-gc-low-threshold=60"

@@ -2,6 +2,9 @@
 DJANGO_SETTINGS_MODULE = "backend.config.settings"
 python_files = ["test_*.py"]
 addopts = "--strict-markers"
+markers = [
+  "kind_e2e: opt-in disposable kind acceptance requiring Docker and kind",
+]
 
 [tool.ruff]
 line-length = 100

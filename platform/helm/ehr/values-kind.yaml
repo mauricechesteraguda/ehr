@@ -1,3 +1,5 @@
+# type-10042026-Maurice: local kind profile; dependencies and secrets are created
+# by the opt-in acceptance target, never stored in Git.
 environment: demo
 profile: lightweight
 provider: none

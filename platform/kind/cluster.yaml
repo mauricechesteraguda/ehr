@@ -1,0 +1,15 @@
+# type-10042026-Maurice: disposable, architecture-neutral kind cluster for Ticket05.
+# The image uses a version tag because this repository cannot verify an official
+# registry digest offline; operators should replace it with a verified digest.
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: ehr-kind
+image: kindest/node:v1.31.4
+nodes:
+  - role: control-plane
+  - role: worker
+  - role: worker
+networking:
+  disableDefaultCNI: false
+  kubeProxyMode: iptables
+  apiServerAddress: 127.0.0.1
