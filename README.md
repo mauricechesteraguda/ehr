@@ -311,66 +311,6 @@ separate console-only observability stream with redaction; they are not clinical
 records or audit evidence. The Vite server reads `HTTPS_CERT` and `HTTPS_KEY`;
 certificate and key files must remain local.
 
-## Happy flow
-
-This sequence describes the available local demo path, including medication safety/signing
-and authorized export boundaries; the patient view is self-only.
-
-```mermaid
-sequenceDiagram
-    participant Browser as React/Vite browser
-    participant HTTPS as Local HTTPS
-    participant API as Django/DRF API
-    participant DB as PostgreSQL
-    participant Audit as Audit chain
-    participant Logs as Structured logs
-
-    Browser->>HTTPS: Open local HTTPS app
-    HTTPS->>Browser: Serve React shell
-    Browser->>API: POST /api/auth/login/ with password
-    API->>Logs: Record redacted auth attempt
-    API-->>Browser: Request current TOTP code
-    Browser->>API: POST login with password + TOTP
-    API->>DB: Validate user, role, and TOTP state
-    API->>Logs: Record successful login without secrets
-    API-->>Browser: Authenticated session and role
-
-    Browser->>API: Clinician searches patients
-    API->>DB: Apply clinician role scope and search
-    API->>Audit: Append patient-search read event
-    Audit->>DB: Store hash-linked event
-    API-->>Browser: Matching synthetic patients
-    Browser->>API: Clinician reads patient record
-    API->>DB: Load demographics and clinical displays
-    API->>Audit: Append patient-read event
-    Audit->>DB: Store next hash-linked event
-    API-->>Browser: Role-scoped patient data
-
-    Browser->>API: Submit medication draft
-    API->>API: Validate medication fields and clinician scope
-    API->>DB: Create order and immutable draft version
-    API->>Audit: Append medication-create event
-    Audit->>DB: Store hash-linked event
-    API-->>Browser: Draft order and version
-    Browser->>API: Change medication
-    API->>API: Validate changed fields
-    API->>DB: Append immutable version that supersedes prior version
-    API->>Audit: Append medication-change event
-    Browser->>API: Cancel medication
-    API->>DB: Append immutable cancelled version
-    API->>Audit: Append medication-cancel event
-    Browser->>API: Refill eligible medication
-    API->>DB: Append new immutable refill draft version
-    API->>Audit: Append medication-refill event
-    Browser->>API: Request medication history
-    API->>DB: Read all immutable versions
-    API-->>Browser: Version history with supersession links
-
-    Browser->>API: Patient requests self-view
-    API->>DB: Apply owner link and patient role scope
-    API->>Audit: Append role-scoped patient-read event
-    API-->>Browser: Patient's self-only demographics and displays
-```
 
 The browser is the React client, local HTTPS is provided by the Vite development
 server when configured, and every protected read or medication mutation appends an
