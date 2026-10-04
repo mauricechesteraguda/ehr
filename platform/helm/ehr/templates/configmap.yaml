@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "ehr.fullname" . }}-config
+  labels:
+{{ include "ehr.commonLabels" . | indent 4 }}
+data:
+  DJANGO_ALLOWED_HOSTS: {{ .Values.config.allowedHosts | quote }}
+  DJANGO_DEBUG: {{ .Values.config.djangoDebug | quote }}
+  POSTGRES_HOST: {{ .Values.config.postgresHost | quote }}
+  POSTGRES_PORT: {{ .Values.config.postgresPort | quote }}
+  POSTGRES_DB: {{ .Values.config.postgresDb | quote }}
+  POSTGRES_USER: {{ .Values.config.postgresUser | quote }}
+  CELERY_BROKER_URL: {{ .Values.config.redisUrl | quote }}
+  EHR_POPULATION_EXPORT_CAP: {{ .Values.config.populationExportCap | quote }}
+  EHR_POPULATION_EXPORT_MAX_BYTES: {{ .Values.config.populationExportMaxBytes | quote }}
+  EHR_POPULATION_EXPORT_ROOT: {{ .Values.storage.exportMount | quote }}

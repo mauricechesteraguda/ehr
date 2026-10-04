@@ -1,0 +1,6 @@
+apiVersion: v2
+name: ehr-library
+description: Shared safe workload helpers for the synthetic EHR platform.
+type: library
+version: 0.1.0
+appVersion: "1.0"

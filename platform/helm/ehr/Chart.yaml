@@ -1,0 +1,10 @@
+apiVersion: v2
+name: ehr
+description: Synthetic EHR application workloads; reference configuration only.
+type: application
+version: 0.1.0
+appVersion: "1.0"
+dependencies:
+  - name: ehr-library
+    version: 0.1.0
+    repository: "file://../ehr-library"

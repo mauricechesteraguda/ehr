@@ -1,0 +1,16 @@
+{{- if or .Values.persistence.heartbeat .Values.persistence.exports }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "ehr.fullname" . }}-runtime
+  labels:
+{{ include "ehr.commonLabels" . | indent 4 }}
+spec:
+  accessModes: [{{ .Values.storage.accessMode | quote }}]
+  {{- if .Values.storage.storageClass }}
+  storageClassName: {{ .Values.storage.storageClass | quote }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.storage.size }}
+{{- end }}

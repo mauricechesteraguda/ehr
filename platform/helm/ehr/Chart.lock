@@ -1,0 +1,6 @@
+dependencies:
+- name: ehr-library
+  repository: file://../ehr-library
+  version: 0.1.0
+digest: sha256:b3cc6bdfe77f0624b8cfdcc0202b483080663874586d8903a7d222eec4b9a393
+generated: "2026-10-04T17:41:41.602264+08:00"

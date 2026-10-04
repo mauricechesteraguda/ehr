@@ -1,0 +1,74 @@
+{{- if eq .Values.environment "production" }}
+{{- if or (not .Values.image.digest) (not .Values.image.webDigest) }}{{ fail "production requires immutable API and web image digests" }}{{ end }}
+{{- end }}
+{{- range $component := list "web" "api" "worker" "beat" }}
+{{- $root := $ }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "ehr.fullname" $root }}-{{ $component }}
+  labels:
+{{ include "ehr.commonLabels" $root | indent 4 }}
+  annotations:
+    checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") $root | sha256sum }}
+spec:
+  replicas: {{ index $root.Values.replicaCount $component }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate: {maxUnavailable: 0, maxSurge: 1}
+  selector:
+    matchLabels:
+{{ include "ehr.selector" $root | indent 6 }}
+    app.kubernetes.io/component: {{ $component }}
+  template:
+    metadata:
+      labels:
+{{ include "ehr.selector" $root | indent 8 }}
+        app.kubernetes.io/component: {{ $component }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") $root | sha256sum }}
+    spec:
+      serviceAccountName: {{ include "ehr.serviceAccountName" $root }}
+      automountServiceAccountToken: false
+      securityContext:
+{{ include "ehr-library.podSecurityContext" $root | indent 8 }}
+      terminationGracePeriodSeconds: {{ $root.Values.terminationGracePeriodSeconds }}
+{{ include "ehr.topology" $root | indent 6 }}
+      containers:
+        - name: {{ $component }}
+          image: {{ if eq $component "web" }}{{ include "ehr.webImage" $root | quote }}{{ else }}{{ include "ehr.image" $root | quote }}{{ end }}
+          imagePullPolicy: {{ $root.Values.image.pullPolicy }}
+          securityContext:
+{{ include "ehr-library.containerSecurityContext" (dict "readOnlyRootFilesystem" (ne $component "api")) | indent 12 }}
+          resources:
+{{ include "ehr-library.resources" (index $root.Values.resources $component) | indent 12 }}
+          envFrom:
+            - configMapRef: {name: {{ include "ehr.fullname" $root }}-config}
+            - secretRef: {name: {{ $root.Values.secrets.django }}}
+            - secretRef: {name: {{ $root.Values.secrets.database }}}
+            - secretRef: {name: {{ $root.Values.secrets.redis }}}
+          {{- if eq $component "web" }}
+          ports: [{name: http, containerPort: 8080}]
+          command: ["/bin/sh", "-c"]
+          args: ["exec nginx -g 'daemon off;'"]
+{{ include "ehr-library.probes" $root.Values.probes.web | indent 10 }}
+          {{- else if eq $component "api" }}
+          ports: [{name: http, containerPort: 8000}]
+          command: ["gunicorn"]
+          args: ["backend.config.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "2", "--timeout", "30"]
+          volumeMounts:
+            - {name: runtime, mountPath: {{ $root.Values.storage.heartbeatMount | quote }}}
+            - {name: runtime, mountPath: {{ $root.Values.storage.exportMount | quote }}}
+{{ include "ehr-library.probes" $root.Values.probes.api | indent 10 }}
+          {{- else if eq $component "worker" }}
+          command: ["/app/backend/worker-entrypoint.sh"]
+          volumeMounts: [{name: runtime, mountPath: {{ $root.Values.storage.heartbeatMount | quote }}}]
+          {{- else }}
+          command: ["/app/backend/beat-entrypoint.sh"]
+          volumeMounts: [{name: runtime, mountPath: {{ $root.Values.storage.heartbeatMount | quote }}}]
+          {{- end }}
+      volumes:
+        - name: runtime
+          persistentVolumeClaim: {claimName: {{ include "ehr.fullname" $root }}-runtime}
+{{- end }}

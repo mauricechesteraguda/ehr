@@ -1,0 +1,80 @@
+# type-10042026-Maurice: Safe defaults are demo-oriented and intentionally disposable.
+environment: demo
+provider: "none"
+profile: default
+# Supported profiles: demo/kind (disposable), k3s (4 vCPU/8 GB constrained),
+# cloud (managed data services), and production (immutable image required).
+# managed endpoints are supplied through ConfigMap/Secret references by the later platform layer.
+replicaCount:
+  web: 2
+  api: 2
+  worker: 1
+  beat: 1
+image:
+  repository: registry.example.invalid/ehr
+  tag: demo
+  digest: ""
+  webRepository: registry.example.invalid/ehr-web
+  webTag: demo
+  webDigest: ""
+  pullPolicy: IfNotPresent
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
+secrets:
+  django: ehr-django-secrets
+  database: ehr-database-secrets
+  redis: ehr-redis-secrets
+config:
+  allowedHosts: "ehr.local,localhost"
+  djangoDebug: "0"
+  postgresHost: postgres
+  postgresPort: "5432"
+  postgresDb: ehr
+  postgresUser: ehr
+  redisUrl: redis://redis:6379/0
+  populationExportCap: "10000"
+  populationExportMaxBytes: "104857600"
+storage:
+  storageClass: ""
+  accessMode: ReadWriteOnce
+  size: 1Gi
+  heartbeatMount: /run/ehr
+  exportMount: /var/lib/ehr/population-exports
+resources:
+  web: {requests: {cpu: 10m, memory: 32Mi}, limits: {cpu: 250m, memory: 128Mi}}
+  api: {requests: {cpu: 100m, memory: 192Mi}, limits: {cpu: 500m, memory: 512Mi}}
+  worker: {requests: {cpu: 50m, memory: 128Mi}, limits: {cpu: 500m, memory: 384Mi}}
+  beat: {requests: {cpu: 20m, memory: 64Mi}, limits: {cpu: 200m, memory: 128Mi}}
+workerConcurrency: 1
+# k3s boundary: worker concurrency: 1 keeps the constrained profile bounded.
+terminationGracePeriodSeconds: 30
+probes:
+  web: {port: 8080, startup: {path: /healthz, failureThreshold: 30, periodSeconds: 5}, readiness: {path: /healthz, periodSeconds: 10}, liveness: {path: /healthz, periodSeconds: 20}}
+  api: {port: 8000, startup: {path: /api/health/live/, failureThreshold: 30, periodSeconds: 5}, readiness: {path: /api/health/ready/, periodSeconds: 10}, liveness: {path: /api/health/live/, periodSeconds: 20}}
+persistence:
+  heartbeat: true
+  exports: true
+seed:
+  enabled: false
+  passwordSecretKey: DEMO_PASSWORD
+autoscaling:
+  api: {enabled: true, minReplicas: 2, maxReplicas: 5, targetCPUUtilizationPercentage: 70}
+  web: {enabled: true, minReplicas: 2, maxReplicas: 4, targetCPUUtilizationPercentage: 70}
+  worker: {enabled: false, minReplicas: 1, maxReplicas: 3, targetCPUUtilizationPercentage: 70}
+pdb:
+  enabled: true
+  minAvailable: 1
+topologySpread:
+  enabled: true
+  maxSkew: 1
+  topologyKey: topology.kubernetes.io/zone
+  whenUnsatisfiable: ScheduleAnyway
+singleNode:
+  enabled: false
+  pdbEnabled: false
+  topologySpreadEnabled: false
+telemetry:
+  profile: lightweight
+  serviceMonitor: false

@@ -1,0 +1,6 @@
+environment: production
+seed:
+  enabled: true
+image:
+  digest: sha256:synthetic
+  webDigest: sha256:synthetic

@@ -1,0 +1,206 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "environment",
+    "provider",
+    "image",
+    "resources"
+  ],
+  "properties": {
+    "environment": {
+      "type": "string",
+      "enum": [
+        "demo",
+        "k3s",
+        "production"
+      ]
+    },
+    "provider": {
+      "type": "string",
+      "enum": [
+        "none",
+        "eks",
+        "gke",
+        "aks"
+      ]
+    },
+    "profile": {
+      "type": "string",
+      "enum": [
+        "default",
+        "lightweight",
+        "k3s",
+        "cloud"
+      ]
+    },
+    "image": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "repository",
+        "tag",
+        "digest"
+      ],
+      "properties": {
+        "repository": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tag": {
+          "type": "string",
+          "minLength": 1
+        },
+        "digest": {
+          "type": "string"
+        },
+        "pullPolicy": {
+          "type": "string",
+          "enum": [
+            "Always",
+            "IfNotPresent",
+            "Never"
+          ]
+        },
+        "webRepository": {
+          "type": "string",
+          "minLength": 1
+        },
+        "webTag": {
+          "type": "string",
+          "minLength": 1
+        },
+        "webDigest": {
+          "type": "string"
+        }
+      }
+    },
+    "workerConcurrency": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 4
+    },
+    "seed": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "passwordSecretKey": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "storage": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "storageClass": {
+          "type": "string"
+        },
+        "accessMode": {
+          "type": "string",
+          "enum": [
+            "ReadWriteOnce",
+            "ReadWriteMany"
+          ]
+        },
+        "size": {
+          "type": "string",
+          "pattern": "^[1-9][0-9]*([KMG]i)?$"
+        },
+        "heartbeatMount": {
+          "type": "string",
+          "minLength": 1
+        },
+        "exportMount": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "singleNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "pdbEnabled": {
+          "type": "boolean"
+        },
+        "topologySpreadEnabled": {
+          "type": "boolean"
+        }
+      }
+    },
+    "replicaCount": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "web": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 20
+        },
+        "api": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 20
+        },
+        "worker": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 20
+        },
+        "beat": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 20
+        }
+      }
+    },
+    "serviceAccount": {
+      "type": "object"
+    },
+    "secrets": {
+      "type": "object"
+    },
+    "config": {
+      "type": "object"
+    },
+    "resources": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "probes": {
+      "type": "object"
+    },
+    "persistence": {
+      "type": "object"
+    },
+    "autoscaling": {
+      "type": "object"
+    },
+    "pdb": {
+      "type": "object"
+    },
+    "topologySpread": {
+      "type": "object"
+    },
+    "telemetry": {
+      "type": "object"
+    },
+    "terminationGracePeriodSeconds": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 300
+    },
+    "ehr-library": {
+      "type": "object"
+    }
+  }
+}

@@ -1,0 +1,17 @@
+{{- if and .Values.pdb.enabled (not .Values.singleNode.enabled) }}
+{{- range $component := list "web" "api" "worker" }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "ehr.fullname" $ }}-{{ $component }}
+  labels:
+{{ include "ehr.commonLabels" $ | indent 4 }}
+spec:
+  minAvailable: {{ $.Values.pdb.minAvailable }}
+  selector:
+    matchLabels:
+{{ include "ehr.selector" $ | indent 6 }}
+    app.kubernetes.io/component: {{ $component }}
+{{- end }}
+{{- end }}

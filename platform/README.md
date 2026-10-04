@@ -10,12 +10,12 @@ Expected future hostname pattern: `https://ehr.<env>.<your-domain>`; it is not a
 
 ## Purpose and current boundary
 
-This document is the operator-facing architecture skeleton for later platform tickets. It
-does not add runnable Helm, Terraform/OpenTofu, Argo, policy, cloud, or secret-provider
-configuration. The current implementation is the local Docker Compose stack: Caddy is the
-only host-published service, while web/API, PostgreSQL, Redis, worker, and Beat stay on an
-internal network. Compose migration and demo seeding are local startup behavior, not a
-managed-cluster deployment claim.
+This document is the operator-facing architecture skeleton for later platform tickets. Ticket03
+adds a reusable Helm library and EHR application chart under `platform/helm/`; Terraform/OpenTofu,
+Argo, policy, cloud, and secret-provider configuration remain deferred. The current implementation
+is still the local Docker Compose stack: Caddy is the only host-published service, while web/API,
+PostgreSQL, Redis, worker, and Beat stay on an internal network. Compose migration and demo seeding
+are local startup behavior, not a managed-cluster deployment claim.
 
 ```mermaid
 flowchart LR
@@ -44,7 +44,8 @@ platform/
   docs/context.md       scope, assumptions, and validation posture
   tool-versions.json    existing offline tool contract
   validation-targets.json
-  helm/                 future chart/library location (not implemented here)
+  helm/ehr-library/     reusable labels, security, resource, and probe helpers
+  helm/ehr/             EHR web/API/worker/Beat workloads and migration hook
   terraform/            future cluster-and-Argo location (not implemented here)
   gitops/               future Argo applications and environments (not implemented here)
 ```
@@ -100,6 +101,24 @@ policy admission, Terraform scope, Argo sync, provider networking, secret retrie
 observability, recovery, and cost evidence. Static, kind, k3s, cloud, and unvalidated
 results must be classified separately. No endpoint, cloud account, or live recovery is
 claimed by this document.
+
+## Ticket03 chart interface
+
+The chart is a reference configuration and is **not deployed**. Build its local library
+dependency before lint/rendering:
+
+```sh
+helm dependency build platform/helm/ehr
+helm lint platform/helm/ehr
+helm template ehr platform/helm/ehr
+```
+
+`environment: demo` is disposable and defaults to RWO storage; `environment: k3s` keeps worker
+concurrency bounded; cloud profiles can select RWX storage and managed endpoints through values;
+`environment: production` requires API and web image digests and rejects synthetic seeding. Secret
+values are supplied by pre-existing Secret/ExternalSecret interfaces, never by chart values. The
+chart intentionally emits no public Service or ServiceMonitor; Gateway and observability hooks are
+Ticket04/Ticket06 boundaries.
 
 See the [decision index](docs/decisions/README.md), [glossary](docs/glossary.md), and
 [context](docs/context.md).

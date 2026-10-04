@@ -1,0 +1,34 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "ehr.fullname" . }}-migration
+  labels:
+{{ include "ehr.commonLabels" . | indent 4 }}
+  annotations:
+    argocd.argoproj.io/hook: PreSync
+    argocd.argoproj.io/sync-wave: "-10"
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
+spec:
+  backoffLimit: 2
+  template:
+    metadata:
+      labels:
+{{ include "ehr.selector" . | indent 8 }}
+        app.kubernetes.io/component: migration
+    spec:
+      restartPolicy: Never
+      serviceAccountName: {{ include "ehr.serviceAccountName" . }}
+      securityContext:
+{{ include "ehr-library.podSecurityContext" . | indent 8 }}
+      containers:
+        - name: migration
+          image: {{ include "ehr.image" . | quote }}
+          command: ["python", "/app/backend/manage.py", "migrate", "--noinput"]
+          envFrom:
+            - configMapRef: {name: {{ include "ehr.fullname" . }}-config}
+            - secretRef: {name: {{ .Values.secrets.django }}}
+            - secretRef: {name: {{ .Values.secrets.database }}}
+          securityContext:
+{{ include "ehr-library.containerSecurityContext" (dict "readOnlyRootFilesystem" false) | indent 12 }}
+          resources:
+{{ include "ehr-library.resources" .Values.resources.api | indent 12 }}
