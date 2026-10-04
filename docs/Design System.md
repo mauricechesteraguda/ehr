@@ -2,7 +2,7 @@ Design System v1.0
 
 # Synthetic EHR
 
-A violet-led, dark-first system for healthcare admin dashboards: calm surfaces, vivid status colors, soft depth.
+A violet-led, light-first system for healthcare admin dashboards: calm surfaces, vivid status colors, soft depth.
 
 ## Principles
 
