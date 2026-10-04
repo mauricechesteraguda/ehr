@@ -2,6 +2,8 @@
 
 ## Implemented
 
+- Ticket05 redesign: added responsive administrator and developer workspaces with loaded-data snapshots, explicit status/empty/error/retry states, accessible sticky data tables, role and audit controls, job/export/quality surfaces, SMART registration/revocation and one-time-secret warnings. Existing API, audit, token, and memory-only boundaries remain unchanged; UI evidence maps to TC-UI-0039–TC-UI-0045.
+
 - Closed final P0 logging acceptance blockers: seed enrollment is opt-in to a mode-600 file with no secret output, console events are structured JSON, and FHIR/patient/medication/SMART/external-auth/export/rate-limit boundaries emit safe status, duration, outcome, error-class, and database outcome evidence.
 
 - Established the Tickets 01–04 EHR demo foundation with Django/DRF, React/Vite TypeScript, and PostgreSQL configuration.
