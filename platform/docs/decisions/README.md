@@ -39,3 +39,18 @@ provider modules without credentials or cloud claims; it does not promise multi-
 measured RPO/RTO/SLO. EKS, GKE, AKS, k3s, and kind
 remain targets with validation status recorded separately; no live-cloud target has been
 validated here.
+
+## Ticket07 CI supply-chain decision
+
+<!-- type-10042026-Maurice -->
+
+GitHub Actions is the credentialless review boundary: least-privilege permissions, full commit-SHA
+action pins, bounded timeouts/artifacts, Renovate grouping, and no `pull_request_target`. OIDC is
+the only cloud identity path. Terraform may plan/apply only the selected provider's cluster and
+Argo foundation; GitOps owns application workloads. Apply requires protected environment approval,
+main ref, typed allowlists, and explicit `APPLY` confirmation. Release is manual, multi-architecture,
+digest-addressed, scanned, SBOM-producing, keylessly signed/attested, and does not deploy.
+
+The default suite is static and credentialless. Kind is a separately selected live suite; its
+absence is recorded as Not Run rather than converted into a pass. This remains a synthetic reference
+configuration and is **Not deployed**.

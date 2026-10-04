@@ -1,0 +1,6 @@
+# type-10042026-Maurice: synthetic repository secret boundary.
+[extend]
+useDefault = true
+[allowlist]
+description = "Documentation placeholders and synthetic fixtures only; no live credentials."
+paths = ['''(^|/)(docs|platform/test-fixtures)/''']

@@ -1,0 +1,4 @@
+# type-10042026-Maurice: no suppression without documented rationale.
+severity: HIGH,CRITICAL
+ignore-unfixed: false
+exit-code: 1

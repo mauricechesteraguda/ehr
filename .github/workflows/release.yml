@@ -1,0 +1,54 @@
+# type-10042026-Maurice: manual, protected, immutable release; inert by default.
+name: Multi-architecture release evidence
+on:
+  workflow_dispatch:
+    inputs:
+      registry: {required: true, type: choice, options: [ECR, Artifact-Registry, ACR]}
+      publish: {required: true, default: false, type: boolean}
+permissions: {contents: read, id-token: write, packages: write}
+concurrency: {group: 'release-${{ github.ref }}', cancel-in-progress: false}
+jobs:
+  release:
+    if: inputs.publish == true && github.ref == 'refs/heads/main'
+    environment: release
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    strategy: {fail-fast: true}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2, retrieved 2026-10-04
+        with: {persist-credentials: false}
+      - uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1, official, retrieved 2026-10-04
+      - name: Validate registry variables
+        env: {REGISTRY: '${{ vars.RELEASE_REGISTRY }}', IMAGE_PREFIX: '${{ vars.RELEASE_IMAGE_PREFIX }}'}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          [[ "$REGISTRY" =~ ^[a-zA-Z0-9./_-]+$ && "$IMAGE_PREFIX" =~ ^[a-zA-Z0-9./_-]+$ ]] || { echo '::error title=Release::Safe registry variables are required'; exit 1; }
+          echo "RELEASE_REF=$REGISTRY/$IMAGE_PREFIX" >> "$GITHUB_ENV"
+      - uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0, official, retrieved 2026-10-04
+        with: {context: ., file: ./web/Dockerfile, platforms: linux/amd64,linux/arm64, push: true, tags: '${{ env.RELEASE_REF }}/web:${{ github.sha }}', provenance: true, sbom: true}
+      - uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0, official, retrieved 2026-10-04
+        with: {context: ., file: ./backend/Dockerfile, platforms: linux/amd64,linux/arm64, push: true, tags: '${{ env.RELEASE_REF }}/api:${{ github.sha }}', provenance: true, sbom: true}
+      - name: Keyless sign and attest immutable digests
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          command -v cosign >/dev/null || { echo '::error title=Cosign::Pinned Cosign is required'; exit 1; }
+          for image in "$RELEASE_REF/web:$GITHUB_SHA" "$RELEASE_REF/api:$GITHUB_SHA"; do
+            digest="$(docker buildx imagetools inspect "$image" --format '{{json .Manifest.Digest}}' | tr -d '"')"
+            [[ "$digest" =~ ^sha256:[0-9a-f]{64}$ ]] || { echo '::error title=Release::No immutable digest'; exit 1; }
+            cosign sign --yes "$RELEASE_REF@${digest}"
+            cosign attest --yes --predicate-type slsaprovenance1 "$RELEASE_REF@${digest}"
+          done
+      - name: Scan and generate inspectable SBOMs
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          command -v trivy >/dev/null || { echo '::error title=Trivy::Runner must provide pinned Trivy'; exit 1; }
+          command -v syft >/dev/null || { echo '::error title=Syft::Runner must provide pinned Syft'; exit 1; }
+          for image in "$RELEASE_REF/web:$GITHUB_SHA" "$RELEASE_REF/api:$GITHUB_SHA"; do trivy image --exit-code 1 --severity HIGH,CRITICAL --no-progress "$image"; done
+          syft "$RELEASE_REF/web:$GITHUB_SHA" -o spdx-json="$RUNNER_TEMP/ehr-web.spdx.json" -o cyclonedx-json="$RUNNER_TEMP/ehr-web.cyclonedx.json"
+          syft "$RELEASE_REF/api:$GITHUB_SHA" -o spdx-json="$RUNNER_TEMP/ehr-api.spdx.json" -o cyclonedx-json="$RUNNER_TEMP/ehr-api.cyclonedx.json"
+      - if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2, retrieved 2026-10-04
+        with: {name: 'release-evidence-${{ github.sha }}', path: '${{ runner.temp }}/ehr.*.json', retention-days: 7}

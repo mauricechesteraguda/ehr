@@ -1,0 +1,13 @@
+{
+  "extends": ["config:recommended"],
+  "schedule": ["before 06:00 on monday"],
+  "automerge": false,
+  "dependencyDashboard": true,
+  "packageRules": [
+    {"groupName": "GitHub Actions pins", "matchManagers": ["github-actions"]},
+    {"groupName": "Terraform providers", "matchManagers": ["terraform"], "matchFileNames": ["platform/terraform/**"]},
+    {"groupName": "Helm charts", "matchManagers": ["helm-values", "helm-requirements"]},
+    {"groupName": "Container images", "matchManagers": ["dockerfile", "docker-compose"]},
+    {"groupName": "Security and platform tools", "matchManagers": ["regex"], "matchFileNames": ["platform/tool-versions.json", ".github/workflows/**"]}
+  ]
+}

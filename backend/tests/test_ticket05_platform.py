@@ -86,9 +86,9 @@ def _run(command: list[str], *, input_text: str | None = None, timeout: int = 18
         raise RuntimeError(f"command failed safely: {command[0]} returned {result.returncode}")
 
 
-@pytest.mark.kind_e2e
+@pytest.mark.live_kind_e2e
 def test_kind_ticket05_acceptance() -> None:
-    """Opt-in bounded application acceptance; never runs in ordinary CI."""
+    """Separately selected bounded application acceptance; never runs in the static suite."""
     if os.getenv("EHR_KIND_E2E") != "1":
         pytest.skip("EHR_KIND_E2E=1 required; live kind evidence is not claimed")
     for tool in ("docker", "kind", "kubectl", "helm"):

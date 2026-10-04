@@ -131,3 +131,31 @@ Ticket04/Ticket06 boundaries.
 
 See the [decision index](docs/decisions/README.md), [glossary](docs/glossary.md), and
 [context](docs/context.md).
+
+## Ticket07 delivery and credentialless gates
+
+The workflows in `.github/workflows/` are reference automation and are **not deployed**.
+`platform-validation.yml` is the default credentialless suite. `kind-integration.yml` is a
+separately selected disposable suite: it creates a uniquely named cluster, loads current web/API
+images, waits for web/API/worker/Beat and migration, then deletes only that cluster. A kind run is
+Not Run unless its explicit manual input is selected; static validation never implies kind passed.
+
+```mermaid
+flowchart LR
+  PR[Pull request] --> Static[Credentialless static gates]
+  Manual[Protected manual input] --> Kind[Ephemeral kind acceptance]
+  Main[Reviewed main ref] --> Release[Multi-arch digest release]
+  OIDC[GitHub OIDC federation] --> TF[Terraform plan/apply]
+  TF --> Boundary[Cluster + Argo only]
+  Boundary --> GitOps[GitOps owns workloads]
+```
+
+Cloud credentials are not stored as long-lived keys. AWS role ARN, GCP workload identity provider,
+and Azure federated client ID are environment variables consumed only by an approved OIDC runner.
+Plan artifacts are short-retention and are not uploaded for fork PRs. Apply requires a main-branch
+dispatch, typed provider/environment allowlists, `APPLY` confirmation, and matching protected GitHub
+environment approval. Release requires explicit manual gating, configured ECR/Artifact Registry/ACR,
+immutable digests, Trivy, SBOM, Cosign keyless signature/attestation, and provenance. No workflow
+performs a production deployment. Official action release references were checked on 2026-10-04;
+Renovate maintains full-SHA pins. Missing optional tools or credentials are blocked/Not Run, never
+a successful estimate or deployment claim.

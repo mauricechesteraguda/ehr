@@ -1,0 +1,9 @@
+# type-10042026-Maurice: reference verification policy; no private key material.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ehr-cosign-verification-reference
+data:
+  identity-regexp: '^https://github.com/[^/]+/ehr/.github/workflows/[^/]+@refs/heads/main$'
+  issuer: https://token.actions.githubusercontent.com
+  verification: cosign verify --certificate-identity-regexp "$IDENTITY_REGEXP" --certificate-oidc-issuer "$ISSUER" IMAGE_DIGEST

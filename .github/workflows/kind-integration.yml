@@ -1,0 +1,51 @@
+# type-10042026-Maurice: opt-in disposable kind acceptance with scoped cleanup.
+name: Kind integration
+on:
+  workflow_dispatch:
+    inputs:
+      run: {required: true, default: false, type: boolean}
+permissions: {contents: read}
+concurrency: {group: 'kind-${{ github.workflow }}-${{ github.ref }}', cancel-in-progress: true}
+jobs:
+  kind:
+    if: inputs.run == true
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    strategy: {fail-fast: true}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2, retrieved 2026-10-04
+        with: {persist-credentials: false}
+      - name: Check prerequisites
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          command -v docker >/dev/null && command -v kind >/dev/null || { echo '::error title=kind::Docker and kind are required'; exit 1; }
+          docker info >/dev/null
+          test -z "$(kind get clusters --quiet 2>/dev/null | grep '^ehr-' || true)" || { echo '::error title=kind::Existing EHR cluster prevents scoped run'; exit 1; }
+      - name: Build load and exercise current images
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          export CLUSTER="ehr-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"; echo "CLUSTER=$CLUSTER" >> "$GITHUB_ENV"
+          docker build --tag ehr-web:ci-${GITHUB_RUN_ID} .
+          docker build --tag ehr-api:ci-${GITHUB_RUN_ID} backend
+          kind create cluster --name "$CLUSTER" --config platform/kind/cluster.yaml
+          kind load docker-image "ehr-web:ci-${GITHUB_RUN_ID}" "ehr-api:ci-${GITHUB_RUN_ID}" --name "$CLUSTER"
+          helm dependency build platform/helm/ehr >/dev/null
+          helm upgrade --install ehr platform/helm/ehr --namespace ehr --create-namespace -f platform/helm/ehr/values-kind.yaml --set images.web.repository=ehr-web --set images.web.tag=ci-${GITHUB_RUN_ID} --set images.api.repository=ehr-api --set images.api.tag=ci-${GITHUB_RUN_ID} --wait --timeout 8m
+          for deployment in ehr-api ehr-web ehr-worker ehr-beat; do kubectl -n ehr rollout status "deployment/$deployment" --timeout=5m; done
+          kubectl -n ehr wait --for=condition=complete job -l app.kubernetes.io/component=migration --timeout=5m
+          kubectl -n ehr get service,endpoints,networkpolicy --selector=app.kubernetes.io/part-of=ehr
+          kubectl -n ehr get service --selector=app.kubernetes.io/component=admin --output=name
+      - name: Execute separately selected Ticket05 live acceptance
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          EHR_KIND_E2E=1 python -m pytest -q backend/tests/test_ticket05_platform.py -m live_kind_e2e --maxfail=1
+      - name: Always scoped cleanup
+        if: always()
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          if [[ -n "${CLUSTER:-}" ]] && kind get clusters --quiet 2>/dev/null | grep -Fxq "$CLUSTER"; then kind delete cluster --name "$CLUSTER"; fi
+          rm -rf platform/helm/ehr/charts

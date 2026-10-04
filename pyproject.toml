@@ -1,9 +1,9 @@
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "backend.config.settings"
 python_files = ["test_*.py"]
-addopts = "--strict-markers"
+addopts = "--strict-markers -m 'not live_kind_e2e'"
 markers = [
-  "kind_e2e: opt-in disposable kind acceptance requiring Docker and kind",
+  "live_kind_e2e: separately selected disposable kind acceptance requiring Docker and kind",
 ]
 
 [tool.ruff]

@@ -1,0 +1,81 @@
+# type-10042026-Maurice: credentialless OIDC plan/apply template; cluster + Argo only.
+name: Terraform plan and apply
+on:
+  pull_request:
+    paths: ['platform/terraform/**']
+  workflow_dispatch:
+    inputs:
+      provider: {required: true, type: choice, options: [AWS, GCP, Azure]}
+      environment: {required: true, type: choice, options: [development, staging, production]}
+      apply: {required: true, default: false, type: boolean}
+      confirmation: {required: true, type: string, description: 'Type APPLY for protected approval'}
+permissions: {contents: read, id-token: write, pull-requests: write}
+concurrency: {group: 'terraform-${{ github.workflow }}-${{ github.ref }}', cancel-in-progress: false}
+jobs:
+  plan:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy: {fail-fast: true}
+    env: {TF_IN_AUTOMATION: 'true', TF_INPUT: 'false'}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2, retrieved 2026-10-04
+        with: {persist-credentials: false}
+      - name: Select provider and environment allowlist
+        env: {EVENT_PROVIDER: '${{ inputs.provider }}', EVENT_ENVIRONMENT: '${{ inputs.environment }}'}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          provider="${EVENT_PROVIDER:-AWS}"; environment="${EVENT_ENVIRONMENT:-development}"
+          case "$provider:$environment" in
+            AWS:development|AWS:staging|AWS:production) root="platform/terraform/environments/aws/$environment";;
+            GCP:development|GCP:staging|GCP:production) root="platform/terraform/environments/gcp/$environment";;
+            Azure:development|Azure:staging|Azure:production) root="platform/terraform/environments/azure/$environment";;
+            *) echo '::error title=Terraform::Unsupported provider/environment'; exit 1;;
+          esac
+          test -d "$root" || { echo '::error title=Terraform::Selected root is absent'; exit 1; }
+          echo "TF_ROOT=$root" >> "$GITHUB_ENV"
+      - name: Enforce credentialless federation boundary
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          test -z "${AWS_ACCESS_KEY_ID:-}" && test -z "${GOOGLE_CREDENTIALS:-}" && test -z "${AZURE_CLIENT_SECRET:-}" || { echo '::error title=OIDC::Long-lived keys are forbidden'; exit 1; }
+          echo '::notice title=OIDC::Provider federation must be configured by the protected runner environment'
+      - name: AWS OIDC federation
+        if: inputs.provider == 'AWS'
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1, official, retrieved 2026-10-04
+        with:
+          role-to-assume: ${{ vars.AWS_OIDC_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+          role-session-name: ehr-terraform-${{ github.run_id }}
+      - name: GCP OIDC federation
+        if: inputs.provider == 'GCP'
+        uses: google-github-actions/auth@ba79af03959ebeac9769e648f473a284504d9193 # v2.1.10, official, retrieved 2026-10-04
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_PROVIDER }}
+          service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
+      - name: Azure OIDC federation
+        if: inputs.provider == 'Azure'
+        uses: azure/login@a65d910e8af852a8061c627c456678983e180302 # v2.2.0, official, retrieved 2026-10-04
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      - name: Init validate and plan without backend mutation
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          terraform -chdir="$TF_ROOT" init -backend=false -input=false -no-color >/dev/null
+          terraform -chdir="$TF_ROOT" validate -no-color
+          terraform -chdir="$TF_ROOT" plan -input=false -lock=false -no-color -out="$RUNNER_TEMP/ehr.tfplan" >/dev/null
+      - name: Upload sensitive short-retention plan
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2, retrieved 2026-10-04
+        with: {name: 'terraform-plan-${{ github.run_id }}', path: '${{ runner.temp }}/ehr.tfplan', retention-days: 2}
+      - name: Apply only with protected environment and confirmation
+        if: github.event_name == 'workflow_dispatch' && inputs.apply == true && inputs.confirmation == 'APPLY' && github.ref == 'refs/heads/main'
+        environment: 'terraform-${{ inputs.provider }}-${{ inputs.environment }}'
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          echo '::notice title=Terraform::Protected approval passed; GitOps still owns workloads'
+          terraform -chdir="$TF_ROOT" apply -input=false -auto-approve "$RUNNER_TEMP/ehr.tfplan"
