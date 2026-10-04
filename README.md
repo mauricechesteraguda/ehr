@@ -33,6 +33,21 @@ Ticket16 does not claim formal WCAG 2.2 conformance, ISO/FDA/HIPAA certification
 clinical validation. See `docs/accessibility-conformance-note.md` and
 `docs/evidence-manifest-ticket16.json` for bounded evidence and known exceptions.
 
+## Screenshots
+
+These images show the current local demo using synthetic demonstration data only. They are
+illustrative UI captures, not clinical validation or evidence of production readiness.
+
+| Screen | Workflow shown |
+| --- | --- |
+| [![Synthetic MFA sign-in screen](docs/screenshots/login-mfa.png)](docs/screenshots/login-mfa.png) | Synthetic account sign-in with the mandatory TOTP field and non-clinical safety notice. |
+| [![Clinician medication order workspace](docs/screenshots/clinician-medication-safety.png)](docs/screenshots/clinician-medication-safety.png) | Clinician record workspace at the medication-order workflow, with the synthetic-data boundary visible. |
+| [![Administrator audit workspace](docs/screenshots/administrator-audit-jobs.png)](docs/screenshots/administrator-audit-jobs.png) | Administrator quality and append-only audit view; sensitive-looking values are masked in this documentation capture. |
+| [![Developer SMART and FHIR workspace](docs/screenshots/developer-smart-fhir.png)](docs/screenshots/developer-smart-fhir.png) | Developer SMART/FHIR workspace with synthetic-data and browser-storage boundaries. |
+
+The patient questionnaire/record capture was omitted because the seeded patient workspace did
+not load reliably in the current demo run. No screenshot is presented for that state.
+
 ## One-command local HTTPS platform (Ticket01)
 
 The supported demo deployment is Docker Compose. Install Docker Desktop (macOS/Windows) or
