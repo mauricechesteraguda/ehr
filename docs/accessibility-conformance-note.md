@@ -9,6 +9,13 @@ conformance, certification, clinical validation, or suitability for real patient
 developer, loading/error/empty, and responsive/reduced-motion markers with pinned
 `axe-core@4.10.2`. Serious and critical axe violations fail; no axe rule is disabled.
 
+Ticket06 regression coverage is in `src/ticket06.test.tsx` (10 tests). The full frontend run
+completed with 15 files and 74 tests passing, including the existing serious/critical axe checks;
+`npm run lint`, `npm run build`, `npm run validate:evidence`, and the static Compose contract also
+passed. The browser smoke used the current-source Vite server for the login page at 1440x900,
+1024x768, and 390x844. No authenticated role-workspace browser capture was claimed because no
+disposable PostgreSQL/Redis/Django runtime was available.
+
 ## Manual checklist
 
 Browser automation was unavailable in this environment, so these checks are explicitly

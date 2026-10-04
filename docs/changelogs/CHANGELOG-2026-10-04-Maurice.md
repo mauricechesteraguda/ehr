@@ -26,4 +26,10 @@
 - Added explicit severity text/icons, critical-action treatment, emergency break-glass direction, mobile-safe forms/tables, and directional empty/error states.
 - Added RED-first coverage for TC-UI-0028..0036 in `src/ticket04.test.tsx` and mapped every Ticket04 CSV row to its test reference.
 
+## Ticket 06 — Existing flows, evidence, Compose and static serving
+
+- Added ten executable regression/evidence tests for TC-UI-0046..0055 in `src/ticket06.test.tsx` and mapped each CSV row after the tests passed.
+- Refreshed the README screenshot gallery with viewport metadata and current-source responsive sign-in captures at 1440x900, 1024x768, and 390x844; authenticated role captures remain explicitly omitted without a disposable backend.
+- Recorded automated frontend, axe, static Compose, build, lint, and evidence results without claiming formal accessibility conformance or clinical validation.
+
 Author Name: Aguda, Maurice
