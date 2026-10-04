@@ -5,6 +5,7 @@ import { logout, roleShellTitle, type Role } from "./auth";
 import { useEffect, useState } from "react";
 import "./styles.css";
 import { roleWorkspacePath } from "./workflow";
+import { AppShell } from "./ui";
 import { acknowledgeMedication, cancelJob, createAdminUser, createDevice, createMedication, createFamilyHistory, evaluateMedication, fetchAdminUsers, fetchAudit, fetchDeviceHistory, fetchFamilyHistory, fetchInteractionAdmin, fetchJobs, fetchMedicationHistory, fetchMedications, fetchPatient, fetchPatients, previewDevice, requestPatientExport, requestPopulationExport, fetchPopulationExports, populationExportAction, signMedication, updateAdminUser, updateSeverityFloor, fetchQuestionnaires, saveQuestionnaireResponse, fetchQuestionnaireReviewQueue, reviewQuestionnaireResponse, fetchAmendments, fetchAmendmentQueue, createAmendment, reviewAmendment, startAmendmentReview, requestBreakGlass, revokeBreakGlass, selectPatient, fetchDirectArtifacts, fetchDirectDeliveries, createDirectDelivery, cancelDirectDelivery, retryDirectDelivery, invokeCDS, actOnCDSCard, type AdminUser, type AuditEvent, type DeviceParsePreview, type DeviceVersion, type FamilyHistoryVersion, type InteractionEvaluation, type MedicationOrder, type MedicationVersion, type PatientRecord, type PatientExport, type InteractionRule, type JobStatus, type Questionnaire, type QuestionnaireResponse, type PatientAmendment, type BreakGlassGrant, type PopulationExport, type DirectArtifact, type DirectDelivery, type CDSCard } from "./records";
 
 export function Login({ onSuccess }: { onSuccess: (role: Role, username: string) => void }) {
@@ -131,6 +132,12 @@ function App() {
   const [breakGlassReason, setBreakGlassReason] = useState("");
   const [breakGlassError, setBreakGlassError] = useState("");
   const isAdmin = role === "admin";
+  // type-10042026-Maurice: Browser history listener keeps route state synchronized without persistence.
+  useEffect(() => {
+    const onPopState = () => setRoute(window.location.pathname);
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []);
   useEffect(() => {
     fetch("/api/auth/session/", { credentials: "include" }).then((response) => response.ok ? response.json() : null).then((session) => {
       if (session?.role) { setRole(session.role as Role); setUsername(session.username ?? ""); setAuthenticated(true); }
@@ -146,11 +153,11 @@ function App() {
   const navigate = (next: string) => { window.history.pushState({}, "", next); setRoute(next); setSelected(null); };
    if (authenticated === null) return <main id="main-content" aria-busy="true"><h1>Loading EHR demo</h1><p role="status" aria-live="polite">Loading secure session…</p></main>;
   if (!authenticated) return <Login onSuccess={(nextRole, nextUsername) => { setRole(nextRole); setUsername(nextUsername); setAuthenticated(true); }} />;
-    if (route === roleWorkspacePath("developer")) return <main id="main-content"><Header role={role} username={username} navigate={navigate} /><section aria-labelledby="developer-title"><h1 id="developer-title">Developer SMART workspace</h1><p>Use registered SMART credentials and a current MFA-authenticated token. Selection accepts an exact identifier or exact normalized full name plus date of birth.</p><p role="note"><strong>Warning:</strong> synthetic data only. Tokens and submitted demographics are never stored in browser storage.</p><PatientSelectionPanel /></section></main>;
+    if (route === roleWorkspacePath("developer")) return <AppShell role={role} username={username} route={route} onNavigate={navigate} onSignOut={() => logout().then(() => window.location.reload())} page="Developer SMART workspace" context="Registered SMART credentials and exact synthetic patient selection." safety="Tokens are memory-only"><section aria-labelledby="developer-title"><h1 id="developer-title">Developer SMART workspace</h1><p>Use registered SMART credentials and a current MFA-authenticated token. Selection accepts an exact identifier or exact normalized full name plus date of birth.</p><p role="note"><strong>Warning:</strong> synthetic data only. Tokens and submitted demographics are never stored in browser storage.</p><PatientSelectionPanel /></section></AppShell>;
   const openPatient = (id: string) => { setLoading(true); setError(""); setFamilyHistoryLoading(true); fetchPatient(id).then((record) => { setSelected(record); return Promise.all([fetchMedications(id).then(setMedications), fetchFamilyHistory(id).then(setFamilyHistory), fetchAmendments(id).then(setAmendments)]); }).catch(() => setError("Unable to load this synthetic record.")).finally(() => { setLoading(false); setFamilyHistoryLoading(false); }); };
   const submitMedication = (event: FormEvent<HTMLFormElement>) => { event.preventDefault(); if (!selected || role !== "clinician") return; setSavingMedication(true); setMedicationError(""); const form = new FormData(event.currentTarget); const payload = Object.fromEntries(form.entries()) as Record<string, string | number>; payload.dose = Number(payload.dose); payload.quantity = Number(payload.quantity); payload.refills = Number(payload.refills); createMedication(selected.public_id, payload).then((order) => { setMedications((current) => [...current, order]); event.currentTarget.reset(); }).catch(() => setMedicationError("Unable to save draft. No medication or audit event was created.")).finally(() => setSavingMedication(false)); };
-   return <main id="main-content">
-     <Header role={role} username={username} navigate={navigate} /><p>{roleShellTitle(role)}</p>
+    return <AppShell role={role} username={username} route={route} onNavigate={navigate} onSignOut={() => logout().then(() => window.location.reload())} page={roleShellTitle(role)} context="Review bounded synthetic records and role-scoped workflows." safety="Synthetic data only">
+      <p>{roleShellTitle(role)}</p>
     <aside role="note"><strong>Synthetic data only.</strong> This demo contains no real patient information.</aside>
     {loading && <p role="status">Loading patient records…</p>}
      {error && <p role="alert">{error}</p>}
@@ -184,7 +191,7 @@ function App() {
         {medications.length === 0 ? <p>No medication orders found.</p> : <ul>{medications.map((order) => <li key={order.id}><strong>{order.active_version?.medication_name}</strong> — {order.active_version?.status}<button onClick={() => fetchMedicationHistory(selected.public_id, order.id).then(setMedicationHistory).catch(() => setMedicationError("Unable to load medication history."))}>History</button>{role === "clinician" && order.active_version?.status === "draft" && <><button onClick={() => evaluateMedication(selected.public_id, order.id).then((evaluation) => setEvaluations((current) => ({ ...current, [order.id]: evaluation }))).catch(() => setMedicationError("Safety evaluation unavailable; signing is blocked."))}>Evaluate safety</button>{evaluations[order.id] && <section aria-label="Medication safety alerts"><ul>{evaluations[order.id].findings.map((finding) => <li key={finding.rule_id}>{finding.suppressed ? "Suppressed below floor" : `${finding.severity}: ${finding.description}`}</li>)}</ul>{evaluations[order.id].findings.some((finding) => !finding.suppressed && finding.severity !== "CRITICAL") && <button onClick={() => acknowledgeMedication(selected.public_id, order.id, evaluations[order.id].id).then(() => setAcknowledged((current) => ({ ...current, [order.id]: true }))).catch(() => setMedicationError("Unable to acknowledge safety alert."))}>Acknowledge</button>}<button disabled={evaluations[order.id].findings.some((finding) => finding.severity === "CRITICAL") || (evaluations[order.id].findings.some((finding) => !finding.suppressed) && !acknowledged[order.id])} onClick={() => signMedication(selected.public_id, order.id, evaluations[order.id].id, Boolean(acknowledged[order.id])).then((version) => setMedications((current) => current.map((item) => item.id === order.id ? { ...item, active_version: version } : item))).catch((error: Error) => setMedicationError(error.message))}>Sign safely</button></section>}</>}</li>)}</ul>}
        {medicationHistory.length > 0 && <section aria-label="Immutable medication history"><h4>Immutable history</h4><ol>{medicationHistory.map((version) => <li key={version.id}>v{version.version}: {version.medication_name}, {version.dose} {version.dose_unit}, {version.status}</li>)}</ol></section>}
      </section>}
-  </main>;
+   </AppShell>;
 }
 
 if (typeof document !== "undefined" && document.getElementById("root")) createRoot(document.getElementById("root")!).render(<StrictMode><App /></StrictMode>);

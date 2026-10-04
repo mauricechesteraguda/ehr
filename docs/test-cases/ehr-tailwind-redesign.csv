@@ -88,7 +88,7 @@ TC-UI-0010,API success data mapping,"Ticket 02 — Primitives, data states and s
 4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
 2. The result is explicit, stable, and usable in the named state.
 3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
-4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-UI-0010,Errors/Messages,
+4. Failure can be retried or corrected without silent mutation or data loss.","RED: Ticket02 contract added",Not Run,HIGH,P1,,,,REQ-UI-0010,Errors/Messages,src/ticket02.test.tsx::1
 TC-UI-0011,API failure timeout and bad payload,"Ticket 02 — Primitives, data states and semantic presentation",Verify the redesign requirement for api failure timeout and bad payload without changing the existing synthetic application flow.,"1. A clean checkout and disposable test environment are available.
 2. Only synthetic fixtures and approved demo aliases are loaded.
 3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
@@ -97,7 +97,7 @@ TC-UI-0011,API failure timeout and bad payload,"Ticket 02 — Primitives, data s
 4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
 2. The result is explicit, stable, and usable in the named state.
 3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
-4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-UI-0011,Empty/Loading/No Results,
+4. Failure can be retried or corrected without silent mutation or data loss.","RED: Ticket02 contract added",Not Run,HIGH,P1,,,,REQ-UI-0011,Empty/Loading/No Results,src/ticket02.test.tsx::2
 TC-UI-0012,Chart text and table fallback,"Ticket 02 — Primitives, data states and semantic presentation",Verify the redesign requirement for chart text and table fallback without changing the existing synthetic application flow.,"1. A clean checkout and disposable test environment are available.
 2. Only synthetic fixtures and approved demo aliases are loaded.
 3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
@@ -106,7 +106,7 @@ TC-UI-0012,Chart text and table fallback,"Ticket 02 — Primitives, data states 
 4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
 2. The result is explicit, stable, and usable in the named state.
 3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
-4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-UI-0012,API Success/Failure/Timeout/Bad Payload,
+4. Failure can be retried or corrected without silent mutation or data loss.","RED: Ticket02 contract added",Not Run,HIGH,P1,,,,REQ-UI-0012,API Success/Failure/Timeout/Bad Payload,src/ticket02.test.tsx::3
 TC-UI-0013,Severity text and icon beyond color,"Ticket 02 — Primitives, data states and semantic presentation",Verify the redesign requirement for severity text and icon beyond color without changing the existing synthetic application flow.,"1. A clean checkout and disposable test environment are available.
 2. Only synthetic fixtures and approved demo aliases are loaded.
 3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
@@ -115,7 +115,7 @@ TC-UI-0013,Severity text and icon beyond color,"Ticket 02 — Primitives, data s
 4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
 2. The result is explicit, stable, and usable in the named state.
 3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
-4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-UI-0013,Security,
+4. Failure can be retried or corrected without silent mutation or data loss.","RED: Ticket02 contract added",Not Run,HIGH,P1,,,,REQ-UI-0013,Security,src/ticket02.test.tsx::4
 TC-UI-0014,Edit correction validation,"Ticket 02 — Primitives, data states and semantic presentation",Verify the redesign requirement for edit correction validation without changing the existing synthetic application flow.,"1. A clean checkout and disposable test environment are available.
 2. Only synthetic fixtures and approved demo aliases are loaded.
 3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
@@ -124,7 +124,7 @@ TC-UI-0014,Edit correction validation,"Ticket 02 — Primitives, data states and
 4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
 2. The result is explicit, stable, and usable in the named state.
 3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
-4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-UI-0014,Regression,
+4. Failure can be retried or corrected without silent mutation or data loss.","RED: Ticket02 contract added",Not Run,HIGH,P1,,,,REQ-UI-0014,Regression,src/ticket02.test.tsx::5
 TC-UI-0015,Optimistic save rollback,"Ticket 02 — Primitives, data states and semantic presentation",Verify the redesign requirement for optimistic save rollback without changing the existing synthetic application flow.,"1. A clean checkout and disposable test environment are available.
 2. Only synthetic fixtures and approved demo aliases are loaded.
 3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
@@ -133,7 +133,7 @@ TC-UI-0015,Optimistic save rollback,"Ticket 02 — Primitives, data states and s
 4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
 2. The result is explicit, stable, and usable in the named state.
 3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
-4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-UI-0015,Happy,
+4. Failure can be retried or corrected without silent mutation or data loss.","RED: Ticket02 contract added",Not Run,HIGH,P1,,,,REQ-UI-0015,Happy,src/ticket02.test.tsx::6
 TC-UI-0016,Concurrent edit conflict,"Ticket 02 — Primitives, data states and semantic presentation",Verify the redesign requirement for concurrent edit conflict without changing the existing synthetic application flow.,"1. A clean checkout and disposable test environment are available.
 2. Only synthetic fixtures and approved demo aliases are loaded.
 3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
@@ -142,7 +142,7 @@ TC-UI-0016,Concurrent edit conflict,"Ticket 02 — Primitives, data states and s
 4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
 2. The result is explicit, stable, and usable in the named state.
 3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
-4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-UI-0016,Alternate,
+4. Failure can be retried or corrected without silent mutation or data loss.","RED: Ticket02 contract added",Not Run,HIGH,P1,,,,REQ-UI-0016,Alternate,src/ticket02.test.tsx::7
 TC-UI-0017,Desktop two-part shell,"Ticket 02 — Primitives, data states and semantic presentation",Verify the redesign requirement for desktop two-part shell without changing the existing synthetic application flow.,"1. A clean checkout and disposable test environment are available.
 2. Only synthetic fixtures and approved demo aliases are loaded.
 3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
@@ -151,7 +151,7 @@ TC-UI-0017,Desktop two-part shell,"Ticket 02 — Primitives, data states and sem
 4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
 2. The result is explicit, stable, and usable in the named state.
 3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
-4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-UI-0017,Invalid,
+4. Failure can be retried or corrected without silent mutation or data loss.","RED: Ticket02 contract added",Not Run,HIGH,P1,,,,REQ-UI-0017,Invalid,src/ticket02.test.tsx::8
 TC-UI-0018,Tablet shell no overlap,"Ticket 02 — Primitives, data states and semantic presentation",Verify the redesign requirement for tablet shell no overlap without changing the existing synthetic application flow.,"1. A clean checkout and disposable test environment are available.
 2. Only synthetic fixtures and approved demo aliases are loaded.
 3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
@@ -160,7 +160,7 @@ TC-UI-0018,Tablet shell no overlap,"Ticket 02 — Primitives, data states and se
 4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
 2. The result is explicit, stable, and usable in the named state.
 3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
-4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-UI-0018,Boundaries,
+4. Failure can be retried or corrected without silent mutation or data loss.","RED: Ticket02 contract added",Not Run,HIGH,P1,,,,REQ-UI-0018,Boundaries,src/ticket02.test.tsx::9
 TC-UI-0019,Mobile shell and touch targets,"Ticket 03 — Desktop, tablet and mobile shell",Verify the redesign requirement for mobile shell and touch targets without changing the existing synthetic application flow.,"1. A clean checkout and disposable test environment are available.
 2. Only synthetic fixtures and approved demo aliases are loaded.
 3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
