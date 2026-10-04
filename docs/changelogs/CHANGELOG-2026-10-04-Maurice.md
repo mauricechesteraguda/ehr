@@ -20,4 +20,10 @@
 - Reframed the patient workspace with patient context, record tabs, responsive summary cards, clinical action surfaces, safe empty/error/status text, and mobile-friendly record navigation.
 - Added RED-first coverage for TC-UI-0019..0027 in `src/ticket03.test.tsx` and mapped every Ticket03 CSV row to its test reference.
 
+## Ticket 04 — Clinician workflow redesign
+
+- Reorganized the clinician record view into responsive patient context, safety, action, queue, history, exchange, and review surfaces while preserving API calls, selectors, immutable-history behavior, and synthetic-data boundaries.
+- Added explicit severity text/icons, critical-action treatment, emergency break-glass direction, mobile-safe forms/tables, and directional empty/error states.
+- Added RED-first coverage for TC-UI-0028..0036 in `src/ticket04.test.tsx` and mapped every Ticket04 CSV row to its test reference.
+
 Author Name: Aguda, Maurice

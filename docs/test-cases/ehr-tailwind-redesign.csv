@@ -250,7 +250,7 @@ TC-UI-0028,Focus order and focus return,Ticket 04 — Memory-only themes and acc
 4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
 2. The result is explicit, stable, and usable in the named state.
 3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
-4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-A11Y-0010,Regression,
+4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-A11Y-0010,Regression,src/ticket04.test.tsx::1
 TC-UI-0029,Reduced motion,Ticket 04 — Memory-only themes and accessibility,Verify the redesign requirement for reduced motion without changing the existing synthetic application flow.,"1. A clean checkout and disposable test environment are available.
 2. Only synthetic fixtures and approved demo aliases are loaded.
 3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
@@ -259,7 +259,7 @@ TC-UI-0029,Reduced motion,Ticket 04 — Memory-only themes and accessibility,Ver
 4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
 2. The result is explicit, stable, and usable in the named state.
 3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
-4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-RESP-0001,Happy,
+4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-RESP-0001,Happy,src/ticket04.test.tsx::2
 TC-UI-0030,Axe scan,Ticket 04 — Memory-only themes and accessibility,Verify the redesign requirement for axe scan without changing the existing synthetic application flow.,"1. A clean checkout and disposable test environment are available.
 2. Only synthetic fixtures and approved demo aliases are loaded.
 3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
@@ -268,7 +268,7 @@ TC-UI-0030,Axe scan,Ticket 04 — Memory-only themes and accessibility,Verify th
 4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
 2. The result is explicit, stable, and usable in the named state.
 3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
-4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-RESP-0002,Alternate,
+4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-RESP-0002,Alternate,src/ticket04.test.tsx::3
 TC-UI-0031,Target-size boundary,Ticket 04 — Memory-only themes and accessibility,Verify the redesign requirement for target-size boundary without changing the existing synthetic application flow.,"1. A clean checkout and disposable test environment are available.
 2. Only synthetic fixtures and approved demo aliases are loaded.
 3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
@@ -277,7 +277,7 @@ TC-UI-0031,Target-size boundary,Ticket 04 — Memory-only themes and accessibili
 4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
 2. The result is explicit, stable, and usable in the named state.
 3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
-4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-RESP-0003,Invalid,
+4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-RESP-0003,Invalid,src/ticket04.test.tsx::4
 TC-UI-0032,Browser storage security,Ticket 04 — Memory-only themes and accessibility,Verify the redesign requirement for browser storage security without changing the existing synthetic application flow.,"1. A clean checkout and disposable test environment are available.
 2. Only synthetic fixtures and approved demo aliases are loaded.
 3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
@@ -286,7 +286,7 @@ TC-UI-0032,Browser storage security,Ticket 04 — Memory-only themes and accessi
 4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
 2. The result is explicit, stable, and usable in the named state.
 3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
-4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-RESP-0004,Boundaries,
+4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-RESP-0004,Boundaries,src/ticket04.test.tsx::5
 TC-UI-0033,Navigation breadcrumbs back and forward,Ticket 04 — Memory-only themes and accessibility,Verify the redesign requirement for navigation breadcrumbs back and forward without changing the existing synthetic application flow.,"1. A clean checkout and disposable test environment are available.
 2. Only synthetic fixtures and approved demo aliases are loaded.
 3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
@@ -295,7 +295,7 @@ TC-UI-0033,Navigation breadcrumbs back and forward,Ticket 04 — Memory-only the
 4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
 2. The result is explicit, stable, and usable in the named state.
 3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
-4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-RESP-0005,Validation,
+4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-RESP-0005,Validation,src/ticket04.test.tsx::6
 TC-UI-0034,Filter and scroll state,Ticket 04 — Memory-only themes and accessibility,Verify the redesign requirement for filter and scroll state without changing the existing synthetic application flow.,"1. A clean checkout and disposable test environment are available.
 2. Only synthetic fixtures and approved demo aliases are loaded.
 3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
@@ -304,7 +304,7 @@ TC-UI-0034,Filter and scroll state,Ticket 04 — Memory-only themes and accessib
 4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
 2. The result is explicit, stable, and usable in the named state.
 3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
-4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-RESP-0006,Permissions,
+4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-RESP-0006,Permissions,src/ticket04.test.tsx::7
 TC-UI-0035,Valid login,Ticket 04 — Memory-only themes and accessibility,Verify the redesign requirement for valid login without changing the existing synthetic application flow.,"1. A clean checkout and disposable test environment are available.
 2. Only synthetic fixtures and approved demo aliases are loaded.
 3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
@@ -313,7 +313,7 @@ TC-UI-0035,Valid login,Ticket 04 — Memory-only themes and accessibility,Verify
 4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
 2. The result is explicit, stable, and usable in the named state.
 3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
-4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-RESP-0007,State,
+4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-RESP-0007,State,src/ticket04.test.tsx::8
 TC-UI-0036,Invalid login boundary,Ticket 04 — Memory-only themes and accessibility,Verify the redesign requirement for invalid login boundary without changing the existing synthetic application flow.,"1. A clean checkout and disposable test environment are available.
 2. Only synthetic fixtures and approved demo aliases are loaded.
 3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.
@@ -322,7 +322,7 @@ TC-UI-0036,Invalid login boundary,Ticket 04 — Memory-only themes and accessibi
 4. Inspect rendered content, focus, network/storage behavior, and recovery.","Synthetic patient alias Demo-042; appointment A-104; roles patient.demo, clinician.demo, admin.demo, developer.demo; viewports 1440x900, 1024x768, 390x844; fixtures HTTP 200, 500, timeout, malformed payload","1. The requirement is satisfied using the documented design-system contract.
 2. The result is explicit, stable, and usable in the named state.
 3. No secrets, real identifiers, clinical payloads, or raw errors are exposed.
-4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-RESP-0008,Edit/Correction,
+4. Failure can be retried or corrected without silent mutation or data loss.",,Not Run,HIGH,P1,,,,REQ-RESP-0008,Edit/Correction,src/ticket04.test.tsx::9
 TC-UI-0037,MFA success and challenge errors,"Ticket 05 — Navigation, authentication and role permissions",Verify the redesign requirement for mfa success and challenge errors without changing the existing synthetic application flow.,"1. A clean checkout and disposable test environment are available.
 2. Only synthetic fixtures and approved demo aliases are loaded.
 3. The actor and route named in the test data are prepared.","1. Open the named route or component at the specified viewport/state.

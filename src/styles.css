@@ -195,3 +195,43 @@ th, td { border: 1px solid var(--app-border); padding: .5rem; text-align: left; 
 .patient-record li { margin: .35rem 0; }
 @media (max-width: 52rem) { .auth-page { grid-template-columns: 1fr; gap: 1rem; max-width: 40rem; } .auth-story { padding-bottom: 0; } .auth-story h1 { max-width: 14ch; font-size: clamp(2.7rem, 10vw, 4rem); } .auth-promises { margin-top: 1.5rem; } }
 @media (max-width: 42rem) { .auth-page { padding: 1.25rem .8rem 2rem; } .auth-panel { border-radius: 1.1rem; } .auth-steps { gap: .45rem; justify-content: space-between; } .auth-steps span { font-size: .68rem; } .record-heading { grid-template-columns: 1fr; gap: .55rem; } .record-status { width: fit-content; } .record-grid { grid-template-columns: 1fr; } .record-tabs { position: sticky; top: 0; z-index: 1; background: var(--app-bg); } }
+
+/* type-10042026-Maurice: Ticket04 clinician workflow composition. Keep actions and API-owned text unchanged. */
+.workspace-dashboard { gap: 1.25rem; }
+.workspace-dashboard > .workspace-notice { border-left: 4px solid var(--color-warning); }
+.patient-record { gap: 1.25rem; }
+.patient-record > section, .patient-record > form, .record-actions > section { min-width: 0; }
+.record-heading { border-top: 3px solid var(--color-primary-300); }
+.record-heading h2 { letter-spacing: -.025em; }
+.record-tabs { scrollbar-width: thin; }
+.record-tabs a::before { content: "→"; margin-right: .35rem; color: var(--color-primary-300); }
+.record-grid { grid-template-columns: minmax(0, 1.4fr) minmax(16rem, .6fr); }
+.record-summary { box-shadow: 0 8px 24px rgb(0 0 0 / 14%); }
+.record-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+.record-actions > section { margin: 0; }
+.record-actions > section[aria-label="Emergency break-glass"], .record-actions > section[aria-label="C-CDA transition and reconciliation"] { grid-column: 1 / -1; }
+.patient-record > section, .patient-record > form { margin: 0; box-shadow: 0 8px 24px rgb(0 0 0 / 14%); }
+.patient-record > section h3, .patient-record > form h3 { padding-bottom: .7rem; border-bottom: 1px solid var(--app-border); }
+.patient-record > section:nth-of-type(n+5), .patient-record > form:nth-of-type(n+2) { background: color-mix(in srgb, var(--app-surface) 92%, var(--color-primary) 8%); }
+.patient-record form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .25rem 1rem; }
+.patient-record form > h4, .patient-record form > button, .patient-record form > p, .patient-record form > small { grid-column: 1 / -1; }
+.patient-record form label { min-width: 0; }
+.patient-record table, .record-actions table { display: block; overflow-x: auto; white-space: nowrap; }
+.action-bar { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .75rem; }
+.action-bar button, .medication-list button { margin: 0; }
+.critical-action { border: 1px solid color-mix(in srgb, var(--color-danger) 70%, var(--app-border)); background: color-mix(in srgb, var(--color-danger) 18%, var(--app-surface)); color: var(--app-text); font-weight: 600; }
+.critical-action:disabled { background: color-mix(in srgb, var(--app-muted) 12%, var(--app-surface)); }
+.breakglass-banner { display: flex; align-items: center; flex-wrap: wrap; gap: .75rem; margin: 0; padding: 1rem 1.1rem; border: 2px solid var(--color-danger); border-radius: var(--radius-md); background: color-mix(in srgb, var(--color-danger) 14%, var(--app-surface)); color: var(--app-text); }
+.breakglass-banner strong { color: var(--color-danger); }
+.breakglass-banner button { margin: 0 0 0 auto; }
+.severity-badge { display: inline-flex; align-items: center; gap: .25rem; min-height: 1.75rem; padding: .15rem .5rem; border: 1px solid currentColor; border-radius: var(--radius-pill); font-size: .72rem; font-weight: 700; letter-spacing: .04em; }
+.severity-critical, .severity-high { color: var(--color-danger); }
+.severity-moderate { color: var(--color-warning); }
+.severity-low, .severity-suppressed { color: var(--color-info); }
+.safety-alerts { margin-top: .75rem; padding: .8rem; border-left: 4px solid var(--color-warning); background: color-mix(in srgb, var(--color-warning) 8%, var(--app-surface)); }
+.safety-alerts ul { margin-top: 0; }
+.directional-error { padding: .7rem; border-left: 4px solid var(--color-danger); background: color-mix(in srgb, var(--color-danger) 10%, var(--app-surface)); }
+.empty-direction { color: var(--app-muted); }
+.cds-panel li article { padding: .8rem; border: 1px solid var(--app-border); border-radius: var(--radius-md); background: color-mix(in srgb, var(--app-surface) 86%, var(--color-primary) 14%); }
+@media (max-width: 56rem) { .record-actions { grid-template-columns: 1fr; } .record-actions > section[aria-label="Emergency break-glass"], .record-actions > section[aria-label="C-CDA transition and reconciliation"] { grid-column: auto; } .record-grid { grid-template-columns: 1fr; } }
+@media (max-width: 42rem) { .patient-record form { grid-template-columns: 1fr; } .patient-record form > h4, .patient-record form > button, .patient-record form > p, .patient-record form > small { grid-column: auto; } .breakglass-banner { align-items: flex-start; flex-direction: column; } .breakglass-banner button { margin: 0; width: 100%; } .action-bar { align-items: stretch; flex-direction: column; } }
