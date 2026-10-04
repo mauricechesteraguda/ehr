@@ -1,0 +1,13 @@
+# type-10042026-Maurice: strict workflow/platform YAML syntax gate.
+extends: default
+ignore: |
+  # Helm templates are rendered YAML, not YAML syntax until Helm evaluates them.
+  platform/helm/**
+rules:
+  line-length: disable
+  commas: disable
+  comments: disable
+  braces: disable
+  truthy:
+    allowed-values: ['true', 'false', 'on', 'off']
+  document-start: disable

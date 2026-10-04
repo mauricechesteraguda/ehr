@@ -1,5 +1,10 @@
 # Changelog — 2026-10-04
 
+## Platform validation hardening
+
+- Enforced actionlint, yamllint, Terraform, Helm, TFLint, kubeconform, Kyverno, Gitleaks, and Trivy gates with exact official release pins, SHA-256 verification, and no silent tool skips.
+- Triggered bounded, scoped kind integration for platform pull requests and manual dispatch; narrowed synthetic Gitleaks exceptions to exact Ticket10 fixtures.
+
 ## Documentation
 
 - Added the Ticket 01 Tailwind v4 build-time foundation, self-hosted Outfit weights, local icon dependency, semantic Synthetic EHR tokens, primitive state variants, and a memory-only light-theme seam.

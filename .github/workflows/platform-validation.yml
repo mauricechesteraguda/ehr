@@ -10,12 +10,6 @@ permissions:
 concurrency:
   group: platform-validation-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
-env:
-  TMPDIR: ${{ runner.temp }}/ehr-platform
-  PIP_CACHE_DIR: ${{ runner.temp }}/ehr-pip
-  HELM_CACHE_HOME: ${{ runner.temp }}/ehr-helm
-  HELM_CONFIG_HOME: ${{ runner.temp }}/ehr-helm-config
-  HELM_DATA_HOME: ${{ runner.temp }}/ehr-helm-data
 jobs:
   validate:
     runs-on: ubuntu-24.04
@@ -26,6 +20,15 @@ jobs:
         with: {persist-credentials: false}
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0, official, retrieved 2026-10-04
         with: {python-version: '${{ matrix.python }}'}
+      - name: Allocate runner-scoped temporary paths
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          echo "TMPDIR=$RUNNER_TEMP/ehr-platform" >> "$GITHUB_ENV"
+          echo "PIP_CACHE_DIR=$RUNNER_TEMP/ehr-pip" >> "$GITHUB_ENV"
+          echo "HELM_CACHE_HOME=$RUNNER_TEMP/ehr-helm" >> "$GITHUB_ENV"
+          echo "HELM_CONFIG_HOME=$RUNNER_TEMP/ehr-helm-config" >> "$GITHUB_ENV"
+          echo "HELM_DATA_HOME=$RUNNER_TEMP/ehr-helm-data" >> "$GITHUB_ENV"
       - name: Platform tests and evidence
         shell: bash
         run: |
@@ -66,27 +69,42 @@ jobs:
           for values in platform/helm/ehr/values-{demo,development,staging,k3s,kind,production}.yaml; do helm template ehr platform/helm/ehr -f "$values" >/dev/null; done
           rm -rf platform/helm/ehr/charts
       - name: Optional security and policy tools
-        env:
-          TFLINT_URL: ${{ vars.TFLINT_RELEASE_URL }}
-          TFLINT_SHA256: ${{ vars.TFLINT_RELEASE_SHA256 }}
         shell: bash
         run: |
           set -Eeuo pipefail
-          for tool in tflint kubeconform kyverno gitleaks trivy; do
-            if ! command -v "$tool" >/dev/null; then echo "::notice title=$tool::$tool is not installed; this gate is blocked, not passed"; fi
-          done
-          if ! command -v tflint >/dev/null && [[ -n "${TFLINT_URL:-}" ]]; then
-            [[ "$TFLINT_URL" =~ ^https://github.com/terraform-linters/tflint/releases/download/ ]] || { echo '::error title=TFLint::Release URL is not an official TFLint release'; exit 1; }
-            [[ "$TFLINT_SHA256" =~ ^[0-9a-f]{64}$ ]] || { echo '::error title=TFLint::A 64-character release checksum is required'; exit 1; }
-            curl --fail --location --silent --show-error --max-time 60 "$TFLINT_URL" --output "$RUNNER_TEMP/tflint.zip"
-            printf '%s  %s\n' "$TFLINT_SHA256" "$RUNNER_TEMP/tflint.zip" | sha256sum --check --status
-            unzip -q "$RUNNER_TEMP/tflint.zip" -d "$RUNNER_TEMP/tflint"; export PATH="$RUNNER_TEMP/tflint:$PATH"
-          fi
-          if command -v tflint >/dev/null; then tflint --init --config .tflint.hcl; tflint --recursive --config .tflint.hcl; else echo '::notice title=TFLint::Not installed and no pinned release configured'; fi
-          if command -v kubeconform >/dev/null; then kubeconform -strict -ignore-missing-schemas -schema-location default platform/gitops/*.yaml; fi
-          if command -v kyverno >/dev/null; then kyverno apply platform/gitops/resources/kyverno-policies.yaml --resource platform/gitops/apps/namespaces.yaml; fi
-          if command -v gitleaks >/dev/null; then gitleaks detect --no-banner --redact --config .gitleaks.toml; fi
-          if command -v trivy >/dev/null; then trivy config --exit-code 1 --severity HIGH,CRITICAL --no-progress .; fi
+          tools="$RUNNER_TEMP/ehr-platform/tools"; mkdir -p "$tools"
+          curl --fail --location --silent --show-error --max-time 60 'https://github.com/rhysd/actionlint/releases/download/v1.7.7/actionlint_1.7.7_linux_amd64.tar.gz' -o "$tools/actionlint.tgz"
+          printf '%s  %s\n' '023070a287cd8cccd71515fedc843f1985bf96c436b7effaecce67290e7e0757' "$tools/actionlint.tgz" | sha256sum --check --status
+          tar -xzf "$tools/actionlint.tgz" -C "$tools"; chmod 0755 "$tools/actionlint"; export PATH="$tools:$PATH"
+          python -m venv "$tools/yamllint-venv"
+          "$tools/yamllint-venv/bin/python" -m pip install --disable-pip-version-check --no-cache-dir 'yamllint==1.37.1'
+          actionlint .github/workflows/*.yml
+          find .github/workflows platform -type f \( -name '*.yml' -o -name '*.yaml' \) -print0 | xargs -0 "$tools/yamllint-venv/bin/yamllint" -c .yamllint.yml
+
+          curl --fail --location --silent --show-error --max-time 60 'https://github.com/terraform-linters/tflint/releases/download/v0.59.1/tflint_linux_amd64.zip' -o "$tools/tflint.zip"
+          printf '%s  %s\n' '6108d84282292f11d793dc8038ce08fbc629dcd25324d6f13c63d8100b52e01f' "$tools/tflint.zip" | sha256sum --check --status
+          unzip -q "$tools/tflint.zip" -d "$tools/tflint"; TFLINT="$tools/tflint/tflint"
+          export PATH="$tools/tflint:$tools:$PATH"; tflint --init --config .tflint.hcl; tflint --recursive --config .tflint.hcl
+
+          curl --fail --location --silent --show-error --max-time 60 'https://github.com/yannh/kubeconform/releases/download/v0.7.0/kubeconform-linux-amd64.tar.gz' -o "$tools/kubeconform.tgz"
+          printf '%s  %s\n' 'c31518ddd122663b3f3aa874cfe8178cb0988de944f29c74a0b9260920d115d3' "$tools/kubeconform.tgz" | sha256sum --check --status
+          tar -xzf "$tools/kubeconform.tgz" -C "$tools"; KUBECONFORM="$tools/kubeconform"
+          kubeconform -strict -ignore-missing-schemas -schema-location default platform/gitops/*.yaml
+
+          curl --fail --location --silent --show-error --max-time 60 'https://github.com/kyverno/kyverno/releases/download/v1.15.2/kyverno-cli_v1.15.2_linux_x86_64.tar.gz' -o "$tools/kyverno.tgz"
+          printf '%s  %s\n' 'c90520ba24fb8b8df003ec22d6d2621e4a3d3c7497665fdcf84e9eab4ff1dfe0' "$tools/kyverno.tgz" | sha256sum --check --status
+          tar -xzf "$tools/kyverno.tgz" -C "$tools"; KYVERNO="$tools/kyverno"
+          kyverno apply platform/gitops/resources/kyverno-policies.yaml --resource platform/gitops/apps/namespaces.yaml
+
+          curl --fail --location --silent --show-error --max-time 60 'https://github.com/gitleaks/gitleaks/releases/download/v8.28.0/gitleaks_8.28.0_linux_x64.tar.gz' -o "$tools/gitleaks.tgz"
+          printf '%s  %s\n' 'a65b5253807a68ac0cafa4414031fd740aeb55f54fb7e55f386acb52e6a840eb' "$tools/gitleaks.tgz" | sha256sum --check --status
+          tar -xzf "$tools/gitleaks.tgz" -C "$tools"; GITLEAKS="$tools/gitleaks"
+          gitleaks detect --no-banner --redact --config .gitleaks.toml --exit-code 1
+
+          curl --fail --location --silent --show-error --max-time 60 'https://github.com/aquasecurity/trivy/releases/download/v0.75.0/trivy_0.75.0_Linux-64bit.tar.gz' -o "$tools/trivy.tgz"
+          printf '%s  %s\n' 'c6e65abddb348e25f10549df887045629cf28cc72453cd1c63acb717316b3f3f' "$tools/trivy.tgz" | sha256sum --check --status
+          tar -xzf "$tools/trivy.tgz" -C "$tools"; TRIVY="$tools/trivy"
+          trivy config --exit-code 1 --severity HIGH,CRITICAL --no-progress .
       - name: Documentation local links
         shell: bash
         run: |

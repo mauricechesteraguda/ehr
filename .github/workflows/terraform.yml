@@ -15,6 +15,7 @@ jobs:
   plan:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
+    environment: 'terraform-${{ inputs.provider }}-${{ inputs.environment }}'
     strategy: {fail-fast: true}
     env: {TF_IN_AUTOMATION: 'true', TF_INPUT: 'false'}
     steps:
@@ -73,7 +74,6 @@ jobs:
         with: {name: 'terraform-plan-${{ github.run_id }}', path: '${{ runner.temp }}/ehr.tfplan', retention-days: 2}
       - name: Apply only with protected environment and confirmation
         if: github.event_name == 'workflow_dispatch' && inputs.apply == true && inputs.confirmation == 'APPLY' && github.ref == 'refs/heads/main'
-        environment: 'terraform-${{ inputs.provider }}-${{ inputs.environment }}'
         shell: bash
         run: |
           set -Eeuo pipefail

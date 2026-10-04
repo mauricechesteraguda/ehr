@@ -1,14 +1,15 @@
 # type-10042026-Maurice: opt-in disposable kind acceptance with scoped cleanup.
 name: Kind integration
 on:
+  pull_request:
+    paths:
+      - 'platform/**'
+      - '.github/workflows/kind-integration.yml'
   workflow_dispatch:
-    inputs:
-      run: {required: true, default: false, type: boolean}
 permissions: {contents: read}
 concurrency: {group: 'kind-${{ github.workflow }}-${{ github.ref }}', cancel-in-progress: true}
 jobs:
   kind:
-    if: inputs.run == true
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     strategy: {fail-fast: true}

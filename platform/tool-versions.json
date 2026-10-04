@@ -26,6 +26,48 @@
       "pin_type": "bounded",
       "constraint": ">=1.8.0,<2.0.0",
       "source": "compatibility-boundary"
+    },
+    "actionlint": {
+      "pin_type": "exact",
+      "version": "1.7.7",
+      "source": "official-release",
+      "repository": "rhysd/actionlint",
+      "sha256": "023070a287cd8cccd71515fedc843f1985bf96c436b7effaecce67290e7e0757"
+    },
+    "tflint": {
+      "pin_type": "exact",
+      "version": "0.59.1",
+      "source": "official-release",
+      "repository": "terraform-linters/tflint",
+      "sha256": "6108d84282292f11d793dc8038ce08fbc629dcd25324d6f13c63d8100b52e01f"
+    },
+    "kubeconform": {
+      "pin_type": "exact",
+      "version": "0.7.0",
+      "source": "official-release",
+      "repository": "yannh/kubeconform",
+      "sha256": "c31518ddd122663b3f3aa874cfe8178cb0988de944f29c74a0b9260920d115d3"
+    },
+    "kyverno": {
+      "pin_type": "exact",
+      "version": "1.15.2",
+      "source": "official-release",
+      "repository": "kyverno/kyverno",
+      "sha256": "c90520ba24fb8b8df003ec22d6d2621e4a3d3c7497665fdcf84e9eab4ff1dfe0"
+    },
+    "gitleaks": {
+      "pin_type": "exact",
+      "version": "8.28.0",
+      "source": "official-release",
+      "repository": "gitleaks/gitleaks",
+      "sha256": "a65b5253807a68ac0cafa4414031fd740aeb55f54fb7e55f386acb52e6a840eb"
+    },
+    "trivy": {
+      "pin_type": "exact",
+      "version": "0.75.0",
+      "source": "official-release",
+      "repository": "aquasecurity/trivy",
+      "sha256": "c6e65abddb348e25f10549df887045629cf28cc72453cd1c63acb717316b3f3f"
     }
   },
   "contract_inventory": {

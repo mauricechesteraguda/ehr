@@ -3,6 +3,15 @@
   "schedule": ["before 06:00 on monday"],
   "automerge": false,
   "dependencyDashboard": true,
+  "customManagers": [
+    {
+      "customType": "regex",
+      "fileMatch": ["^platform/tool-versions\\.json$"],
+      "matchStrings": ["\\\"version\\\": \\\"(?<currentValue>[^\\\"]+)\\\",[^}]*?\\\"repository\\\": \\\"(?<depName>[^\\\"]+)\\\""],
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "{{depName}}"
+    }
+  ],
   "packageRules": [
     {"groupName": "GitHub Actions pins", "matchManagers": ["github-actions"]},
     {"groupName": "Terraform providers", "matchManagers": ["terraform"], "matchFileNames": ["platform/terraform/**"]},

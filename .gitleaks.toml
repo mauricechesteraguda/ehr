@@ -2,5 +2,12 @@
 [extend]
 useDefault = true
 [allowlist]
-description = "Documentation placeholders and synthetic fixtures only; no live credentials."
-paths = ['''(^|/)(docs|platform/test-fixtures)/''']
+description = "Three exact synthetic Ticket10 fixture lines only; no live credentials."
+condition = "AND"
+regexTarget = "line"
+paths = ['''(^|/)backend/tests/test_ticket10_population_exports.py$''']
+regexes = [
+  '''POPULATION_EXPORT_KEY = "A{43}="''',
+  '''password="ticket10-test"''',
+  '''idempotency_key="ticket10-[a-z-]+"'''
+]

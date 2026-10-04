@@ -7,7 +7,7 @@ permissions: {contents: read, pull-requests: write}
 concurrency: {group: 'infracost-${{ github.event.pull_request.number }}', cancel-in-progress: true}
 jobs:
   estimate:
-    if: vars.INFRACOST_ENABLED == 'true' && secrets.INFRACOST_API_KEY != ''
+    if: vars.INFRACOST_ENABLED == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     strategy: {fail-fast: true}
@@ -19,6 +19,7 @@ jobs:
         shell: bash
         run: |
           set -Eeuo pipefail
+          [[ -n "${INFRACOST_API_KEY:-}" ]] || { echo '::notice title=Infracost::Missing API key; estimate not run'; exit 0; }
           command -v infracost >/dev/null || { echo '::error title=Infracost::Configured but unavailable'; exit 1; }
           infracost breakdown --path platform/terraform --format json --out-file "$RUNNER_TEMP/infracost.json"
           echo '::notice title=Infracost::Estimate only; not a bill or deployment approval'
