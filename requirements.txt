@@ -13,3 +13,4 @@ redis==5.2.1
 webauthn==2.6.0
 cryptography>=43.0,<45.0
 defusedxml>=0.7.1,<1.0
+PyYAML==6.0.3

@@ -1,9 +1,11 @@
 """type-10042026-Maurice: Ticket07 CI/supply-chain contract tests, one CSV case each."""
 
+import ast
 import json
 import logging
 import re
 import shlex
+import sys
 from pathlib import Path
 
 import yaml
@@ -173,3 +175,30 @@ def test_TC_PLAT_0060_workflow_dependency_requirement_paths() -> None:
         raise
     finally:
         LOGGER.debug("dependency requirement validation exited")
+
+
+def test_TC_PLAT_0061_platform_collection_imports_are_declared() -> None:
+    """type-10052026-Maurice: collection imports must be installable from root requirements."""
+    workflow = _text("platform-validation.yml")
+    test_paths = re.findall(r"backend/tests/test_ticket\d+_(?:platform|terraform)\.py", workflow)
+    assert test_paths
+
+    stdlib = set(sys.stdlib_module_names)
+    imported = set()
+    for relative in test_paths:
+        tree = ast.parse((ROOT / relative).read_text(encoding="utf-8"), filename=relative)
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                imported.update(alias.name.split(".", 1)[0] for alias in node.names)
+            elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
+                imported.add(node.module.split(".", 1)[0])
+
+    third_party = imported - stdlib - {"backend"}
+    declared = {
+        line.split("[", 1)[0].split("=", 1)[0].split(">", 1)[0].split("<", 1)[0].strip().lower()
+        for line in (ROOT / "requirements.txt").read_text(encoding="utf-8").splitlines()
+        if line.strip() and not line.lstrip().startswith("#")
+    }
+    module_to_distribution = {"yaml": "pyyaml", "pytest": "pytest"}
+    assert third_party <= module_to_distribution.keys()
+    assert {module_to_distribution[module] for module in third_party} <= declared
