@@ -56,9 +56,11 @@ def test_TC_PLAT_0059_acceptance_evidence_classification() -> None:
         fields = rows[0].keys()
     assert len(fields) == 18
     ids = [row["Test Case ID"] for row in rows]
-    assert len(rows) == 62
+    assert len(rows) == 63
     assert len(set(ids)) == len(ids)
-    assert ids == [f"TC-PLAT-{number:04d}" for number in range(1, 63)]
+    assert ids == [f"TC-PLAT-{number:04d}" for number in range(1, 64)]
+    requirement_refs = {reference.strip() for row in rows for reference in row["Requirement ID"].split(";")}
+    assert len(requirement_refs) == 54
     assert all(row["Requirement ID"].strip() for row in rows)
     assert all(row["Status (Pass/Fail)"].strip() == "Not Run" for row in rows)
     qa_fields = ("Actual Result", "Tester Name", "Test Date", "Remarks / Defects ID")

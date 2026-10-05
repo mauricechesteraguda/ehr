@@ -15,9 +15,14 @@
 - Added an isolated, digest-pinned PostgreSQL 17.2 Alpine service and matching synthetic Django CI environment for Ticket 07 tests.
 - Added semantic Ticket 07 workflow regression coverage for service readiness and the intentional absence of Redis.
 
+## Terraform and Helm CI bootstrapping
+
+- Added full-SHA-pinned official setup actions to every Terraform- or Helm-invoking CI job, using the repository contract versions Terraform 1.9.8 and Helm 3.16.4.
+- Added semantic regression coverage for setup ordering, unconditional execution, immutable action refs, and exact manifest versions.
+
 ## Platform evidence cardinality maintenance
 
-- Updated the existing TC-PLAT-0059 contract for the approved 62-case, 53-requirement canonical evidence matrix.
+- Updated the existing TC-PLAT-0059 contract for the approved 63-case, 54-requirement canonical evidence matrix.
 - Preserved exact columns, unique continuous IDs, nonblank automated references, and blank QA fields for `Not Run` evidence.
 
 Author Name: Aguda, Maurice

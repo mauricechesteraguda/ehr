@@ -21,6 +21,8 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2, retrieved 2026-10-04
         with: {persist-credentials: false}
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1, official, verified 2026-10-05
+        with: {terraform_version: '1.9.8', terraform_wrapper: false}
       - name: Select provider and environment allowlist
         env: {EVENT_PROVIDER: '${{ inputs.provider }}', EVENT_ENVIRONMENT: '${{ inputs.environment }}'}
         shell: bash

@@ -39,6 +39,10 @@ jobs:
         with: {persist-credentials: false}
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0, official, retrieved 2026-10-04
         with: {python-version: '${{ matrix.python }}'}
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1, official, verified 2026-10-05
+        with: {terraform_version: '1.9.8', terraform_wrapper: false}
+      - uses: azure/setup-helm@dda3372f752e03dde6b3237bc9431cdc2f7a02a2 # v5.0.0, official, verified 2026-10-05
+        with: {version: '3.16.4'}
       - name: Allocate runner-scoped temporary paths
         shell: bash
         run: |

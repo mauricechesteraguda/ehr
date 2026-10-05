@@ -242,3 +242,36 @@ def test_TC_PLAT_0062_postgres_service_matches_django_ci_environment() -> None:
     readiness = next(i for i, step in enumerate(steps) if "pg_isready" in (step.get("run") or ""))
     tests = next(i for i, step in enumerate(steps) if "backend/tests/test_ticket07.py" in (step.get("run") or ""))
     assert readiness < tests
+
+
+def test_TC_PLAT_0063_tool_invocations_have_pinned_bootstrap() -> None:
+    """type-10052026-Maurice: Terraform and Helm must be installed before use."""
+    manifest = json.loads((ROOT / "platform/tool-versions.json").read_text(encoding="utf-8"))
+    versions = manifest["tool_versions"]
+    setup = {
+        "terraform": ("hashicorp/setup-terraform", "terraform_version"),
+        "helm": ("azure/setup-helm", "version"),
+    }
+    for workflow in WORKFLOWS.glob("*.yml"):
+        data = yaml.safe_load(workflow.read_text(encoding="utf-8")) or {}
+        for job_name, job in data.get("jobs", {}).items():
+            steps = job.get("steps", [])
+            for invocation_index, step in enumerate(steps):
+                command = step.get("run") or ""
+                tools = [tool for tool in setup if re.search(rf"(?m)(?:^|[;&|])\s*{tool}(?:\s|$)", command)]
+                for tool in tools:
+                    action_name, version_input = setup[tool]
+                    candidates = [
+                        (index, candidate)
+                        for index, candidate in enumerate(steps[:invocation_index])
+                        if candidate.get("uses", "").startswith(action_name + "@")
+                    ]
+                    assert candidates, f"{workflow.name}/{job_name}: missing {tool} setup"
+                    setup_index, setup_step = candidates[-1]
+                    action_ref = setup_step["uses"].split("@", 1)[1]
+                    assert re.fullmatch(r"[0-9a-f]{40}", action_ref), f"{workflow.name}/{job_name}: {tool} setup is not full-SHA pinned"
+                    assert "if" not in setup_step, f"{workflow.name}/{job_name}: {tool} setup is conditional"
+                    assert setup_step.get("with", {}).get(version_input) == versions[tool]["version"], (
+                        f"{workflow.name}/{job_name}: {tool} version mismatch"
+                    )
+                    assert setup_index < invocation_index
