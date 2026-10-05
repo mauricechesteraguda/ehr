@@ -43,4 +43,9 @@
 - Corrected the TFLint path-discovery loop to consume NUL-delimited Terraform paths with a token-safe Bash `read` delimiter.
 - Extended TC-PLAT-0065 with an offline parser fixture covering nonempty path assignment.
 
+## Scoped Kubernetes manifest validation
+
+- Scoped kubeconform to the checked-in Kubernetes manifest roots and directories, excluding GitOps metadata files.
+- Strengthened TC-PLAT-0039 to require the exact 21-file, 33-document manifest set and top-level Kubernetes identity fields.
+
 Author Name: Aguda, Maurice

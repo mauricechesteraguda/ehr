@@ -133,7 +133,7 @@ jobs:
           curl --fail --location --silent --show-error --max-time 60 'https://github.com/yannh/kubeconform/releases/download/v0.7.0/kubeconform-linux-amd64.tar.gz' -o "$tools/kubeconform.tgz"
           printf '%s  %s\n' 'c31518ddd122663b3f3aa874cfe8178cb0988de944f29c74a0b9260920d115d3' "$tools/kubeconform.tgz" | sha256sum --check --status
           tar -xzf "$tools/kubeconform.tgz" -C "$tools"
-          kubeconform -strict -ignore-missing-schemas -schema-location default platform/gitops/*.yaml
+          kubeconform -strict -ignore-missing-schemas -schema-location default platform/gitops/project.yaml platform/gitops/root-application.yaml platform/gitops/apps platform/gitops/resources
 
           curl --fail --location --silent --show-error --max-time 60 'https://github.com/kyverno/kyverno/releases/download/v1.15.2/kyverno-cli_v1.15.2_linux_x86_64.tar.gz' -o "$tools/kyverno.tgz"
           printf '%s  %s\n' 'c90520ba24fb8b8df003ec22d6d2621e4a3d3c7497665fdcf84e9eab4ff1dfe0' "$tools/kyverno.tgz" | sha256sum --check --status

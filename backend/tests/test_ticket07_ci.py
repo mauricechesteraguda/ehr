@@ -41,6 +41,46 @@ def test_TC_PLAT_0039_security_scan_threshold() -> None:
     validation, release = _text("platform-validation.yml"), _text("release.yml")
     assert "gitleaks detect" in validation and "trivy config --exit-code 1" in validation
     assert "kubeconform" in validation and "kyverno apply" in validation
+    kubeconform_line = next(line.strip() for line in validation.splitlines() if re.match(r"\s*kubeconform\s", line))
+    tokens = shlex.split(kubeconform_line)
+    kubeconform_args = tokens[tokens.index("kubeconform") + 1 :]
+    assert "-strict" in kubeconform_args
+    assert "-ignore-missing-schemas" in kubeconform_args
+    assert kubeconform_args[kubeconform_args.index("-schema-location") + 1] == "default"
+    inputs = []
+    skip_next = False
+    for token in kubeconform_args:
+        if skip_next:
+            skip_next = False
+        elif token == "-schema-location":
+            skip_next = True
+        elif not token.startswith("-"):
+            inputs.append(token)
+    expected_inputs = [
+        "platform/gitops/project.yaml",
+        "platform/gitops/root-application.yaml",
+        "platform/gitops/apps",
+        "platform/gitops/resources",
+    ]
+    assert inputs == expected_inputs
+    assert "platform/gitops/*.yaml" not in inputs
+    assert "platform/gitops/chart-versions.yaml" not in inputs
+    assert "platform/gitops/targets.yaml" not in inputs
+
+    selected = set()
+    for input_path in inputs:
+        path = ROOT / input_path
+        selected.update(path.glob("*.yaml") if path.is_dir() else [path])
+    assert {path.relative_to(ROOT).as_posix() for path in selected} == {
+        "platform/gitops/project.yaml",
+        "platform/gitops/root-application.yaml",
+        *{path.relative_to(ROOT).as_posix() for path in (ROOT / "platform/gitops/apps").glob("*.yaml")},
+        *{path.relative_to(ROOT).as_posix() for path in (ROOT / "platform/gitops/resources").glob("*.yaml")},
+    }
+    assert len(selected) == 21
+    documents = [document for path in sorted(selected) for document in yaml.safe_load_all(path.read_text(encoding="utf-8")) if document is not None]
+    assert len(documents) == 33
+    assert all(isinstance(document, dict) and document.get("apiVersion") and document.get("kind") for document in documents)
     assert "trivy image --exit-code 1 --severity HIGH,CRITICAL" in release
     assert (ROOT / ".gitleaks.toml").exists() and (ROOT / "trivy.yaml").exists()
 
