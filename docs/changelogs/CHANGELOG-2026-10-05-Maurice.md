@@ -38,4 +38,9 @@
 
 - Preserved backslashes while reading discovered Terraform directories and added TC-PLAT-0064 coverage for unsafe shell `read` invocations.
 
+## Safe Terraform path parsing
+
+- Corrected the TFLint path-discovery loop to consume NUL-delimited Terraform paths with a token-safe Bash `read` delimiter.
+- Extended TC-PLAT-0065 with an offline parser fixture covering nonempty path assignment.
+
 Author Name: Aguda, Maurice

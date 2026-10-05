@@ -340,7 +340,23 @@ def test_TC_PLAT_0065_tflint_is_scoped_to_tracked_terraform_directories() -> Non
     assert "-type f" in tflint_block and "-name '*.tf'" in tflint_block
     assert ".terraform" in tflint_block
     assert "dirname \"$file\"" in tflint_block and "sort -u" in tflint_block
-    assert re.search(r"while IFS= read(?: -r)? -d(?: ''|\$'\\0') file", tflint_block)
+    assert "while IFS= read -r -d '' file; do" in tflint_block
+    assert "while IFS= read -r -d$'\\0' file; do" not in tflint_block
+    parser_probe = subprocess.run(
+        ["bash", "-Eeuo", "pipefail", "-c", """
+set -Eeuo pipefail
+unset file
+while IFS= read -r -d '' file; do
+  [[ -n "$file" ]] || exit 1
+  printf '%s\\n' assigned
+done < <(printf '%s\\0' 'synthetic/terraform/main.tf')
+"""],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert parser_probe.returncode == 0
+    assert parser_probe.stdout == "assigned\n"
     assert 'tflint --chdir "$dir" --config "$config"' in tflint_block
     assert not re.search(r"tflint --recursive|tflint --config \S+ platform/terraform", tflint_block)
 

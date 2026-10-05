@@ -121,7 +121,7 @@ jobs:
           export PATH="$tools/tflint:$tools:$PATH"
           config="$GITHUB_WORKSPACE/.tflint.hcl"
           tflint --init --config "$config"
-          while IFS= read -r -d$'\0' file; do
+          while IFS= read -r -d '' file; do
             relative="${file#"$GITHUB_WORKSPACE/"}"
             git -C "$GITHUB_WORKSPACE" ls-files --error-unmatch -- "$relative" >/dev/null 2>&1 || continue
             dirname "$file"
