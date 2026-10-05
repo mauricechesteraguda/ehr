@@ -29,4 +29,9 @@
 
 - Added discoverable TC-PLAT-0064 coverage for unsafe embedded shell patterns and made the affected workflow blocks actionlint/ShellCheck-clean.
 
+## Scoped Terraform linting
+
+- Added TC-PLAT-0065 coverage for tracked Terraform directory discovery and shared absolute TFLint configuration.
+- Scoped CI TFLint to the nine environment roots and three modules, and fixed provider constraints plus the unused AWS declaration for zero findings.
+
 Author Name: Aguda, Maurice

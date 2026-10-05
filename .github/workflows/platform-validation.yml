@@ -118,7 +118,17 @@ jobs:
           curl --fail --location --silent --show-error --max-time 60 'https://github.com/terraform-linters/tflint/releases/download/v0.59.1/tflint_linux_amd64.zip' -o "$tools/tflint.zip"
           printf '%s  %s\n' '6108d84282292f11d793dc8038ce08fbc629dcd25324d6f13c63d8100b52e01f' "$tools/tflint.zip" | sha256sum --check --status
           unzip -q "$tools/tflint.zip" -d "$tools/tflint"
-          export PATH="$tools/tflint:$tools:$PATH"; tflint --init --config .tflint.hcl; tflint --recursive --config .tflint.hcl
+          export PATH="$tools/tflint:$tools:$PATH"
+          config="$GITHUB_WORKSPACE/.tflint.hcl"
+          tflint --init --config "$config"
+          while IFS= read -r -d$'\0' file; do
+            relative="${file#"$GITHUB_WORKSPACE/"}"
+            git -C "$GITHUB_WORKSPACE" ls-files --error-unmatch -- "$relative" >/dev/null 2>&1 || continue
+            dirname "$file"
+          done < <(find "$GITHUB_WORKSPACE/platform/terraform" -type f -name '*.tf' -not -path '*/.terraform/*' -print0) | sort -u > "$tools/tflint-dirs"
+          while IFS= read dir; do
+            tflint --chdir "$dir" --config "$config"
+          done < "$tools/tflint-dirs"
 
           curl --fail --location --silent --show-error --max-time 60 'https://github.com/yannh/kubeconform/releases/download/v0.7.0/kubeconform-linux-amd64.tar.gz' -o "$tools/kubeconform.tgz"
           printf '%s  %s\n' 'c31518ddd122663b3f3aa874cfe8178cb0988de944f29c74a0b9260920d115d3' "$tools/kubeconform.tgz" | sha256sum --check --status

@@ -1,6 +1,10 @@
 // type-10042026-Maurice: isolated azure/production root;provider identity is ambient/OIDC only.
 terraform {
   required_version = ">= 1.9.8, < 2.0.0"
+  required_providers {
+    azurerm = { source = "hashicorp/azurerm", version = "~> 4.15" }
+    helm    = { source = "hashicorp/helm", version = "= 2.17.0" }
+  }
   backend "azurerm" {
     key = "ehr/azure/production/terraform.tfstate"
   }

@@ -5,6 +5,7 @@ import json
 import logging
 import re
 import shlex
+import subprocess
 import sys
 from pathlib import Path
 
@@ -157,6 +158,8 @@ def test_TC_PLAT_0060_workflow_dependency_requirement_paths() -> None:
                 for token_index in range(install_at + 2, len(tokens)):
                     token = tokens[token_index]
                     requirement = None
+                    if token == "-r" and token_index + 1 < len(tokens) and tokens[token_index + 1].startswith("-d"):
+                        continue
                     if token in ("-r", "--requirement") and token_index + 1 < len(tokens):
                         requirement = tokens[token_index + 1]
                     elif token.startswith("--requirement="):
@@ -317,3 +320,34 @@ def test_TC_PLAT_0064_embedded_shell_has_no_known_lint_diagnostics() -> None:
                         violations.append(f"{location}: unused downloaded-tool assignment {variable}")
 
     assert not violations, "\n".join(violations)
+
+
+def test_TC_PLAT_0065_tflint_is_scoped_to_tracked_terraform_directories() -> None:
+    """type-10052026-Maurice: TFLint uses one absolute config over the tracked directory set."""
+    workflow = _text("platform-validation.yml")
+    tflint_block = workflow[workflow.index("curl --fail --location --silent --show-error --max-time 60 'https://github.com/terraform-linters/") :]
+    assert "config=\"$GITHUB_WORKSPACE/.tflint.hcl\"" in tflint_block
+    assert "tflint --init --config \"$config\"" in tflint_block
+    assert "find \"$GITHUB_WORKSPACE/platform/terraform\"" in tflint_block
+    assert "-type f" in tflint_block and "-name '*.tf'" in tflint_block
+    assert ".terraform" in tflint_block
+    assert "dirname \"$file\"" in tflint_block and "sort -u" in tflint_block
+    assert re.search(r"while IFS= read(?: -r)? -d(?: ''|\$'\\0') file", tflint_block)
+    assert 'tflint --chdir "$dir" --config "$config"' in tflint_block
+    assert not re.search(r"tflint --recursive|tflint --config \S+ platform/terraform", tflint_block)
+
+    tracked = {
+        path.parent
+        for path in ROOT.joinpath("platform/terraform").rglob("*.tf")
+        if ".terraform" not in path.parts
+        and "platform/terraform" in str(path.relative_to(ROOT))
+        and str(path.relative_to(ROOT)) in subprocess.check_output(
+            ["git", "ls-files", "--", "platform/terraform"], text=True
+        ).splitlines()
+    }
+    expected = {
+        ROOT / "platform/terraform" / "environments" / cloud / environment
+        for cloud in ("aws", "azure", "gcp")
+        for environment in ("development", "staging", "production")
+    } | {ROOT / "platform/terraform" / "modules" / cloud for cloud in ("aws", "azure", "gcp")}
+    assert tracked == expected and len(tracked) == 12

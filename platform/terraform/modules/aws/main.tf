@@ -10,9 +10,6 @@ provider "aws" {
 data "tls_certificate" "eks" {
   url = aws_eks_cluster.this.identity[0].oidc[0].issuer
 }
-data "aws_availability_zones" "available" {
-  state = "available"
-}
 resource "aws_kms_key" "platform" {
   description             = "${var.name} platform encryption"
   enable_key_rotation     = true

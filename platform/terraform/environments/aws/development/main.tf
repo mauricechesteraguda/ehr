@@ -1,6 +1,10 @@
 // type-10042026-Maurice: isolated aws/development root; provider identity is ambient/OIDC only.
 terraform {
   required_version = ">= 1.9.8, < 2.0.0"
+  required_providers {
+    aws  = { source = "hashicorp/aws", version = "~> 5.70" }
+    helm = { source = "hashicorp/helm", version = "= 2.17.0" }
+  }
   backend "s3" {
     key = "ehr/aws/development/terraform.tfstate"
   }
