@@ -47,16 +47,18 @@ jobs:
         shell: bash
         run: |
           set -Eeuo pipefail
-          echo "TMPDIR=$RUNNER_TEMP/ehr-platform" >> "$GITHUB_ENV"
-          echo "PIP_CACHE_DIR=$RUNNER_TEMP/ehr-pip" >> "$GITHUB_ENV"
-          echo "HELM_CACHE_HOME=$RUNNER_TEMP/ehr-helm" >> "$GITHUB_ENV"
-          echo "HELM_CONFIG_HOME=$RUNNER_TEMP/ehr-helm-config" >> "$GITHUB_ENV"
-          echo "HELM_DATA_HOME=$RUNNER_TEMP/ehr-helm-data" >> "$GITHUB_ENV"
+          {
+            echo "TMPDIR=$RUNNER_TEMP/ehr-platform"
+            echo "PIP_CACHE_DIR=$RUNNER_TEMP/ehr-pip"
+            echo "HELM_CACHE_HOME=$RUNNER_TEMP/ehr-helm"
+            echo "HELM_CONFIG_HOME=$RUNNER_TEMP/ehr-helm-config"
+            echo "HELM_DATA_HOME=$RUNNER_TEMP/ehr-helm-data"
+          } >> "$GITHUB_ENV"
       - name: Wait for PostgreSQL readiness
         shell: bash
         run: |
           set -Eeuo pipefail
-          for attempt in $(seq 1 30); do
+          for _attempt in $(seq 1 30); do
             pg_isready -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" -d "$POSTGRES_DB" && exit 0
             sleep 1
           done
@@ -115,27 +117,27 @@ jobs:
 
           curl --fail --location --silent --show-error --max-time 60 'https://github.com/terraform-linters/tflint/releases/download/v0.59.1/tflint_linux_amd64.zip' -o "$tools/tflint.zip"
           printf '%s  %s\n' '6108d84282292f11d793dc8038ce08fbc629dcd25324d6f13c63d8100b52e01f' "$tools/tflint.zip" | sha256sum --check --status
-          unzip -q "$tools/tflint.zip" -d "$tools/tflint"; TFLINT="$tools/tflint/tflint"
+          unzip -q "$tools/tflint.zip" -d "$tools/tflint"
           export PATH="$tools/tflint:$tools:$PATH"; tflint --init --config .tflint.hcl; tflint --recursive --config .tflint.hcl
 
           curl --fail --location --silent --show-error --max-time 60 'https://github.com/yannh/kubeconform/releases/download/v0.7.0/kubeconform-linux-amd64.tar.gz' -o "$tools/kubeconform.tgz"
           printf '%s  %s\n' 'c31518ddd122663b3f3aa874cfe8178cb0988de944f29c74a0b9260920d115d3' "$tools/kubeconform.tgz" | sha256sum --check --status
-          tar -xzf "$tools/kubeconform.tgz" -C "$tools"; KUBECONFORM="$tools/kubeconform"
+          tar -xzf "$tools/kubeconform.tgz" -C "$tools"
           kubeconform -strict -ignore-missing-schemas -schema-location default platform/gitops/*.yaml
 
           curl --fail --location --silent --show-error --max-time 60 'https://github.com/kyverno/kyverno/releases/download/v1.15.2/kyverno-cli_v1.15.2_linux_x86_64.tar.gz' -o "$tools/kyverno.tgz"
           printf '%s  %s\n' 'c90520ba24fb8b8df003ec22d6d2621e4a3d3c7497665fdcf84e9eab4ff1dfe0' "$tools/kyverno.tgz" | sha256sum --check --status
-          tar -xzf "$tools/kyverno.tgz" -C "$tools"; KYVERNO="$tools/kyverno"
+          tar -xzf "$tools/kyverno.tgz" -C "$tools"
           kyverno apply platform/gitops/resources/kyverno-policies.yaml --resource platform/gitops/apps/namespaces.yaml
 
           curl --fail --location --silent --show-error --max-time 60 'https://github.com/gitleaks/gitleaks/releases/download/v8.28.0/gitleaks_8.28.0_linux_x64.tar.gz' -o "$tools/gitleaks.tgz"
           printf '%s  %s\n' 'a65b5253807a68ac0cafa4414031fd740aeb55f54fb7e55f386acb52e6a840eb' "$tools/gitleaks.tgz" | sha256sum --check --status
-          tar -xzf "$tools/gitleaks.tgz" -C "$tools"; GITLEAKS="$tools/gitleaks"
+          tar -xzf "$tools/gitleaks.tgz" -C "$tools"
           gitleaks detect --no-banner --redact --config .gitleaks.toml --exit-code 1
 
           curl --fail --location --silent --show-error --max-time 60 'https://github.com/aquasecurity/trivy/releases/download/v0.75.0/trivy_0.75.0_Linux-64bit.tar.gz' -o "$tools/trivy.tgz"
           printf '%s  %s\n' 'c6e65abddb348e25f10549df887045629cf28cc72453cd1c63acb717316b3f3f' "$tools/trivy.tgz" | sha256sum --check --status
-          tar -xzf "$tools/trivy.tgz" -C "$tools"; TRIVY="$tools/trivy"
+          tar -xzf "$tools/trivy.tgz" -C "$tools"
           trivy config --exit-code 1 --severity HIGH,CRITICAL --no-progress .
       - name: Documentation local links
         shell: bash

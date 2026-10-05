@@ -22,7 +22,10 @@ jobs:
         shell: bash
         run: |
           set -Eeuo pipefail
-          command -v docker >/dev/null && command -v kind >/dev/null || { echo '::error title=kind::Docker and kind are required'; exit 1; }
+          if ! command -v docker >/dev/null || ! command -v kind >/dev/null; then
+            echo '::error title=kind::Docker and kind are required'
+            exit 1
+          fi
           docker info >/dev/null
           test -z "$(kind get clusters --quiet 2>/dev/null | grep '^ehr-' || true)" || { echo '::error title=kind::Existing EHR cluster prevents scoped run'; exit 1; }
       - name: Build load and exercise current images
@@ -30,12 +33,12 @@ jobs:
         run: |
           set -Eeuo pipefail
           export CLUSTER="ehr-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"; echo "CLUSTER=$CLUSTER" >> "$GITHUB_ENV"
-          docker build --tag ehr-web:ci-${GITHUB_RUN_ID} .
-          docker build --tag ehr-api:ci-${GITHUB_RUN_ID} backend
+          docker build --tag "ehr-web:ci-${GITHUB_RUN_ID}" .
+          docker build --tag "ehr-api:ci-${GITHUB_RUN_ID}" backend
           kind create cluster --name "$CLUSTER" --config platform/kind/cluster.yaml
           kind load docker-image "ehr-web:ci-${GITHUB_RUN_ID}" "ehr-api:ci-${GITHUB_RUN_ID}" --name "$CLUSTER"
           helm dependency build platform/helm/ehr >/dev/null
-          helm upgrade --install ehr platform/helm/ehr --namespace ehr --create-namespace -f platform/helm/ehr/values-kind.yaml --set images.web.repository=ehr-web --set images.web.tag=ci-${GITHUB_RUN_ID} --set images.api.repository=ehr-api --set images.api.tag=ci-${GITHUB_RUN_ID} --wait --timeout 8m
+          helm upgrade --install ehr platform/helm/ehr --namespace ehr --create-namespace -f platform/helm/ehr/values-kind.yaml --set images.web.repository=ehr-web --set "images.web.tag=ci-${GITHUB_RUN_ID}" --set images.api.repository=ehr-api --set "images.api.tag=ci-${GITHUB_RUN_ID}" --wait --timeout 8m
           for deployment in ehr-api ehr-web ehr-worker ehr-beat; do kubectl -n ehr rollout status "deployment/$deployment" --timeout=5m; done
           kubectl -n ehr wait --for=condition=complete job -l app.kubernetes.io/component=migration --timeout=5m
           kubectl -n ehr get service,endpoints,networkpolicy --selector=app.kubernetes.io/part-of=ehr

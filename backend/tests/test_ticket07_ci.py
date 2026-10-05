@@ -275,3 +275,45 @@ def test_TC_PLAT_0063_tool_invocations_have_pinned_bootstrap() -> None:
                         f"{workflow.name}/{job_name}: {tool} version mismatch"
                     )
                     assert setup_index < invocation_index
+
+
+def test_TC_PLAT_0064_embedded_shell_has_no_known_lint_diagnostics() -> None:
+    """type-10052026-Maurice: embedded workflow shell stays actionlint/ShellCheck-clean."""
+    workflow_names = {
+        "platform-validation.yml",
+        "terraform.yml",
+        "kind-integration.yml",
+        "infracost.yml",
+        "release.yml",
+    }
+    violations = []
+    for workflow in sorted(WORKFLOWS.glob("*.yml")):
+        if workflow.name not in workflow_names:
+            continue
+        data = yaml.safe_load(workflow.read_text(encoding="utf-8")) or {}
+        for job_name, job in data.get("jobs", {}).items():
+            for step_index, step in enumerate(job.get("steps", [])):
+                command = step.get("run") or ""
+                if not command:
+                    continue
+                location = f"{workflow.name}:{job_name}:step-{step_index + 1}"
+                for line in command.splitlines():
+                    if re.search(r"&&.+\|\|", line) and "[[" not in line:
+                        violations.append(f"{location}: unsafe conditional list")
+                    for expansion in re.finditer(r"\$\{?GITHUB_RUN_ID\}?", line):
+                        if line[: expansion.start()].count('"') % 2 == 0:
+                            violations.append(f"{location}: unquoted GITHUB_RUN_ID")
+
+                env_redirects = re.findall(r"\+\+\s*[\"']?\$GITHUB_ENV", command)
+                if len(env_redirects) > 1 and "} >>" not in command:
+                    violations.append(f"{location}: repeated GITHUB_ENV redirects")
+
+                for match in re.finditer(r"for\s+(\w+)\s+in\b.*?;\s*do(.*?)(?:\bdone\b|$)", command, re.S):
+                    if not match.group(1).startswith("_") and len(re.findall(rf"\b{re.escape(match.group(1))}\b", match.group(2))) == 0:
+                        violations.append(f"{location}: unused loop variable {match.group(1)}")
+
+                for variable in ("TFLINT", "KUBECONFORM", "KYVERNO", "GITLEAKS", "TRIVY"):
+                    if re.search(rf"\b{variable}=", command) and len(re.findall(rf"\b{variable}\b", command)) == 1:
+                        violations.append(f"{location}: unused downloaded-tool assignment {variable}")
+
+    assert not violations, "\n".join(violations)

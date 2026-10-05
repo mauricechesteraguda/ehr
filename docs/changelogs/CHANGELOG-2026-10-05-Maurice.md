@@ -22,7 +22,11 @@
 
 ## Platform evidence cardinality maintenance
 
-- Updated the existing TC-PLAT-0059 contract for the approved 63-case, 54-requirement canonical evidence matrix.
+- Updated the existing TC-PLAT-0059 contract for the approved 64-case, 55-requirement canonical evidence matrix.
 - Preserved exact columns, unique continuous IDs, nonblank automated references, and blank QA fields for `Not Run` evidence.
+
+## Workflow shell lint cleanliness
+
+- Added discoverable TC-PLAT-0064 coverage for unsafe embedded shell patterns and made the affected workflow blocks actionlint/ShellCheck-clean.
 
 Author Name: Aguda, Maurice

@@ -41,7 +41,10 @@ jobs:
         shell: bash
         run: |
           set -Eeuo pipefail
-          test -z "${AWS_ACCESS_KEY_ID:-}" && test -z "${GOOGLE_CREDENTIALS:-}" && test -z "${AZURE_CLIENT_SECRET:-}" || { echo '::error title=OIDC::Long-lived keys are forbidden'; exit 1; }
+          if [[ -n "${AWS_ACCESS_KEY_ID:-}" || -n "${GOOGLE_CREDENTIALS:-}" || -n "${AZURE_CLIENT_SECRET:-}" ]]; then
+            echo '::error title=OIDC::Long-lived keys are forbidden'
+            exit 1
+          fi
           echo '::notice title=OIDC::Provider federation must be configured by the protected runner environment'
       - name: AWS OIDC federation
         if: inputs.provider == 'AWS'
