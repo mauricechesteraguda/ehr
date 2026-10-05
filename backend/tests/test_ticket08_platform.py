@@ -55,9 +55,14 @@ def test_TC_PLAT_0059_acceptance_evidence_classification() -> None:
         rows = list(csv.DictReader(stream))
         fields = rows[0].keys()
     assert len(fields) == 18
-    assert [row["Test Case ID"] for row in rows] == [f"TC-PLAT-{number:04d}" for number in range(1, 60)]
+    ids = [row["Test Case ID"] for row in rows]
+    assert len(rows) == 62
+    assert len(set(ids)) == len(ids)
+    assert ids == [f"TC-PLAT-{number:04d}" for number in range(1, 63)]
     assert all(row["Requirement ID"].strip() for row in rows)
     assert all(row["Status (Pass/Fail)"].strip() == "Not Run" for row in rows)
+    qa_fields = ("Actual Result", "Tester Name", "Test Date", "Remarks / Defects ID")
+    assert all(not row[field].strip() for row in rows for field in qa_fields)
     assert all(row["Automated Test Ref."].strip() for row in rows)
     docs = _read("platform/README.md").lower()
     for evidence_class in ("static", "kind", "k3s", "cloud", "not run"):
