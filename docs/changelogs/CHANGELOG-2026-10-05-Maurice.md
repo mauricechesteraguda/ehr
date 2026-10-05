@@ -10,4 +10,9 @@
 - Declared pinned `PyYAML==6.0.3` in root `requirements.txt` for platform-test collection.
 - Added Ticket 08 regression coverage and verified clean dependency installation supports platform-test collection.
 
+## CI PostgreSQL service
+
+- Added an isolated, digest-pinned PostgreSQL 17.2 Alpine service and matching synthetic Django CI environment for Ticket 07 tests.
+- Added semantic Ticket 07 workflow regression coverage for service readiness and the intentional absence of Redis.
+
 Author Name: Aguda, Maurice

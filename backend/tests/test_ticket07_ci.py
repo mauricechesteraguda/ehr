@@ -202,3 +202,43 @@ def test_TC_PLAT_0061_platform_collection_imports_are_declared() -> None:
     module_to_distribution = {"yaml": "pyyaml", "pytest": "pytest"}
     assert third_party <= module_to_distribution.keys()
     assert {module_to_distribution[module] for module in third_party} <= declared
+
+
+def test_TC_PLAT_0062_postgres_service_matches_django_ci_environment() -> None:
+    """type-10052026-Maurice: PostgreSQL-backed CI tests have an isolated ready service."""
+    data = yaml.safe_load(_text("platform-validation.yml"))
+    jobs = data.get("jobs", {})
+    matching = [
+        job for job in jobs.values()
+        if any("backend/tests/test_ticket07.py" in (step.get("run") or "") for step in job.get("steps", []))
+    ]
+    assert matching, "a job running test_ticket07.py must be discoverable"
+    assert len(matching) == 1
+    job = matching[0]
+    services = job.get("services", {})
+    assert set(services) == {"postgres"}, "the Django CI job must not provision Redis"
+    postgres = services["postgres"]
+    assert re.fullmatch(r"postgres:17\.2-alpine@sha256:[0-9a-f]{64}", postgres["image"])
+    assert postgres["ports"] == ["5432:5432"]
+
+    run_id = "${{ github.run_id }}"
+    attempt = "${{ github.run_attempt }}"
+    expected = {
+        "POSTGRES_DB": f"ehr_ci_{run_id}_{attempt}",
+        "POSTGRES_USER": f"ehr_ci_{run_id}_{attempt}",
+        "POSTGRES_PASSWORD": f"ci_only_{run_id}_{attempt}",
+        "POSTGRES_HOST": "localhost",
+        "POSTGRES_PORT": 5432,
+    }
+    assert postgres["env"] == {key: expected[key] for key in ("POSTGRES_DB", "POSTGRES_USER", "POSTGRES_PASSWORD")}
+    assert job["env"] == expected | {"DJANGO_SECRET_KEY": f"ci-only-{run_id}-{attempt}"}
+
+    options = postgres.get("options", "")
+    assert re.search(r'--health-cmd[= ]+"?pg_isready\s+-U\s+\$?\{?POSTGRES_USER\}?\s+-d\s+\$?\{?POSTGRES_DB\}?', options)
+    for option, maximum in (("--health-interval", 30), ("--health-timeout", 30), ("--health-retries", 30)):
+        match = re.search(rf"{option}\s+(\d+)(?:s)?", options)
+        assert match and 0 < int(match.group(1)) <= maximum
+    steps = job["steps"]
+    readiness = next(i for i, step in enumerate(steps) if "pg_isready" in (step.get("run") or ""))
+    tests = next(i for i, step in enumerate(steps) if "backend/tests/test_ticket07.py" in (step.get("run") or ""))
+    assert readiness < tests

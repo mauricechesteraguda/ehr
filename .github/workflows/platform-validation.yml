@@ -14,6 +14,25 @@ jobs:
   validate:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
+    # type-10052026-Maurice: disposable PostgreSQL service for Django CI only.
+    services:
+      postgres:
+        image: postgres:17.2-alpine@sha256:7e5df973a74872482e320dcbdeb055e178d6f42de0558b083892c50cda833c96
+        env:
+          POSTGRES_DB: ehr_ci_${{ github.run_id }}_${{ github.run_attempt }}
+          POSTGRES_USER: ehr_ci_${{ github.run_id }}_${{ github.run_attempt }}
+          POSTGRES_PASSWORD: ci_only_${{ github.run_id }}_${{ github.run_attempt }}
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U $POSTGRES_USER -d $POSTGRES_DB"
+          --health-interval 5s --health-timeout 5s --health-retries 12
+    env:
+      POSTGRES_DB: ehr_ci_${{ github.run_id }}_${{ github.run_attempt }}
+      POSTGRES_USER: ehr_ci_${{ github.run_id }}_${{ github.run_attempt }}
+      POSTGRES_PASSWORD: ci_only_${{ github.run_id }}_${{ github.run_attempt }}
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: 5432
+      DJANGO_SECRET_KEY: ci-only-${{ github.run_id }}-${{ github.run_attempt }}
     strategy: {fail-fast: true, matrix: {python: ['3.12']}}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2, official, retrieved 2026-10-04
@@ -29,6 +48,15 @@ jobs:
           echo "HELM_CACHE_HOME=$RUNNER_TEMP/ehr-helm" >> "$GITHUB_ENV"
           echo "HELM_CONFIG_HOME=$RUNNER_TEMP/ehr-helm-config" >> "$GITHUB_ENV"
           echo "HELM_DATA_HOME=$RUNNER_TEMP/ehr-helm-data" >> "$GITHUB_ENV"
+      - name: Wait for PostgreSQL readiness
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          for attempt in $(seq 1 30); do
+            pg_isready -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" -d "$POSTGRES_DB" && exit 0
+            sleep 1
+          done
+          exit 1
       - name: Platform tests and evidence
         shell: bash
         run: |
