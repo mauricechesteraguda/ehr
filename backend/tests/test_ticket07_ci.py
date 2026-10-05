@@ -38,8 +38,19 @@ def test_TC_PLAT_0038_plan_apply_approval_separation() -> None:
 
 
 def test_TC_PLAT_0039_security_scan_threshold() -> None:
+    # type-10052026-Maurice: every workflow Trivy invocation must use v0.75-compatible syntax.
+    workflows = "\n".join(p.read_text(encoding="utf-8") for p in WORKFLOWS.glob("*.yml"))
     validation, release = _text("platform-validation.yml"), _text("release.yml")
-    assert "gitleaks detect" in validation and "trivy config --exit-code 1" in validation
+    trivy_lines = [line.strip() for line in workflows.splitlines() if re.search(r"\btrivy\s+(?:--\S+\s+)*(?:config|image)\b", line)]
+    assert trivy_lines and all("--no-progress" not in line for line in trivy_lines)
+    assert all(re.search(r"\btrivy\s+--quiet\s+(?:config|image)\b", line) for line in trivy_lines)
+    config_line = next(line for line in trivy_lines if re.search(r"\bconfig\b", line))
+    config_tokens = shlex.split(config_line)
+    config_args = config_tokens[config_tokens.index("config") + 1 :]
+    assert config_args[:4] == ["--exit-code", "1", "--severity", "HIGH,CRITICAL"]
+    assert config_args[4:6] == ["--skip-dirs", "platform/test-fixtures/kyverno"]
+    assert config_args[6:] == ["."]
+    assert "gitleaks detect" in validation
     assert "kubeconform" in validation and "kyverno apply" in validation
     kubeconform_line = next(line.strip() for line in validation.splitlines() if re.match(r"\s*kubeconform\s", line))
     tokens = shlex.split(kubeconform_line)
@@ -81,7 +92,17 @@ def test_TC_PLAT_0039_security_scan_threshold() -> None:
     documents = [document for path in sorted(selected) for document in yaml.safe_load_all(path.read_text(encoding="utf-8")) if document is not None]
     assert len(documents) == 33
     assert all(isinstance(document, dict) and document.get("apiVersion") and document.get("kind") for document in documents)
-    assert "trivy image --exit-code 1 --severity HIGH,CRITICAL" in release
+    release_line = next(line for line in trivy_lines if re.search(r"\bimage\b", line))
+    release_tokens = shlex.split(release_line)
+    release_args = release_tokens[release_tokens.index("image", release_tokens.index("trivy")) + 1 :]
+    assert release_args[:4] == ["--exit-code", "1", "--severity", "HIGH,CRITICAL"]
+    assert release_args[4].removesuffix(";") == "$image" and release_args[5] == "done"
+    assert "trivy --quiet image" in release
+    azure = (ROOT / "platform/terraform/modules/azure/main.tf").read_text(encoding="utf-8")
+    gcp = (ROOT / "platform/terraform/modules/gcp/main.tf").read_text(encoding="utf-8")
+    assert re.search(r'resource "azurerm_storage_account" "shared"[\s\S]*?network_rules\s*\{[\s\S]*?default_action\s*=\s*"Deny"', azure)
+    assert re.search(r'resource "google_sql_database_instance" "postgres"[\s\S]*?ip_configuration\s*\{[\s\S]*?ssl_mode\s*=\s*"ENCRYPTED_ONLY"', gcp)
+    assert '"disable-legacy-endpoints" = "true"' in gcp
     assert (ROOT / ".gitleaks.toml").exists() and (ROOT / "trivy.yaml").exists()
 
 

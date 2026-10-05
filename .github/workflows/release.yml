@@ -46,7 +46,7 @@ jobs:
           set -Eeuo pipefail
           command -v trivy >/dev/null || { echo '::error title=Trivy::Runner must provide pinned Trivy'; exit 1; }
           command -v syft >/dev/null || { echo '::error title=Syft::Runner must provide pinned Syft'; exit 1; }
-          for image in "$RELEASE_REF/web:$GITHUB_SHA" "$RELEASE_REF/api:$GITHUB_SHA"; do trivy image --exit-code 1 --severity HIGH,CRITICAL --no-progress "$image"; done
+          for image in "$RELEASE_REF/web:$GITHUB_SHA" "$RELEASE_REF/api:$GITHUB_SHA"; do trivy --quiet image --exit-code 1 --severity HIGH,CRITICAL "$image"; done
           syft "$RELEASE_REF/web:$GITHUB_SHA" -o spdx-json="$RUNNER_TEMP/ehr-web.spdx.json" -o cyclonedx-json="$RUNNER_TEMP/ehr-web.cyclonedx.json"
           syft "$RELEASE_REF/api:$GITHUB_SHA" -o spdx-json="$RUNNER_TEMP/ehr-api.spdx.json" -o cyclonedx-json="$RUNNER_TEMP/ehr-api.cyclonedx.json"
       - if: always()

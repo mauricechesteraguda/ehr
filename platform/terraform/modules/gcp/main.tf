@@ -97,6 +97,9 @@ resource "google_container_node_pool" "this" {
   node_config {
     machine_type = var.environment == "production" ? "e2-standard-4" : "e2-standard-2"
     oauth_scopes = ["https://www.googleapis.com/auth/cloud-platform"]
+    metadata = {
+      "disable-legacy-endpoints" = "true"
+    }
     workload_metadata_config {
       mode = "GKE_METADATA"
     }
@@ -134,6 +137,7 @@ resource "google_sql_database_instance" "postgres" {
       ipv4_enabled                                  = false
       private_network                               = google_compute_network.this.id
       enable_private_path_for_google_cloud_services = true
+      ssl_mode                                      = "ENCRYPTED_ONLY"
     }
   }
 }

@@ -54,4 +54,10 @@
 - Added pinned Kyverno v1.15.2 offline positive/negative baseline fixtures and required both policy smoke apply and `kyverno test` in platform CI.
 - Signature verification remains a documented Not Run live/registry check.
 
+## Trivy and Terraform security hardening
+
+- Updated all workflow Trivy scans for v0.75.0 global quiet-mode syntax, retaining HIGH/CRITICAL exit-one enforcement and excluding only Kyverno test fixtures from the configuration scan.
+- Denied Azure shared-storage network access by default, required TLS for the GCP Cloud SQL instance, and disabled legacy GKE metadata endpoints.
+- Strengthened TC-PLAT-0039 to inspect every workflow Trivy invocation and assert the Terraform remediations.
+
 Author Name: Aguda, Maurice

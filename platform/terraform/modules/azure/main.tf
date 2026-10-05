@@ -190,6 +190,10 @@ resource "azurerm_storage_account" "shared" {
   public_network_access_enabled     = false
   infrastructure_encryption_enabled = true
   shared_access_key_enabled         = false
+  network_rules {
+    default_action = "Deny"
+    bypass         = ["AzureServices"]
+  }
 }
 resource "azurerm_storage_share" "exports" {
   name                 = "exports"

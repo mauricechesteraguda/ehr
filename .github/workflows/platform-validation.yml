@@ -150,7 +150,7 @@ jobs:
           curl --fail --location --silent --show-error --max-time 60 'https://github.com/aquasecurity/trivy/releases/download/v0.75.0/trivy_0.75.0_Linux-64bit.tar.gz' -o "$tools/trivy.tgz"
           printf '%s  %s\n' 'c6e65abddb348e25f10549df887045629cf28cc72453cd1c63acb717316b3f3f' "$tools/trivy.tgz" | sha256sum --check --status
           tar -xzf "$tools/trivy.tgz" -C "$tools"
-          trivy config --exit-code 1 --severity HIGH,CRITICAL --no-progress .
+          trivy --quiet config --exit-code 1 --severity HIGH,CRITICAL --skip-dirs platform/test-fixtures/kyverno .
       - name: Documentation local links
         shell: bash
         run: |
