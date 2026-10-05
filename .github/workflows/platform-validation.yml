@@ -126,7 +126,7 @@ jobs:
             git -C "$GITHUB_WORKSPACE" ls-files --error-unmatch -- "$relative" >/dev/null 2>&1 || continue
             dirname "$file"
           done < <(find "$GITHUB_WORKSPACE/platform/terraform" -type f -name '*.tf' -not -path '*/.terraform/*' -print0) | sort -u > "$tools/tflint-dirs"
-          while IFS= read dir; do
+          while IFS= read -r dir; do
             tflint --chdir "$dir" --config "$config"
           done < "$tools/tflint-dirs"
 

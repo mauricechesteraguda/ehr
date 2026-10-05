@@ -34,4 +34,8 @@
 - Added TC-PLAT-0065 coverage for tracked Terraform directory discovery and shared absolute TFLint configuration.
 - Scoped CI TFLint to the nine environment roots and three modules, and fixed provider constraints plus the unused AWS declaration for zero findings.
 
+## CI tool path parsing
+
+- Preserved backslashes while reading discovered Terraform directories and added TC-PLAT-0064 coverage for unsafe shell `read` invocations.
+
 Author Name: Aguda, Maurice

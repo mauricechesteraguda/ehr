@@ -158,6 +158,8 @@ def test_TC_PLAT_0060_workflow_dependency_requirement_paths() -> None:
                 for token_index in range(install_at + 2, len(tokens)):
                     token = tokens[token_index]
                     requirement = None
+                    if token == "-r" and token_index > install_at + 2 and tokens[token_index - 1] == "read":
+                        continue
                     if token == "-r" and token_index + 1 < len(tokens) and tokens[token_index + 1].startswith("-d"):
                         continue
                     if token in ("-r", "--requirement") and token_index + 1 < len(tokens):
@@ -303,6 +305,12 @@ def test_TC_PLAT_0064_embedded_shell_has_no_known_lint_diagnostics() -> None:
                 for line in command.splitlines():
                     if re.search(r"&&.+\|\|", line) and "[[" not in line:
                         violations.append(f"{location}: unsafe conditional list")
+                    for read_match in re.finditer(
+                        r"(?:^|[;&|]\s*|while\b[^;\n]*?\s+)read(?P<args>[^;&|\n]*)",
+                        line,
+                    ):
+                        if not re.search(r"(?:^|\s)-r(?:\s|$)", read_match.group("args")):
+                            violations.append(f"{location}: read must use -r")
                     for expansion in re.finditer(r"\$\{?GITHUB_RUN_ID\}?", line):
                         if line[: expansion.start()].count('"') % 2 == 0:
                             violations.append(f"{location}: unquoted GITHUB_RUN_ID")
