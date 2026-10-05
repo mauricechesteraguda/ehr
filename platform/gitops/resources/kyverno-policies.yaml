@@ -26,4 +26,5 @@ spec:
   rules:
     - name: signature-verification-hook
       match: {any: [{resources: {kinds: [Pod], namespaces: [ehr-production]}}]}
-      verifyImages: [{imageReferences: ["registry.example.invalid/ehr*"], attestors: [{entries: [{keys: {publicKeys: "data:text/plain;base64,c3ludGhldGljLXB1YmxpYy1rZXk="}}]}]}]
+      # type-10052026-Maurice: Audit signature evidence must not mutate immutable image references.
+      verifyImages: [{imageReferences: ["registry.example.invalid/ehr*"], mutateDigest: false, attestors: [{entries: [{keys: {publicKeys: "data:text/plain;base64,c3ludGhldGljLXB1YmxpYy1rZXk="}}]}]}]

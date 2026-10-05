@@ -138,7 +138,9 @@ jobs:
           curl --fail --location --silent --show-error --max-time 60 'https://github.com/kyverno/kyverno/releases/download/v1.15.2/kyverno-cli_v1.15.2_linux_x86_64.tar.gz' -o "$tools/kyverno.tgz"
           printf '%s  %s\n' 'c90520ba24fb8b8df003ec22d6d2621e4a3d3c7497665fdcf84e9eab4ff1dfe0' "$tools/kyverno.tgz" | sha256sum --check --status
           tar -xzf "$tools/kyverno.tgz" -C "$tools"
-          kyverno apply platform/gitops/resources/kyverno-policies.yaml --resource platform/gitops/apps/namespaces.yaml
+          kyverno apply platform/gitops/resources/kyverno-policies.yaml --resource platform/gitops/apps/namespaces.yaml | tee "$TMPDIR/kyverno-apply.txt"
+          grep -Eq 'error: 0([, ]|$)' "$TMPDIR/kyverno-apply.txt"
+          kyverno test platform/test-fixtures/kyverno
 
           curl --fail --location --silent --show-error --max-time 60 'https://github.com/gitleaks/gitleaks/releases/download/v8.28.0/gitleaks_8.28.0_linux_x64.tar.gz' -o "$tools/gitleaks.tgz"
           printf '%s  %s\n' 'a65b5253807a68ac0cafa4414031fd740aeb55f54fb7e55f386acb52e6a840eb' "$tools/gitleaks.tgz" | sha256sum --check --status

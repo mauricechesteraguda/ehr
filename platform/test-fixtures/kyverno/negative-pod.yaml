@@ -1,0 +1,20 @@
+# type-10052026-Maurice: Synthetic deliberately unsafe workload for offline rejection checks.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: unsafe-ehr
+  namespace: ehr-production
+spec:
+  hostNetwork: true
+  hostPID: true
+  containers:
+    - name: unsafe-ehr
+      image: registry.example.invalid/ehr-api:latest
+      securityContext:
+        runAsNonRoot: false
+        privileged: true
+        allowPrivilegeEscalation: true
+  volumes:
+    - name: host-data
+      hostPath:
+        path: /var/empty

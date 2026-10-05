@@ -1,0 +1,72 @@
+# type-10052026-Maurice: Fixture mirrors non-signature baseline rules only.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: ehr-production-image-and-pod-boundary
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: production-images-must-be-digests
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+              namespaces: [ehr-production]
+      validate:
+        message: production images must use approved registry digests
+        pattern:
+          spec:
+            containers:
+              - image: registry.example.invalid/ehr*@sha256/*
+    - name: no-privilege-host-access
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+              namespaces: [ehr-production]
+      validate:
+        message: restricted EHR pods cannot use privilege or host access
+        pattern:
+          spec:
+            =(hostNetwork): false
+            =(hostPID): false
+            =(hostIPC): false
+            containers:
+              - securityContext:
+                  =(privileged): false
+                  =(allowPrivilegeEscalation): false
+    - name: no-hostpath-volumes
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+              namespaces: [ehr-production]
+      validate:
+        message: restricted EHR pods cannot use hostPath volumes
+        pattern:
+          spec:
+            =(volumes):
+              - X(hostPath): "null"
+    - name: require-resources-and-non-root
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+              namespaces: [ehr-production]
+      validate:
+        message: EHR pods require non-root and bounded resources
+        pattern:
+          spec:
+            securityContext:
+              runAsNonRoot: true
+            containers:
+              - securityContext:
+                  runAsNonRoot: true
+                resources:
+                  requests:
+                    cpu: "?*"
+                    memory: "?*"
+                  limits:
+                    cpu: "?*"
+                    memory: "?*"

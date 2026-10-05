@@ -1,0 +1,19 @@
+# type-10052026-Maurice: Synthetic compliant EHR workload; no clinical payload or identifier.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: compliant-ehr
+  namespace: ehr-production
+spec:
+  securityContext:
+    runAsNonRoot: true
+  containers:
+    - name: ehr-api
+      image: registry.example.invalid/ehr-api@sha256/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+      securityContext:
+        runAsNonRoot: true
+        privileged: false
+        allowPrivilegeEscalation: false
+      resources:
+        requests: {cpu: 10m, memory: 32Mi}
+        limits: {cpu: 100m, memory: 128Mi}

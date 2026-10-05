@@ -1,0 +1,51 @@
+# type-10052026-Maurice: Offline representative baseline policy tests; signature verification stays Not Run.
+apiVersion: cli.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: ehr-baseline-policy
+policies:
+  - policy.yaml
+resources:
+  - positive-pod.yaml
+  - negative-pod.yaml
+results:
+  - policy: ehr-production-image-and-pod-boundary
+    rule: production-images-must-be-digests
+    resources: [compliant-ehr]
+    kind: Pod
+    result: pass
+  - policy: ehr-production-image-and-pod-boundary
+    rule: no-privilege-host-access
+    resources: [compliant-ehr]
+    kind: Pod
+    result: pass
+  - policy: ehr-production-image-and-pod-boundary
+    rule: no-hostpath-volumes
+    resources: [compliant-ehr]
+    kind: Pod
+    result: pass
+  - policy: ehr-production-image-and-pod-boundary
+    rule: require-resources-and-non-root
+    resources: [compliant-ehr]
+    kind: Pod
+    result: pass
+  - policy: ehr-production-image-and-pod-boundary
+    rule: production-images-must-be-digests
+    resources: [unsafe-ehr]
+    kind: Pod
+    result: fail
+  - policy: ehr-production-image-and-pod-boundary
+    rule: no-privilege-host-access
+    resources: [unsafe-ehr]
+    kind: Pod
+    result: fail
+  - policy: ehr-production-image-and-pod-boundary
+    rule: no-hostpath-volumes
+    resources: [unsafe-ehr]
+    kind: Pod
+    result: fail
+  - policy: ehr-production-image-and-pod-boundary
+    rule: require-resources-and-non-root
+    resources: [unsafe-ehr]
+    kind: Pod
+    result: fail

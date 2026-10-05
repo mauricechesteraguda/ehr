@@ -43,14 +43,30 @@ def test_TC_PLAT_0032_kyverno_and_psa_contracts_present() -> None:
     """TC-PLAT-0032/REQ-PLAT-28: compliant workloads have policy seams."""
     text = _text("platform/gitops/resources/kyverno-policies.yaml")
     namespaces = _text("platform/gitops/apps/namespaces.yaml")
+    policies = list(yaml.safe_load_all(text))
     assert "ClusterPolicy" in text and "runAsNonRoot" in text
     assert "pod-security.kubernetes.io/enforce: restricted" in namespaces
+    for policy in policies:
+        if policy["spec"].get("validationFailureAction") == "Audit":
+            for rule in policy["spec"]["rules"]:
+                for verify_image in rule.get("verifyImages", []):
+                    assert verify_image.get("mutateDigest") is False
+    fixture_dir = PLATFORM / "test-fixtures/kyverno"
+    fixture_config = (fixture_dir / "kyverno-test.yaml").read_text(encoding="utf-8")
+    assert fixture_dir.is_dir()
+    assert (fixture_dir / "positive-pod.yaml").exists()
+    assert (fixture_dir / "negative-pod.yaml").exists()
+    assert "positive-pod.yaml" in fixture_config and "negative-pod.yaml" in fixture_config
+    assert "result: pass" in fixture_config and "result: fail" in fixture_config
 
 
 def test_TC_PLAT_0033_unsafe_workload_policy_contract() -> None:
     """TC-PLAT-0033/REQ-PLAT-28: unsafe capabilities and host access are denied."""
     text = _text("platform/gitops/resources/kyverno-policies.yaml")
+    workflow = _text(".github/workflows/platform-validation.yml")
     assert "privileged" in text and "hostPath" in text and "allowPrivilegeEscalation" in text
+    assert "kyverno apply platform/gitops/resources/kyverno-policies.yaml --resource platform/gitops/apps/namespaces.yaml" in workflow
+    assert "kyverno test platform/test-fixtures/kyverno" in workflow
 
 
 def test_TC_PLAT_0034_psa_restricted_namespaces() -> None:

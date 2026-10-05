@@ -48,4 +48,10 @@
 - Scoped kubeconform to the checked-in Kubernetes manifest roots and directories, excluding GitOps metadata files.
 - Strengthened TC-PLAT-0039 to require the exact 21-file, 33-document manifest set and top-level Kubernetes identity fields.
 
+## Kyverno offline policy gate
+
+- Set `mutateDigest: false` on the Audit-only production signature hook without changing its image references, attestors, or Audit action.
+- Added pinned Kyverno v1.15.2 offline positive/negative baseline fixtures and required both policy smoke apply and `kyverno test` in platform CI.
+- Signature verification remains a documented Not Run live/registry check.
+
 Author Name: Aguda, Maurice
