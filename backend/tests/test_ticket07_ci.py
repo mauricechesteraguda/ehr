@@ -1,13 +1,16 @@
 """type-10042026-Maurice: Ticket07 CI/supply-chain contract tests, one CSV case each."""
 
 import json
+import logging
 import re
+import shlex
 from pathlib import Path
 
 import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
 WORKFLOWS = ROOT / ".github/workflows"
+LOGGER = logging.getLogger(__name__)
 
 
 def _text(name: str) -> str:
@@ -122,3 +125,51 @@ def test_TC_PLAT_0048_gitleaks_generic_api_key_is_not_allowlisted() -> None:
     allowed_fixture = re.findall(r"'''([^']+)'''", text)
     generic_fixture = 'api_key = "synthetic-generic-key-that-must-be-found"'
     assert not any(re.search(pattern, generic_fixture) for pattern in allowed_fixture)
+
+
+def test_TC_PLAT_0060_workflow_dependency_requirement_paths() -> None:
+    """type-10052026-Maurice: CI dependency files resolve from each run directory."""
+    LOGGER.debug("dependency requirement validation entered")
+    try:
+        data = yaml.safe_load(_text("platform-validation.yml"))
+        workflow_defaults = data.get("defaults", {}).get("run", {})
+        found = False
+        for job in data.get("jobs", {}).values():
+            job_defaults = job.get("defaults", {}).get("run", {})
+            for step in job.get("steps", []):
+                command = step.get("run")
+                if not command:
+                    continue
+                tokens = []
+                for line in command.splitlines():
+                    tokens.extend(shlex.split(line, comments=True))
+                if ["pip", "install"] not in [tokens[index:index + 2] for index in range(len(tokens) - 1)]:
+                    continue
+                install_at = next(index for index in range(len(tokens) - 1) if tokens[index:index + 2] == ["pip", "install"])
+                working_directory = step.get(
+                    "working-directory",
+                    job_defaults.get("working-directory", workflow_defaults.get("working-directory", ".")),
+                )
+                base = Path(working_directory)
+                base = base if base.is_absolute() else ROOT / base
+                for token_index in range(install_at + 2, len(tokens)):
+                    token = tokens[token_index]
+                    requirement = None
+                    if token in ("-r", "--requirement") and token_index + 1 < len(tokens):
+                        requirement = tokens[token_index + 1]
+                    elif token.startswith("--requirement="):
+                        requirement = token.split("=", 1)[1]
+                    elif token.startswith("-r") and token != "-r":
+                        requirement = token[2:]
+                    if requirement:
+                        found = True
+                        assert (base / requirement).is_file(), requirement
+        assert found
+    except AssertionError:
+        LOGGER.debug("dependency requirement validation failed")
+        raise
+    except Exception:
+        LOGGER.debug("dependency requirement validation raised an exception")
+        raise
+    finally:
+        LOGGER.debug("dependency requirement validation exited")

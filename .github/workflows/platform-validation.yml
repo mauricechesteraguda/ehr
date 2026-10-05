@@ -34,7 +34,7 @@ jobs:
         run: |
           set -Eeuo pipefail
           mkdir -p "$TMPDIR" "$PIP_CACHE_DIR" "$HELM_CACHE_HOME" "$HELM_CONFIG_HOME" "$HELM_DATA_HOME"
-          python -m pip install --disable-pip-version-check -r backend/requirements.txt
+          python -m pip install --disable-pip-version-check -r requirements.txt
           python -m pytest -q backend/tests/test_ticket01_platform.py backend/tests/test_ticket02_platform.py backend/tests/test_ticket03_platform.py backend/tests/test_ticket04_platform.py backend/tests/test_ticket05_platform.py backend/tests/test_ticket06_terraform.py --maxfail=1
           python -m pytest -q backend/tests/test_ticket07.py --maxfail=1
       - name: CSV evidence contract
