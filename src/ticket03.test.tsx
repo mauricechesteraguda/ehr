@@ -14,6 +14,6 @@ describe("Ticket 03 — authentication and patient workspace composition", () =>
   it("TC-UI-0023 / REQ-A11Y-0005: provides stable workspace landmarks", () => { expect(shell).toContain('aria-label="Workspace navigation"'); expect(shell).toContain('aria-label="Breadcrumb"'); });
   it("TC-UI-0024 / REQ-A11Y-0006: renders the intentional shell composition", () => { expect(shell).toContain("context-ribbon"); expect(shell).toContain("record-heading"); });
   it("TC-UI-0025 / REQ-A11Y-0007: keeps theme changes memory-only", () => { expect(shell).not.toContain("localStorage"); expect(shell).not.toContain("sessionStorage"); });
-  it("TC-UI-0026 / REQ-A11Y-0008: includes semantic dark/light surfaces", () => { expect(shell).toContain("theme-dark"); expect(shell).toContain("context-ribbon"); });
+  it("TC-UI-0026 / REQ-A11Y-0008: includes semantic light/dark surfaces", () => { expect(shell).toContain("theme-light"); expect(shell).toContain("context-ribbon"); });
   it("TC-UI-0027 / REQ-A11Y-0009: auth has skip-ready main content and live errors", () => { const html = renderToStaticMarkup(<Login onSuccess={() => undefined} />); expect(html).toContain('id="main-content"'); expect(html).toContain('aria-live="polite"'); expect(html).toContain("Synthetic data only"); });
 });
